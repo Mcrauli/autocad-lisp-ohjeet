@@ -15,12 +15,42 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
+}
+
+.topnav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(2,6,23,0.95);
+  display: flex;
+  align-items: center;
+  padding: 0 30px;
+  gap: 30px;
+  z-index: 9999;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.topnav a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.topnav a.active {
+  color: #facc15;
+}
+
+.topnav a:hover {
+  color: #facc15;
 }
 
 .container {
   max-width: 700px;
   text-align: center;
+  padding: 80px 20px 20px;
 }
 
 h1 {
@@ -54,6 +84,12 @@ p {
 </head>
 
 <body>
+
+<div class="topnav">
+<a href="index.html" class="active">Etusivu</a>
+<a href="ohjeet.html">Ohjeet</a>
+<a href="lataukset.html">Lataukset</a>
+</div>
 
 <div class="container">
 <h1>AutoCAD LISP työkalut</h1>
