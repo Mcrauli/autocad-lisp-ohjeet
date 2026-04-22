@@ -16,6 +16,35 @@ body {
   justify-content: center;
 }
 
+.topnav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(2,6,23,0.95);
+  display: flex;
+  align-items: center;
+  padding: 0 30px;
+  gap: 30px;
+  z-index: 9999;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.topnav a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.topnav a.active {
+  color: #facc15;
+}
+
+.topnav a:hover {
+  color: #facc15;
+}
+
 .container {
   max-width: 700px;
   padding: 100px 20px;
@@ -26,16 +55,56 @@ a {
   text-decoration: none;
 }
 
+.block {
+  background: rgba(2,6,23,0.75);
+  padding: 18px;
+  border-radius: 10px;
+  margin-top: 22px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: 0.25s;
+}
+
+.block:hover {
+  transform: translateY(-2px);
+  background: rgba(15,23,42,0.85);
+}
+
+.block h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #facc15;
+}
+
+.block p {
+  line-height: 1.85;
+  color: #cbd5f5;
+  margin: 0;
+}
+
 .file {
   margin: 15px 0;
   padding: 12px;
   background: #1e293b;
   border-radius: 8px;
 }
+
+.file h3 {
+  font-size: 1em;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #e2e8f0;
+}
 </style>
 </head>
 
 <body>
+
+<div class="topnav">
+<a href="index.html">Etusivu</a>
+<a href="ohjeet.html">Ohjeet</a>
+<a href="lataukset.html" class="active">Lataukset</a>
+</div>
 
 <div class="container">
 
@@ -46,42 +115,39 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 </p>
 
 <div class="block">
-<b>NPALLO</b>
+<h2>NPALLO</h2>
 <p>Automaattinen numerointityökalu, joka helpottaa merkintöjen tekemistä ja vähentää virheitä.</p>
 </div>
 
 <div class="block">
-<b>KAATO3D</b>
+<h2>KAATO3D</h2>
 <p>Työkalu kaatojen määrittämiseen nopeasti ja tarkasti.</p>
 </div>
 
 <div class="block">
-<b>Putkityökalu</b>
+<h2>Putkityökalu</h2>
 <p>Nopeuttaa putkien piirtämistä ja varmistaa oikeat layerit, värit ja etäisyydet automaattisesti.</p>
 </div>
 
 <div class="file">
-<b>NPALLO</b><br>
+<h3>NPALLO</h3>
 <a href="files/npallo.lsp">Lataa npallo.lsp</a>
 </div>
 
 <div class="file">
-<b>KAATO3D</b><br>
+<h3>KAATO3D</h3>
 <a href="files/kaato.lsp">Lataa kaato.lsp</a>
 </div>
 
 <div class="file">
-<b>Putkityökalu</b><br>
+<h3>Putkityökalu</h3>
 <a href="files/putkityokalu.lsp">Lataa putkityokalu.lsp</a>
 </div>
 
 <div class="file">
-<b>NPALLO DWG</b><br>
+<h3>NPALLO DWG</h3>
 <a href="files/npallo.dwg">Lataa npallo.dwg</a>
 </div>
-
-<br>
-<a href="ohjeet.html">← Takaisin</a>
 
 </div>
 
