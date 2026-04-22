@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<title>Radika LISP ohjeet</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: #e2e8f0;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #020617; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  background: rgba(2,6,23,0.9);
+  backdrop-filter: blur(10px);
+  padding: 32px 0;
+  position: fixed;
+  height: 100vh;
+  border-right: 1px solid rgba(255,255,255,0.04);
+}
+
+.title {
+  padding: 0 26px;
+  font-weight: 700;
+  font-size: 17px;
+  color: #facc15;
+  margin-bottom: 32px;
+}
+
+.menu a {
+  display: block;
+  padding: 14px 26px;
+  text-decoration: none;
+  color: #94a3b8;
+  transition: 0.25s;
+}
+
+.menu a:hover {
+  color: #e2e8f0;
+  background: rgba(255,255,255,0.03);
+  transform: translateX(3px);
+  box-shadow: inset 2px 0 0 #facc15;
+}
+
+.menu a.active {
+  color: #facc15;
+  background: rgba(255,255,255,0.05);
+  font-weight: 600;
+}
+
+/* CONTENT */
+.content {
+  margin-left: 260px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 100px 24px;
+}
+
+.wrapper {
+  max-width: 680px;
+  width: 100%;
+}
+
+/* SECTION */
+.section {
+  margin-bottom: 240px;
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+}
+
+.section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* DIVIDER */
+.section::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+.section:first-child::before {
+  display: none;
+}
+
+/* TITLE */
+h1 {
+  font-size: 38px;
+  margin-bottom: 80px;
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* CATEGORY */
+.category {
+  font-size: 22px;
+  font-weight: 600;
+  padding: 14px 18px;
+  background: linear-gradient(90deg, rgba(30,41,59,0.7), rgba(2,6,23,0.6));
+  border-left: 4px solid #facc15;
+  border-radius: 8px;
+  margin-top: 90px;
+  margin-bottom: 45px;
+  position: relative;
+}
+
+.category::before {
+  content: "";
+  position: absolute;
+  top: -25px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: #facc15;
+  opacity: 0.6;
+}
+
+/* BLOCK */
+.block {
+  background: rgba(2,6,23,0.75);
+  padding: 18px;
+  border-radius: 10px;
+  margin-top: 22px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: 0.25s;
+}
+
+.block:hover {
+  transform: translateY(-2px);
+  background: rgba(15,23,42,0.85);
+}
+
+/* TEXT */
+p {
+  line-height: 1.85;
+  color: #cbd5f5;
+  margin-bottom: 16px;
+}
+
+/* LIST */
+ul, ol {
+  margin-left: 20px;
+  margin-top: 10px;
+  line-height: 1.75;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+/* CODE */
+code {
+  background: #1e293b;
+  padding: 4px 7px;
+  border-radius: 5px;
+  color: #facc15;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+<a href="#top" class="title">AutoCAD LISP ohjeet</a>
+<div class="menu">
+<a href="#intro">Johdanto</a>
+<a href="#kayttoonotto">Käyttöönotto</a>
+<a href="#putket">Putkityökalu</a>
+<a href="#npallo">Npallo</a>
+<a href="#kaato">Kaato</a>
+</div>
+</div>
+
+<div class="content">
+<div class="wrapper">
+
+<h1 id="top">AutoCAD LISP - Työkalut</h1>
+
+<div class="section" id="intro">
+<div class="category">Johdanto</div>
+<div class="block">
+<p>
+Nämä AutoCAD LISP -työkalut on suunniteltu erityisesti 
+<b>kylmälaite suunnitteluun</b> ja <b>putkikaavioiden tekemiseen</b>,
+joissa samat työvaiheet toistuvat jatkuvasti.
+</p>
+<ul>
+<li>Nopeuttaa työskentelyä merkittävästi</li>
+<li>Vähentää virheitä (layerit, värit, mittasuhteet)</li>
+<li>Poistaa turhaa manuaalista työtä</li>
+<li>Yhtenäistää piirustusten ulkoasun</li>
+</ul>
+<p>
+Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeampaa ja luotettavampaa.
+</p>
+</div>
+</div>
+
+<div class="section" id="kayttoonotto">
+<div class="category">Käyttöönotto</div>
+<div class="block">
+<ol>
+<li>Avaa AutoCAD</li>
+<li>Kirjoita <code>APPLOAD</code></li>
+<li>Lataa .lsp tiedostot</li>
+</ol>
+</div>
+</div>
+
+<div class="section" id="putket">
+<div class="category">Putkityökalu</div>
+
+<div class="block">
+<b>Komennot:</b>
+<ul>
+<li><code>LTI</code> → LT IMU</li>
+<li><code>MTI</code> → MT IMU</li>
+<li><code>MTN</code> → MT NESTE</li>
+<li><code>3PTK</code> → kolme putkea kerralla</li>
+</ul>
+</div>
+
+<div class="block">
+<b>Käyttö:</b>
+<ol>
+<li>Kirjoita haluttu komento</li>
+<li>Klikkaa aloituspiste</li>
+<li>Klikkaa loppupiste</li>
+<li>Putki piirtyy automaattisesti oikealle layerille ja värille</li>
+</ol>
+</div>
+
+<div class="block">
+<b>3PTK (suositeltu):</b>
+<ul>
+<li>Luo kolme putkea yhdellä vedolla</li>
+<li>Keskellä: MT NESTE</li>
+<li>Vasemmalla: LT IMU</li>
+<li>Oikealla: MT IMU</li>
+<li>Putket automaattisesti oikealla etäisyydellä (4 mm)</li>
+<li>Layerit ja värit muodostuvat automaattisesti</li>
+</ul>
+</div>
+
+<div class="block">
+<b>Miksi tätä kannattaa käyttää:</b>
+<ul>
+<li>Säästää aikaa → ei tarvitse piirtää kolmea linjaa erikseen</li>
+<li>Vähentää virheitä → layerit ja värit menevät aina oikein</li>
+<li>Yhtenäinen lopputulos kaikissa piirustuksissa</li>
+<li>Nopeuttaa kaavioiden piirtämistä merkittävästi</li>
+</ul>
+</div>
+</div>
+
+<div class="section" id="npallo">
+<div class="category">Npallo</div>
+
+<div class="block">
+<b>Komennot:</b>
+<ul>
+<li><code>ASETANUMERO</code></li>
+<li><code>NPALLO</code></li>
+</ul>
+</div>
+
+<div class="block">
+<b>Käyttö:</b>
+<ol>
+<li>Kirjoita komento <code>ASETANUMERO</code></li>
+<li>Anna aloitusnumero (0 → alkaa 1)</li>
+<li>Kirjoita komento <code>NPALLO</code></li>
+<li>Klikkaa pisteitä → merkinnät luodaan automaattisesti</li>
+</ol>
+</div>
+
+<div class="block">
+<b>Miksi tätä kannattaa käyttää:</b>
+<ul>
+<li>Automaattinen numerointi</li>
+<li>Nopea merkintä</li>
+<li>Vähemmän virheitä</li>
+<li>Yhtenäinen merkintätapa</li>
+</ul>
+</div>
+</div>
+
+<div class="section" id="kaato">
+
+<div class="category">Kaato</div>
+<div class="block">
+<b>Komennot:</b>
+<ul>
+<li><code>KAATO3D</code></li>
+</ul>
+</div>
+
+<div class="block">
+<b>Käyttö:</b>
+<ol>
+<li>Valitse objekti tai pinta</li>
+<li>Anna kaato (mm/m)</li>
+<li>Valitse piste, joka jää paikalleen</li>
+<li>Valitse nouseva pääty</li>
+<li>Valitse suunta:
+  <ul>
+    <li><b>DOWN</b> → nostaa valittua päätä ylöspäin</li>
+    <li><b>UP</b> → laskee valittua päätä alaspäin</li>
+  </ul>
+</li>
+</ol>
+</div>
+
+<div class="block">
+<b>Miksi tätä kannattaa käyttää:</b>
+<ul>
+<li>Nopeampi kuin manuaalinen muokkaus</li>
+<li>Tarkempi lopputulos</li>
+<li>Vähemmän virheitä</li>
+<li>Sopii toistuviin kaatoihin</li>
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const sections = document.querySelectorAll(".section");
+const links = document.querySelectorAll(".menu a");
+
+window.addEventListener("scroll", () => {
+  let current = "";
+
+  sections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+
+    if (rect.top <= window.innerHeight * 0.4 && rect.bottom >= window.innerHeight * 0.4) {
+      current = section.id;
+    }
+  });
+
+  links.forEach(link => {
+    link.classList.remove("active");
+    if (link.getAttribute("href") === "#" + current) {
+      link.classList.add("active");
+    }
+  });
+});
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("visible");
+    }
+  });
+}, { threshold: 0.2 });
+
+sections.forEach(section => observer.observe(section));
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>
