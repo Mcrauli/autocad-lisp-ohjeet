@@ -2,9 +2,16 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<title>Lataukset</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#020617">
+<meta name="description" content="Lataa AutoCAD LISP -työkalut: Npallo, Kaato ja Putkityökalu — nopeuttavat kylmälaite- ja putkikaaviosuunnittelua.">
+<meta property="og:title" content="Lataukset · AutoCAD LISP">
+<meta property="og:description" content="Lataa AutoCAD LISP -työkalut.">
+<meta property="og:type" content="website">
+<title>Lataukset · AutoCAD LISP</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 
 <style>
 body {
@@ -50,25 +57,89 @@ body {
   display: flex;
   align-items: center;
   padding: 0 30px;
-  gap: 30px;
+  gap: 28px;
   z-index: 9999;
   border-bottom: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
 }
 
-.topnav a {
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  text-decoration: none;
+  color: #f8fafc;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.brand-icon {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.topnav-links {
+  display: flex;
+  gap: 28px;
+}
+
+.topnav-links a {
+  position: relative;
   color: #94a3b8;
   text-decoration: none;
   font-weight: 500;
   letter-spacing: 0.01em;
+  padding: 4px 0;
   transition: color 0.2s ease;
 }
 
-.topnav a.active {
-  color: #facc15;
+.topnav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: #f59e0b;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.22s ease;
 }
 
-.topnav a:hover {
-  color: #facc15;
+.topnav-links a.active {
+  color: #f59e0b;
+}
+
+.topnav-links a.active::after {
+  transform: scaleX(1);
+}
+
+.topnav-links a:hover {
+  color: #f59e0b;
+}
+
+.topnav-links a:hover::after {
+  transform: scaleX(1);
+}
+
+.version {
+  margin-left: auto;
+  color: #60a5fa;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+@media (max-width: 600px) {
+  .topnav { gap: 16px; padding: 0 16px; }
+  .brand-text { display: none; }
+  .topnav-links { gap: 18px; }
+  .version { display: none; }
 }
 
 .container {
@@ -95,7 +166,7 @@ h1 {
 }
 
 a {
-  color: #facc15;
+  color: #f59e0b;
   text-decoration: none;
 }
 
@@ -125,7 +196,7 @@ a {
   font-weight: 700;
   letter-spacing: -0.005em;
   margin: 0 0 8px 0;
-  color: #facc15;
+  color: #f59e0b;
 }
 
 .block p {
@@ -162,7 +233,7 @@ a {
 .file:hover {
   background: #334155;
   transform: translateY(-1px);
-  border-color: rgba(250,204,21,0.25);
+  border-color: rgba(245,158,11,0.25);
 }
 
 .file h3 {
@@ -187,9 +258,13 @@ a {
 <body>
 
 <div class="topnav">
+<a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
+<nav class="topnav-links">
 <a href="index.html">Etusivu</a>
 <a href="ohjeet.html">Ohjeet</a>
 <a href="lataukset.html" class="active">Lataukset</a>
+</nav>
+<span class="version">v1.0</span>
 </div>
 
 <div class="container">
