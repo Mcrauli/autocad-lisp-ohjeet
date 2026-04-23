@@ -992,8 +992,8 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="block reveal">
 <h3>Hyllytyypit:</h3>
 <ul>
-<li><b>LEVY</b> — taivutettu peltihylly: 60 mm korkea, 1.25 mm peltipaksuus, 9 mm lippa ylhäällä sisäänpäin käännetty. Pohjapiirrokseen tulee DASH-hatch (scale 40, angle 45°). Kaikki ryhmitelty: yksi klikki valitsee kokonaisuuden.</li>
-<li><b>TIKAS</b> — tikashylly: 2 kiskoa reunoilla (15 × 60 mm) ja poikkitikat (15 × 15 mm) 250 mm välein. Kaikki osat UNIONed yhdeksi 3D-soliditeetiksi.</li>
+<li><b>LEVY</b> — taivutettu peltihylly: 60 mm korkea, 1.25 mm peltipaksuus, 9 mm lippa ylhäällä sisäänpäin käännetty.</li>
+<li><b>TIKAS</b> — tikashylly: 2 kiskoa reunoilla (15 × 60 mm) ja poikkitikat (15 × 15 mm) 250 mm välein.</li>
 </ul>
 </div>
 
@@ -1010,7 +1010,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <li>Kirjoita <code>KLHYLLY</code></li>
 <li>Valitse tyyppi: <code>LEVY</code> tai <code>TIKAS</code> (oletus LEVY)</li>
 <li>Valitse leveys: <code>300</code>, <code>400</code> tai <code>500</code> (oletus 300)</li>
-<li>Klikkaa aloituspiste — OSNAP nappaa kulman visuaalisella markerilla, ja fallback-snap vetää pisteen lähimpään KYL-*HYLLY-nurkkaan ≤ 80 mm päästä</li>
+<li>Klikkaa aloituspiste</li>
 <li>Klikkaa loppupiste — pituus ja suunta määräytyvät kahdesta pisteestä</li>
 <li>Leveyspuoli valitaan automaattisesti tyhjälle puolelle, jos toisella puolella on jo hylly</li>
 </ol>
@@ -1021,7 +1021,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <ul>
 <li><code>KYL-LEVYHYLLY</code> (LEVY-tyyppi)</li>
 <li><code>KYL-TIKASHYLLY</code> (TIKAS-tyyppi)</li>
-<li>Molemmilla true-color <b>RGB(76, 76, 153)</b> — muodostuvat automaattisesti jos puuttuvat</li>
+<li>Muodostuvat automaattisesti jos puuttuvat piirustuksesta</li>
 </ul>
 </div>
 
@@ -1030,9 +1030,8 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <ul>
 <li>Yksi komento → valmis 3D-hylly oikeilla mitoilla</li>
 <li>Automaattinen leveyssuunta → viereiset hyllyt eivät mene päällekkäin</li>
-<li>Nurkka-snap varmistaa että uudet hyllyt linjautuvat vanhojen reunaan flushissa</li>
-<li>GROUP / UNION → yhdellä klikkauksella valitaan koko hylly</li>
-<li>Layerit ja värit muodostuvat automaattisesti</li>
+<li>Yhdellä klikkauksella valitaan koko hylly</li>
+<li>Layerit muodostuvat automaattisesti jos puuttuvat</li>
 </ul>
 </div>
 </div>
