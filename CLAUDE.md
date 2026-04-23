@@ -20,7 +20,7 @@ lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
 | Tiedosto         | Sisältö                                                    |
 |------------------|------------------------------------------------------------|
 | `index.html`     | Hero (kicker + h1 + subtitle + teksti) · 3 feature-korttia · info-osio + highlight-boksit · footer |
-| `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 7 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Npallo · Kaato · Kylmälaitehylly · Usein kysyttyä. Neljä tuotetta (Putki/Npallo/Kaato/KLHylly) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
+| `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 7 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Positio · Kaato · Kylmälaitehylly · Usein kysyttyä. Neljä tuotetta (Putki/Positio/Kaato/KLHylly) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
 | `lataukset.html` | Topnav + 3 kuvauskorttia · 4 latauskorttia (LSP- ja DWG-badge, tiedostokoko, "Lataa ↓" -nappi) · footer |
 
 ## Jaetut resurssit
@@ -36,9 +36,9 @@ lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
   tyyli (generoitu PowerShell System.Drawingilla, fontti Segoe UI Bold)
 - `robots.txt`, `sitemap.xml` — github.io-URL pohjalla
 - **JSON-LD structured data** (`<script type="application/ld+json">`):
-  `index.html` sisältää WebSite + Person + 3 SoftwareApplication -entryä
-  (Putkityökalu/Npallo/Kaato) @graph-rakenteessa. `ohjeet.html`
-  sisältää FAQPage-schemin FAQ-osion kysymyksistä.
+  `index.html` sisältää WebSite + Person + 4 SoftwareApplication -entryä
+  (Putkityökalu/Positio/Kaato/Kylmälaitehylly) @graph-rakenteessa.
+  `ohjeet.html` sisältää FAQPage-schemin FAQ-osion kysymyksistä.
 - `files/` — varsinaiset `.lsp` ja `.dwg` -tiedostot
 
 ## Visuaalinen identiteetti
@@ -99,8 +99,10 @@ looppi, respektoi `prefers-reduced-motion`:
    `files/putkityokalu.lsp`:n `make-layer` -komentojen colorindexit
    (4, 42, 5). Vertikaalinen järjestys vastaa LISP vecL/vecR -logiikkaa
    vasen→oikea-piirtovektorilla.
-2. **NPALLO** — viisi numeroitua amber-outline-palloa pop-in-
-   sekvenssinä scattered-pisteissä.
+2. **POSITIO** — viisi numeroitua amber-outline-palloa pop-in-
+   sekvenssinä scattered-pisteissä. (Työkalun nimi muutettu
+   NPALLOsta POSITIOon LSP-lähdön myötä; komento nyt `POSITIO`,
+   `ASETANUMERO` ennallaan. CSS-luokat `.positio-demo__*`.)
 3. **KAATO3D** — sininen palkki kaatuu 6° amber-pivotilta,
    dashed-viiva näyttää alkuperäisen asennon. Käyttää
    `transform-box: view-box` (muuten SVG-transform-origin ei toimi).
@@ -127,7 +129,7 @@ Yhteinen CSS: `.pipe-demo-block` wrapper + `.pipe-demo-caption`
   baria (pidetty kevyenä) eikä mini-terminaalia (käyttäjän pyynnöstä).
 - **Feature cards** — 3-column grid, sininen badge (PUTKI / MERKINTÄ /
   3D), amber otsikko, kuvaus, "Katso ohjeet →" -linkki. Linkittävät
-  `ohjeet.html#putket` / `#npallo` / `#kaato` -ankkureihin.
+  `ohjeet.html#putket` / `#positio` / `#kaato` / `#klhylly` -ankkureihin.
 - **TIETOA-kicker** info-osion yläpuolella (cyan, pieni uppercase).
 
 ## Kehitys ja testaus
