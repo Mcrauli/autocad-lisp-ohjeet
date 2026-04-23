@@ -258,9 +258,7 @@ a {
   background: rgba(2,6,23,0.55);
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.05);
-  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  text-decoration: none;
-  color: inherit;
+  transition: border-color 0.2s ease;
 }
 
 .block + .file {
@@ -280,10 +278,7 @@ a {
 }
 
 .file:hover {
-  background: rgba(15,23,42,0.9);
-  transform: translateY(-2px);
-  border-color: rgba(245,158,11,0.25);
-  box-shadow: 0 10px 24px -16px rgba(0,0,0,0.6);
+  border-color: rgba(255,255,255,0.08);
 }
 
 .file-badge {
@@ -342,12 +337,18 @@ a {
   color: #f59e0b;
   font-weight: 500;
   font-size: 14px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.file:hover .file-action {
-  background: rgba(245,158,11,0.18);
-  border-color: rgba(245,158,11,0.45);
+.file-action:hover {
+  background: rgba(245,158,11,0.2);
+  border-color: rgba(245,158,11,0.55);
+  transform: translateY(-1px);
+}
+
+.file-action:active {
+  transform: translateY(0);
 }
 
 .file-action-arrow {
@@ -415,41 +416,41 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <p>Nopeuttaa putkien piirtämistä ja varmistaa oikeat layerit, värit ja etäisyydet automaattisesti.</p>
 </div>
 
-<a class="file" href="files/npallo.lsp" download>
+<div class="file">
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>NPALLO</h3>
 <div class="file-meta-line"><span>npallo.lsp</span><span>0.97 KB</span></div>
 </div>
-<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
-</a>
+<a class="file-action" href="files/npallo.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
+</div>
 
-<a class="file" href="files/kaato.lsp" download>
+<div class="file">
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>KAATO3D</h3>
 <div class="file-meta-line"><span>kaato.lsp</span><span>1.29 KB</span></div>
 </div>
-<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
-</a>
+<a class="file-action" href="files/kaato.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
+</div>
 
-<a class="file" href="files/putkityokalu.lsp" download>
+<div class="file">
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>Putkityökalu</h3>
 <div class="file-meta-line"><span>putkityokalu.lsp</span><span>1.76 KB</span></div>
 </div>
-<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
-</a>
+<a class="file-action" href="files/putkityokalu.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
+</div>
 
-<a class="file" href="files/npallo.dwg" download>
+<div class="file">
 <span class="file-badge dwg">DWG</span>
 <div class="file-meta">
 <h3>NPALLO DWG</h3>
 <div class="file-meta-line"><span>npallo.dwg</span><span>27.6 KB</span></div>
 </div>
-<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
-</a>
+<a class="file-action" href="files/npallo.dwg" download>Lataa<span class="file-action-arrow">↓</span></a>
+</div>
 
 <footer class="site-footer">
 © 2026 Lauri Rekola
