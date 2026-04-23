@@ -13,9 +13,10 @@ body {
   background: radial-gradient(circle at top, #0f172a, #020617);
   color: #e2e8f0;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   min-height: 100vh;
+  padding: 20px 0 60px;
 }
 
 .topnav {
@@ -80,6 +81,56 @@ p {
 .nav a:hover {
   background: #334155;
 }
+
+.info {
+  max-width: 700px;
+  width: 100%;
+  padding: 0 20px;
+  margin: 40px auto 0;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.info h2 {
+  font-size: 22px;
+  font-weight: 600;
+  padding: 14px 18px;
+  background: linear-gradient(90deg, rgba(30,41,59,0.7), rgba(2,6,23,0.6));
+  border-left: 4px solid #facc15;
+  border-radius: 8px;
+  margin: 48px 0 24px;
+}
+
+.info h2:first-of-type {
+  margin-top: 0;
+}
+
+.info p {
+  line-height: 1.8;
+  color: #cbd5f5;
+}
+
+.info ul {
+  padding-left: 22px;
+  color: #cbd5f5;
+  line-height: 1.85;
+}
+
+.info li {
+  margin-bottom: 8px;
+}
+
+.info .highlight {
+  background: rgba(2,6,23,0.75);
+  padding: 18px 20px;
+  margin-top: 32px;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-left: 4px solid #facc15;
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-style: italic;
+  line-height: 1.7;
+}
 </style>
 </head>
 
@@ -105,6 +156,28 @@ kylmälaite suunnitteluun ja putkikaavioiden tekemiseen.
 </div>
 
 </div>
+
+<section class="info">
+<h2>Mikä on AutoCAD LISP?</h2>
+<p>
+AutoCAD LISP on ohjelmointikieli, jonka avulla voidaan automatisoida
+AutoCADissa toistuvia työvaiheita. Sen avulla voidaan luoda omia
+työkaluja, jotka nopeuttavat suunnittelua ja vähentävät manuaalista työtä.
+</p>
+
+<h2>Miksi käyttää LISP-työkaluja?</h2>
+<ul>
+<li>Nopeuttaa työskentelyä merkittävästi, erityisesti toistuvissa tehtävissä</li>
+<li>Vähentää virheitä automatisoimalla layerit, värit ja mittasuhteet</li>
+<li>Poistaa turhaa manuaalista työtä</li>
+<li>Yhtenäistää piirustusten ulkoasun ja laadun</li>
+</ul>
+
+<p class="highlight">
+Nämä työkalut on suunniteltu oikeaan suunnittelutyöhön, jossa tehokkuus
+ja virheettömyys ovat kriittisiä.
+</p>
+</section>
 
 </body>
 </html>
