@@ -12,177 +12,13 @@
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 
 <style>
-.topnav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: rgba(2,6,23,0.95);
-  display: flex;
-  align-items: center;
-  padding: 0 30px;
-  gap: 28px;
-  z-index: 9999;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  backdrop-filter: blur(8px);
-}
-
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  text-decoration: none;
-  color: #f8fafc;
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-}
-
-.brand-icon {
-  color: #f59e0b;
-  font-weight: 700;
-}
-
-.topnav-links {
-  display: flex;
-  gap: 28px;
-}
-
-.topnav-links a {
-  position: relative;
-  color: #94a3b8;
-  text-decoration: none;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  padding: 4px 0;
-  transition: color 0.2s ease;
-}
-
-.topnav-links a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -2px;
-  height: 2px;
-  background: #f59e0b;
-  border-radius: 2px;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.22s ease;
-}
-
-.topnav-links a.active {
-  color: #f59e0b;
-}
-
-.topnav-links a.active::after {
-  transform: scaleX(1);
-}
-
-.topnav-links a:hover {
-  color: #f59e0b;
-}
-
-.topnav-links a:hover::after {
-  transform: scaleX(1);
-}
-
-.version {
-  margin-left: auto;
-  color: #60a5fa;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  opacity: 0.8;
-}
-
-@media (max-width: 600px) {
-  .topnav { gap: 16px; padding: 0 16px; }
-  .brand-text { display: none; }
-  .topnav-links { gap: 18px; }
-  .version { display: none; }
-}
 html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 
 body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  font-feature-settings: "cv11", "ss01", "ss03";
   display: flex;
-  background:
-    linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
-    radial-gradient(circle at top, #0f172a, #020617);
-  color: #e2e8f0;
-}
-
-/* Corner crosshairs — CAD registration marks */
-.crosshair {
-  position: fixed;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  z-index: 10;
-  opacity: 0.35;
-}
-
-.crosshair::before,
-.crosshair::after {
-  content: "";
-  position: absolute;
-  background: #f59e0b;
-}
-
-.crosshair::before {
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  transform: translateY(-0.5px);
-}
-
-.crosshair::after {
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  transform: translateX(-0.5px);
-}
-
-.crosshair.tl { top: 78px; left: 18px; }
-.crosshair.tr { top: 78px; right: 18px; }
-.crosshair.bl { bottom: 18px; left: 18px; }
-.crosshair.br { bottom: 18px; right: 18px; }
-
-@media (max-width: 600px) {
-  .crosshair { display: none; }
-}
-
-.site-footer {
-  width: 100%;
-  padding: 32px 20px 16px;
-  margin-top: 80px;
-  font-size: 13px;
-  color: #64748b;
-  text-align: center;
-  box-sizing: border-box;
-  position: relative;
-}
-
-.site-footer::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 20px;
-  right: 20px;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
 }
 
 /* SCROLLBAR */
@@ -510,10 +346,6 @@ code {
   .section::before { top: -60px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-  .block:hover, .menu a:hover { transform: none !important; }
-}
 </style>
 </head>
 
@@ -704,6 +536,8 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </div>
 </div>
 
+<button class="back-to-top" aria-label="Takaisin ylös" title="Takaisin ylös">↑</button>
+
 <script>
 const sections = document.querySelectorAll(".section");
 const links = document.querySelectorAll(".menu a");
@@ -739,6 +573,14 @@ sections.forEach(section => observer.observe(section));
 
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+const backToTop = document.querySelector(".back-to-top");
+if (backToTop) {
+  window.addEventListener("scroll", () => {
+    backToTop.classList.toggle("visible", window.scrollY > 600);
+  });
+  backToTop.addEventListener("click", scrollToTop);
 }
 </script>
 

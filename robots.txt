@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mcrauli.github.io/autocad-lisp-ohjeet/sitemap.xml
