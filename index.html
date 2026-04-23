@@ -74,93 +74,6 @@ body {
   font-weight: 400;
 }
 
-/* Mini terminal in hero */
-.hero-terminal {
-  max-width: 520px;
-  margin: 40px auto 0;
-  background: rgba(2,6,23,0.75);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 10px;
-  box-shadow: 0 20px 40px -24px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
-  overflow: hidden;
-  text-align: left;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12.5px;
-  line-height: 1.75;
-}
-
-.hero-terminal__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: rgba(0,0,0,0.3);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-size: 11px;
-}
-
-.hero-terminal__dots {
-  color: rgba(255,255,255,0.2);
-  letter-spacing: 6px;
-  font-size: 9px;
-}
-
-.hero-terminal__path {
-  color: rgba(148,163,184,0.5);
-}
-
-.hero-terminal__body {
-  padding: 14px 18px 18px;
-  min-height: 108px;
-}
-
-.hero-terminal__line {
-  display: block;
-  opacity: 0;
-  color: #cbd5f5;
-  animation: hero-terminal-line 7s ease-in-out infinite;
-  animation-delay: var(--d, 0s);
-}
-
-.hero-terminal__prompt {
-  color: #f59e0b;
-  font-weight: 700;
-  margin-right: 6px;
-}
-
-.hero-terminal__cmd {
-  color: #f8fafc;
-  font-weight: 500;
-}
-
-.hero-terminal__coord {
-  color: #60a5fa;
-}
-
-.hero-terminal__line--ok {
-  color: #22d3ee;
-  margin-top: 6px;
-}
-
-@keyframes hero-terminal-line {
-  0%, 4%   { opacity: 0; transform: translateY(2px); }
-  10%, 82% { opacity: 1; transform: translateY(0); }
-  90%, 100% { opacity: 0; }
-}
-
-.hero-terminal__cursor {
-  display: inline-block;
-  width: 7px;
-  height: 1em;
-  background: #f59e0b;
-  margin-left: 2px;
-  vertical-align: -2px;
-  animation: hero-terminal-blink 1s steps(2) infinite;
-}
-
-@keyframes hero-terminal-blink {
-  50% { opacity: 0; }
-}
 
 .container {
   max-width: 720px;
@@ -396,14 +309,6 @@ p {
 <text y="-26" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(148,163,184,0.4)">N</text>
 </g>
 
-<g transform="translate(90, 380)">
-<rect width="120" height="3" fill="rgba(148,163,184,0.2)"/>
-<rect x="30" width="30" height="3" fill="rgba(245,158,11,0.35)"/>
-<rect x="90" width="30" height="3" fill="rgba(245,158,11,0.35)"/>
-<text x="0" y="18" font-family="JetBrains Mono, monospace" font-size="9" fill="rgba(148,163,184,0.4)">0</text>
-<text x="60" y="18" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="rgba(148,163,184,0.4)">500</text>
-<text x="120" y="18" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="9" fill="rgba(148,163,184,0.4)">1000</text>
-</g>
 </svg>
 
 <div class="container">
@@ -418,19 +323,6 @@ Työkalut jotka tekevät kylmäsuunnittelusta nopeampaa.
 Tämä sivu sisältää AutoCAD LISP -työkaluja, jotka on suunniteltu erityisesti
 kylmälaite suunnitteluun ja putkikaavioiden tekemiseen.
 </p>
-
-<div class="hero-terminal" aria-hidden="true">
-<div class="hero-terminal__bar">
-<span class="hero-terminal__dots">● ● ●</span>
-<span class="hero-terminal__path">autocad/lisp</span>
-</div>
-<div class="hero-terminal__body">
-<span class="hero-terminal__line" style="--d:0.3s"><span class="hero-terminal__prompt">$</span><span class="hero-terminal__cmd">3PTK</span></span>
-<span class="hero-terminal__line" style="--d:1s">Aloituspiste: <span class="hero-terminal__coord">(0, 0)</span></span>
-<span class="hero-terminal__line" style="--d:1.6s">Loppupiste:&nbsp;&nbsp;&nbsp;<span class="hero-terminal__coord">(1000, 0)</span></span>
-<span class="hero-terminal__line hero-terminal__line--ok" style="--d:2.2s">✓ MT NESTE · LT IMU · MT IMU</span>
-</div>
-</div>
 
 </div>
 
