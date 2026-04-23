@@ -10,10 +10,34 @@
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
-  background: radial-gradient(circle at top, #0f172a, #020617);
+  background:
+    linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
+    radial-gradient(circle at top, #0f172a, #020617);
   color: #e2e8f0;
   display: flex;
   justify-content: center;
+}
+
+.site-footer {
+  width: 100%;
+  padding: 32px 20px 16px;
+  margin-top: 80px;
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.site-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
 }
 
 .topnav {
@@ -210,6 +234,10 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <h3>NPALLO DWG</h3>
 <a href="files/npallo.dwg">Lataa npallo.dwg</a>
 </div>
+
+<footer class="site-footer">
+© 2026 Lauri Rekola
+</footer>
 
 </div>
 
