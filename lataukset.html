@@ -12,7 +12,7 @@
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 
 <style>
 body {
@@ -214,6 +214,9 @@ a {
 <span class="crosshair bl"></span>
 <span class="crosshair br"></span>
 
+<div class="scroll-progress"><div class="scroll-progress__fill"></div></div>
+<div class="toast-host"></div>
+
 <div class="topnav">
 <a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
 <nav class="topnav-links">
@@ -232,22 +235,22 @@ Täältä voit ladata AutoCAD LISP -työkalut, jotka on suunniteltu nopeuttamaan
 kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 </p>
 
-<div class="block">
+<div class="block reveal">
 <h2>NPALLO</h2>
 <p>Automaattinen numerointityökalu, joka helpottaa merkintöjen tekemistä ja vähentää virheitä.</p>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h2>KAATO3D</h2>
 <p>Työkalu kaatojen määrittämiseen nopeasti ja tarkasti.</p>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h2>Putkityökalu</h2>
 <p>Nopeuttaa putkien piirtämistä ja varmistaa oikeat layerit, värit ja etäisyydet automaattisesti.</p>
 </div>
 
-<div class="file">
+<div class="file reveal">
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>NPALLO</h3>
@@ -256,7 +259,7 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <a class="file-action" href="files/npallo.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
 </div>
 
-<div class="file">
+<div class="file reveal">
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>KAATO3D</h3>
@@ -265,7 +268,7 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <a class="file-action" href="files/kaato.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
 </div>
 
-<div class="file">
+<div class="file reveal">
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>Putkityökalu</h3>
@@ -274,7 +277,7 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <a class="file-action" href="files/putkityokalu.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
 </div>
 
-<div class="file">
+<div class="file reveal">
 <span class="file-badge dwg">DWG</span>
 <div class="file-meta">
 <h3>NPALLO DWG</h3>
@@ -289,5 +292,6 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 
 </div>
 
+<script src="script.js?v=1" defer></script>
 </body>
 </html>

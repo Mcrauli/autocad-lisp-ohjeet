@@ -12,7 +12,7 @@
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 
 <style>
 html { scroll-behavior: smooth; scroll-padding-top: 80px; }
@@ -475,6 +475,9 @@ code {
 <span class="crosshair bl"></span>
 <span class="crosshair br"></span>
 
+<div class="scroll-progress"><div class="scroll-progress__fill"></div></div>
+<div class="toast-host"></div>
+
 <div class="topnav">
 <a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
 <nav class="topnav-links">
@@ -505,7 +508,7 @@ code {
 
 <div class="section" id="intro">
 <h2 class="category">Johdanto</h2>
-<div class="block">
+<div class="block reveal">
 <p>
 Nämä AutoCAD LISP -työkalut on suunniteltu erityisesti 
 <b>kylmälaite suunnitteluun</b> ja <b>putkikaavioiden tekemiseen</b>,
@@ -525,7 +528,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 
 <div class="section" id="kayttoonotto">
 <h2 class="category">Käyttöönotto</h2>
-<div class="block">
+<div class="block reveal">
 <ol>
 <li>Avaa AutoCAD</li>
 <li>Kirjoita <code>APPLOAD</code></li>
@@ -562,7 +565,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </svg>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Komennot:</h3>
 <ul>
 <li><code>LTI</code> → LT IMU</li>
@@ -572,7 +575,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </ul>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Käyttö:</h3>
 <ol>
 <li>Kirjoita haluttu komento</li>
@@ -582,7 +585,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </ol>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>3PTK (suositeltu):</h3>
 <ul>
 <li>Luo kolme putkea yhdellä vedolla</li>
@@ -594,7 +597,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </ul>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Miksi tätä kannattaa käyttää:</h3>
 <ul>
 <li>Säästää aikaa → ei tarvitse piirtää kolmea linjaa erikseen</li>
@@ -643,7 +646,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </svg>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Komennot:</h3>
 <ul>
 <li><code>ASETANUMERO</code></li>
@@ -651,7 +654,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </ul>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Käyttö:</h3>
 <ol>
 <li>Kirjoita komento <code>ASETANUMERO</code></li>
@@ -661,7 +664,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </ol>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Miksi tätä kannattaa käyttää:</h3>
 <ul>
 <li>Automaattinen numerointi</li>
@@ -705,14 +708,14 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </svg>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Komennot:</h3>
 <ul>
 <li><code>KAATO3D</code></li>
 </ul>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Käyttö:</h3>
 <ol>
 <li>Valitse objekti tai pinta</li>
@@ -728,7 +731,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </ol>
 </div>
 
-<div class="block">
+<div class="block reveal">
 <h3>Miksi tätä kannattaa käyttää:</h3>
 <ul>
 <li>Nopeampi kuin manuaalinen muokkaus</li>
@@ -748,6 +751,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 
 <button class="back-to-top" aria-label="Takaisin ylös" title="Takaisin ylös">↑</button>
 
+<script src="script.js?v=1" defer></script>
 <script>
 const sections = document.querySelectorAll(".section");
 const links = document.querySelectorAll(".menu a");
