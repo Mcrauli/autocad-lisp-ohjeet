@@ -17,6 +17,7 @@
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
+  font-feature-settings: "cv11", "ss01", "ss03";
   background:
     linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
     linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
@@ -24,6 +25,48 @@ body {
   color: #e2e8f0;
   display: flex;
   justify-content: center;
+}
+
+/* Corner crosshairs — CAD registration marks */
+.crosshair {
+  position: fixed;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.35;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: "";
+  position: absolute;
+  background: #f59e0b;
+}
+
+.crosshair::before {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.crosshair::after {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.crosshair.tl { top: 78px; left: 18px; }
+.crosshair.tr { top: 78px; right: 18px; }
+.crosshair.bl { bottom: 18px; left: 18px; }
+.crosshair.br { bottom: 18px; right: 18px; }
+
+@media (max-width: 600px) {
+  .crosshair { display: none; }
 }
 
 .site-footer {
@@ -206,12 +249,18 @@ a {
 }
 
 .file {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 16px;
+  align-items: center;
   margin: 12px 0;
-  padding: 12px;
-  background: #1e293b;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.04);
-  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  padding: 16px 18px;
+  background: rgba(2,6,23,0.55);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  color: inherit;
 }
 
 .block + .file {
@@ -231,21 +280,93 @@ a {
 }
 
 .file:hover {
-  background: #334155;
-  transform: translateY(-1px);
+  background: rgba(15,23,42,0.9);
+  transform: translateY(-2px);
   border-color: rgba(245,158,11,0.25);
+  box-shadow: 0 10px 24px -16px rgba(0,0,0,0.6);
 }
 
-.file h3 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1em;
+.file-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(96,165,250,0.08);
+  border: 1px solid rgba(96,165,250,0.2);
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
   font-weight: 700;
-  margin: 0 0 4px 0;
-  color: #e2e8f0;
+  letter-spacing: 0.06em;
+  color: #60a5fa;
 }
 
-.file a {
-  transition: color 0.2s ease;
+.file-badge.dwg {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.22);
+  color: #f59e0b;
+}
+
+.file-meta h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 3px 0;
+  color: #e2e8f0;
+  letter-spacing: -0.005em;
+}
+
+.file-meta-line {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.file-meta-line span + span::before {
+  content: "·";
+  margin-right: 10px;
+  opacity: 0.5;
+}
+
+.file-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: #f59e0b;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.file:hover .file-action {
+  background: rgba(245,158,11,0.18);
+  border-color: rgba(245,158,11,0.45);
+}
+
+.file-action-arrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+@media (max-width: 520px) {
+  .file {
+    grid-template-columns: 40px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .file-badge { width: 40px; height: 40px; }
+  .file-action {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-top: 4px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -256,6 +377,10 @@ a {
 </head>
 
 <body>
+<span class="crosshair tl"></span>
+<span class="crosshair tr"></span>
+<span class="crosshair bl"></span>
+<span class="crosshair br"></span>
 
 <div class="topnav">
 <a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
@@ -290,25 +415,41 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <p>Nopeuttaa putkien piirtämistä ja varmistaa oikeat layerit, värit ja etäisyydet automaattisesti.</p>
 </div>
 
-<div class="file">
+<a class="file" href="files/npallo.lsp" download>
+<span class="file-badge">LSP</span>
+<div class="file-meta">
 <h3>NPALLO</h3>
-<a href="files/npallo.lsp">Lataa npallo.lsp</a>
+<div class="file-meta-line"><span>npallo.lsp</span><span>0.97 KB</span></div>
 </div>
+<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
+</a>
 
-<div class="file">
+<a class="file" href="files/kaato.lsp" download>
+<span class="file-badge">LSP</span>
+<div class="file-meta">
 <h3>KAATO3D</h3>
-<a href="files/kaato.lsp">Lataa kaato.lsp</a>
+<div class="file-meta-line"><span>kaato.lsp</span><span>1.29 KB</span></div>
 </div>
+<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
+</a>
 
-<div class="file">
+<a class="file" href="files/putkityokalu.lsp" download>
+<span class="file-badge">LSP</span>
+<div class="file-meta">
 <h3>Putkityökalu</h3>
-<a href="files/putkityokalu.lsp">Lataa putkityokalu.lsp</a>
+<div class="file-meta-line"><span>putkityokalu.lsp</span><span>1.76 KB</span></div>
 </div>
+<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
+</a>
 
-<div class="file">
+<a class="file" href="files/npallo.dwg" download>
+<span class="file-badge dwg">DWG</span>
+<div class="file-meta">
 <h3>NPALLO DWG</h3>
-<a href="files/npallo.dwg">Lataa npallo.dwg</a>
+<div class="file-meta-line"><span>npallo.dwg</span><span>27.6 KB</span></div>
 </div>
+<span class="file-action">Lataa<span class="file-action-arrow">↓</span></span>
+</a>
 
 <footer class="site-footer">
 © 2026 Lauri Rekola

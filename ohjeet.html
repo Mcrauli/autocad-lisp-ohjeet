@@ -113,12 +113,55 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
+  font-feature-settings: "cv11", "ss01", "ss03";
   display: flex;
   background:
     linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
     linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
     radial-gradient(circle at top, #0f172a, #020617);
   color: #e2e8f0;
+}
+
+/* Corner crosshairs — CAD registration marks */
+.crosshair {
+  position: fixed;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.35;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: "";
+  position: absolute;
+  background: #f59e0b;
+}
+
+.crosshair::before {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.crosshair::after {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.crosshair.tl { top: 78px; left: 18px; }
+.crosshair.tr { top: 78px; right: 18px; }
+.crosshair.bl { bottom: 18px; left: 18px; }
+.crosshair.br { bottom: 18px; right: 18px; }
+
+@media (max-width: 600px) {
+  .crosshair { display: none; }
 }
 
 .site-footer {
@@ -264,11 +307,25 @@ body {
   top: -120px;
   left: 0;
   width: 100%;
-  height: 2px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent);
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
 }
 
-.section:first-child::before {
+.section::after {
+  content: "";
+  position: absolute;
+  top: -124px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: rgba(245,158,11,0.6);
+  box-shadow: 0 0 14px rgba(245,158,11,0.35);
+}
+
+.section:first-child::before,
+.section:first-child::after {
   display: none;
 }
 
@@ -338,6 +395,41 @@ h2.category::before {
   font-weight: 700;
   margin: 0 0 10px 0;
   color: #e2e8f0;
+}
+
+/* Terminal-style chrome for blocks containing inline code */
+.block:has(code) {
+  padding-top: 44px;
+  position: relative;
+}
+
+.block:has(code)::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  box-shadow:
+    16px 0 0 rgba(255,255,255,0.15),
+    32px 0 0 rgba(255,255,255,0.15);
+}
+
+.block:has(code)::after {
+  content: "commands.lsp";
+  position: absolute;
+  top: 13px;
+  right: 18px;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: rgba(148,163,184,0.55);
+  letter-spacing: 0.02em;
+}
+
+.block:has(code) > *:first-child {
+  position: relative;
 }
 
 /* TEXT */
@@ -431,6 +523,11 @@ code {
 </head>
 
 <body>
+<span class="crosshair tl"></span>
+<span class="crosshair tr"></span>
+<span class="crosshair bl"></span>
+<span class="crosshair br"></span>
+
 <div class="topnav">
 <a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
 <nav class="topnav-links">
