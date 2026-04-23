@@ -300,8 +300,8 @@ body {
   position: relative;
 }
 
-/* DIVIDER */
-.section::before {
+/* DIVIDER — only between sections, never above the first one */
+.section + .section::before {
   content: "";
   position: absolute;
   top: -120px;
@@ -311,7 +311,7 @@ body {
   background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
 }
 
-.section::after {
+.section + .section::after {
   content: "";
   position: absolute;
   top: -124px;
@@ -322,11 +322,6 @@ body {
   border-radius: 50%;
   background: rgba(245,158,11,0.6);
   box-shadow: 0 0 14px rgba(245,158,11,0.35);
-}
-
-.section:first-child::before,
-.section:first-child::after {
-  display: none;
 }
 
 /* TITLE */
