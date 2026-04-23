@@ -20,7 +20,7 @@ lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
 | Tiedosto         | Sisältö                                                    |
 |------------------|------------------------------------------------------------|
 | `index.html`     | Hero (kicker + h1 + subtitle + teksti) · 3 feature-korttia · info-osio + highlight-boksit · footer |
-| `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 6 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Npallo · Kaato · Usein kysyttyä. Kolme tuotetta (Putki/Npallo/Kaato) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
+| `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 7 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Npallo · Kaato · Kylmälaitehylly · Usein kysyttyä. Neljä tuotetta (Putki/Npallo/Kaato/KLHylly) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
 | `lataukset.html` | Topnav + 3 kuvauskorttia · 4 latauskorttia (LSP- ja DWG-badge, tiedostokoko, "Lataa ↓" -nappi) · footer |
 
 ## Jaetut resurssit
@@ -91,7 +91,7 @@ uusi aksentti jossakin, mieti ensin voiko käyttää jo olemassa olevaa.
 
 ## Animaatiot
 
-Kolme puhtaasti CSS:llä tehtyä SVG-animaatiota ohjeissa. Jokainen 6s
+Neljä puhtaasti CSS:llä tehtyä SVG-animaatiota ohjeissa. Jokainen 6s
 looppi, respektoi `prefers-reduced-motion`:
 
 1. **3PTK** (Putkityökalu) — kolme viivaa (cyan LT IMU, amber MT
@@ -104,6 +104,14 @@ looppi, respektoi `prefers-reduced-motion`:
 3. **KAATO3D** — sininen palkki kaatuu 6° amber-pivotilta,
    dashed-viiva näyttää alkuperäisen asennon. Käyttää
    `transform-box: view-box` (muuten SVG-transform-origin ei toimi).
+4. **KLHYLLY** — LEVY-tyyppinen demo: p1 amber-pallo → p2 amber-pallo
+   → dashed length-axis piirtyy → sininen shelf-outline traceytyy
+   stroke-dashoffsetillä (perimeter 760) → DASH-hatch-pattern
+   (`<pattern>` 45° kulmassa) täyttyy → label "LEVY · 400" fadaa.
+   Käyttää sekundääristä sinistä (`#60a5fa`), ei uutta väriä. Omat
+   `@keyframes klhylly-*` koska vaiheet tarvitsevat yksilölliset
+   delay-sekvenssit yhden 6s duration:n sisällä (animation-delay
+   katkaisisi syklin).
 
 Yhteinen CSS: `.pipe-demo-block` wrapper + `.pipe-demo-caption`
 (amber pallo + "Command: XXX").
@@ -189,6 +197,11 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
 10. Apple touch icon (180×180 PNG) + JSON-LD structured data:
     index.html:n WebSite + 3 SoftwareApplication -entryä,
     ohjeet.html:n FAQPage FAQ-osion kysymyksistä.
+11. KLHYLLY-työkalu lisätty kaikille sivuille: ohjeet-section
+    animoidulla SVG-demolla (LEVY-tyyppi, DASH-hatch-pattern),
+    sidebar-linkki, FAQ-entry LEVY/TIKAS-erosta, index feature-card
+    (4-col grid) + SoftwareApplication JSON-LD, lataukset .block
+    + LSP-latauskortti (klhylly.lsp 15.8 KB).
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 

@@ -60,6 +60,14 @@
         "@type": "Answer",
         "text": "Tarkista että APPLOAD näyttää tiedoston Loaded Applications -listassa, komento on kirjoitettu oikein, ja jos käytit APPLOADia kertalatauksena, lisää tiedosto Startup Suiteen pysyväksi."
       }
+    },
+    {
+      "@type": "Question",
+      "name": "Mitä eroa on LEVY- ja TIKAS-tyyppisellä kylmälaitehyllyllä KLHYLLY-työkalussa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "LEVY on taivutettu peltihylly: 60 mm korkea, 1.25 mm peltipaksuus, 9 mm lippa sisäänpäin käännetty. Pohjapiirrokseen tulee DASH-hatch (scale 40, angle 45°). TIKAS on tikashylly: 2 kiskoa reunoilla (15 × 60 mm) ja poikkitikat (15 × 15 mm) 250 mm välein. Molemmissa 3D-solidi muodostuu yhdellä klikkauksella valittavaksi kokonaisuudeksi. LEVY käytetään tyypillisesti umpihyllynä ja TIKAS reikähyllynä."
+      }
     }
   ]
 }
@@ -452,6 +460,81 @@ li {
   95%, 100% { transform: rotate(0deg); opacity: 0; }
 }
 
+/* KLHYLLY demo — two clicks, shelf outline traces, DASH hatch fills in */
+.klhylly-demo__p1 {
+  opacity: 0;
+  animation: klhylly-p1-fade 6s ease-in-out infinite;
+}
+
+.klhylly-demo__p2 {
+  opacity: 0;
+  animation: klhylly-p2-fade 6s ease-in-out infinite;
+}
+
+.klhylly-demo__axis {
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  opacity: 0;
+  animation: klhylly-axis-draw 6s ease-in-out infinite;
+}
+
+.klhylly-demo__outline {
+  stroke-dasharray: 760;
+  stroke-dashoffset: 760;
+  opacity: 0;
+  animation: klhylly-outline-draw 6s ease-in-out infinite;
+}
+
+.klhylly-demo__hatch {
+  opacity: 0;
+  animation: klhylly-hatch-fade 6s ease-in-out infinite;
+}
+
+.klhylly-demo__label {
+  opacity: 0;
+  animation: klhylly-label-fade 6s ease-in-out infinite;
+}
+
+@keyframes klhylly-p1-fade {
+  0%, 3%    { opacity: 0; }
+  7%, 88%   { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes klhylly-p2-fade {
+  0%, 11%   { opacity: 0; }
+  15%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes klhylly-axis-draw {
+  0%, 18%   { stroke-dashoffset: 320; opacity: 0; }
+  22%       { opacity: 1; }
+  34%       { stroke-dashoffset: 0; opacity: 1; }
+  88%       { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes klhylly-outline-draw {
+  0%, 32%   { stroke-dashoffset: 760; opacity: 0; }
+  36%       { opacity: 1; }
+  56%       { stroke-dashoffset: 0; opacity: 1; }
+  88%       { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes klhylly-hatch-fade {
+  0%, 56%   { opacity: 0; }
+  62%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes klhylly-label-fade {
+  0%, 65%   { opacity: 0; }
+  70%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
 /* CODE */
 code {
   background: rgba(96,165,250,0.08);
@@ -621,6 +704,7 @@ code {
 <a href="#putket">Putkityökalu</a>
 <a href="#npallo">Npallo</a>
 <a href="#kaato">Kaato</a>
+<a href="#klhylly">Kylmälaitehylly</a>
 <span class="menu-group">Lisätietoa</span>
 <a href="#faq">Usein kysyttyä</a>
 </div>
@@ -863,6 +947,92 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <li>Tarkempi lopputulos</li>
 <li>Vähemmän virheitä</li>
 <li>Sopii toistuviin kaatoihin</li>
+</ul>
+</div>
+</div>
+
+<div class="section" id="klhylly">
+<h2 class="category">Kylmälaitehylly</h2>
+
+<div class="pipe-demo-block">
+<div class="pipe-demo-caption">Command: KLHYLLY</div>
+<svg class="pipe-demo klhylly-demo" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="KLHYLLY-komento piirtää kylmälaitehyllyn kahdella klikkauksella">
+<defs>
+<pattern id="klhylly-demo-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.06)" stroke-width="0.5"/>
+</pattern>
+<pattern id="klhylly-demo-dash" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+<line x1="0" y1="9" x2="10" y2="9" stroke="#60a5fa" stroke-width="1" stroke-linecap="round" opacity="0.7"/>
+</pattern>
+</defs>
+<rect width="100%" height="100%" fill="url(#klhylly-demo-grid)"/>
+
+<line class="klhylly-demo__axis" x1="100" y1="72" x2="420" y2="72" stroke="rgba(148,163,184,0.32)" stroke-width="1" stroke-dasharray="4 4"/>
+
+<rect class="klhylly-demo__hatch" x="100" y="72" width="320" height="60" fill="url(#klhylly-demo-dash)"/>
+
+<path class="klhylly-demo__outline" d="M 100 72 L 420 72 L 420 132 L 100 132 Z" fill="none" stroke="#60a5fa" stroke-width="1.4" stroke-linejoin="round"/>
+
+<circle class="klhylly-demo__p1" cx="100" cy="72" r="4" fill="#f59e0b"/>
+<circle class="klhylly-demo__p2" cx="420" cy="72" r="4" fill="#f59e0b"/>
+
+<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="500">
+<text class="klhylly-demo__label" x="432" y="106" fill="#60a5fa">LEVY · 400</text>
+</g>
+</svg>
+</div>
+
+<div class="block reveal">
+<h3>Komennot:</h3>
+<ul>
+<li><code>KLHYLLY</code></li>
+</ul>
+</div>
+
+<div class="block reveal">
+<h3>Hyllytyypit:</h3>
+<ul>
+<li><b>LEVY</b> — taivutettu peltihylly: 60 mm korkea, 1.25 mm peltipaksuus, 9 mm lippa ylhäällä sisäänpäin käännetty. Pohjapiirrokseen tulee DASH-hatch (scale 40, angle 45°). Kaikki ryhmitelty: yksi klikki valitsee kokonaisuuden.</li>
+<li><b>TIKAS</b> — tikashylly: 2 kiskoa reunoilla (15 × 60 mm) ja poikkitikat (15 × 15 mm) 250 mm välein. Kaikki osat UNIONed yhdeksi 3D-soliditeetiksi.</li>
+</ul>
+</div>
+
+<div class="block reveal">
+<h3>Leveydet:</h3>
+<ul>
+<li><code>300</code> / <code>400</code> / <code>500</code> mm</li>
+</ul>
+</div>
+
+<div class="block reveal">
+<h3>Käyttö:</h3>
+<ol>
+<li>Kirjoita <code>KLHYLLY</code></li>
+<li>Valitse tyyppi: <code>LEVY</code> tai <code>TIKAS</code> (oletus LEVY)</li>
+<li>Valitse leveys: <code>300</code>, <code>400</code> tai <code>500</code> (oletus 300)</li>
+<li>Klikkaa aloituspiste — OSNAP nappaa kulman visuaalisella markerilla, ja fallback-snap vetää pisteen lähimpään KYL-*HYLLY-nurkkaan ≤ 80 mm päästä</li>
+<li>Klikkaa loppupiste — pituus ja suunta määräytyvät kahdesta pisteestä</li>
+<li>Leveyspuoli valitaan automaattisesti tyhjälle puolelle, jos toisella puolella on jo hylly</li>
+</ol>
+</div>
+
+<div class="block reveal">
+<h3>Layerit:</h3>
+<ul>
+<li><code>KYL-LEVYHYLLY</code> (LEVY-tyyppi)</li>
+<li><code>KYL-TIKASHYLLY</code> (TIKAS-tyyppi)</li>
+<li>Molemmilla true-color <b>RGB(76, 76, 153)</b> — muodostuvat automaattisesti jos puuttuvat</li>
+</ul>
+</div>
+
+<div class="block reveal">
+<h3>Miksi tätä kannattaa käyttää:</h3>
+<ul>
+<li>Yksi komento → valmis 3D-hylly oikeilla mitoilla</li>
+<li>Automaattinen leveyssuunta → viereiset hyllyt eivät mene päällekkäin</li>
+<li>Nurkka-snap varmistaa että uudet hyllyt linjautuvat vanhojen reunaan flushissa</li>
+<li>GROUP / UNION → yhdellä klikkauksella valitaan koko hylly</li>
+<li>Layerit ja värit muodostuvat automaattisesti</li>
 </ul>
 </div>
 </div>

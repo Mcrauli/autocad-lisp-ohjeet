@@ -92,6 +92,26 @@
       },
       "downloadUrl": "https://mcrauli.github.io/autocad-lisp-ohjeet/files/kaato.lsp",
       "url": "https://mcrauli.github.io/autocad-lisp-ohjeet/ohjeet.html#kaato"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Kylmälaitehylly (KLHYLLY)",
+      "description": "Piirtää kylmälaitehyllyn LEVY- tai TIKAS-tyyppinä (300/400/500 mm leveys). Kaksi klikkausta määrää pituuden, leveyssuunta valitaan automaattisesti viereisten hyllyjen perusteella.",
+      "applicationCategory": "DesignApplication",
+      "applicationSubCategory": "AutoCAD LISP",
+      "operatingSystem": "Windows",
+      "softwareRequirements": "AutoCAD (full version, not AutoCAD LT)",
+      "softwareVersion": "1.0",
+      "inLanguage": "fi",
+      "author": { "@id": "https://mcrauli.github.io/autocad-lisp-ohjeet/#author" },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      },
+      "downloadUrl": "https://mcrauli.github.io/autocad-lisp-ohjeet/files/klhylly.lsp",
+      "url": "https://mcrauli.github.io/autocad-lisp-ohjeet/ohjeet.html#klhylly"
     }
   ]
 }
@@ -186,7 +206,7 @@ p {
   padding: 0 20px;
   margin: 48px auto 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   box-sizing: border-box;
 }
@@ -254,10 +274,16 @@ p {
   color: #f59e0b;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
+  .features {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 480px) {
   .features {
     grid-template-columns: 1fr;
-    max-width: 720px;
   }
 }
 
@@ -428,6 +454,13 @@ kylmälaite suunnitteluun ja putkikaavioiden tekemiseen.
 <span class="feature-card-badge">3D</span>
 <h3>Kaato</h3>
 <p>Määrittää pintojen tai objektien kaadon nopeasti ja tarkasti millimetreinä tai kulmassa.</p>
+<span class="feature-card-link">Katso ohjeet →</span>
+</a>
+
+<a class="feature-card reveal" href="ohjeet.html#klhylly">
+<span class="feature-card-badge">HYLLY</span>
+<h3>Kylmälaitehylly</h3>
+<p>Piirtää LEVY- tai TIKAS-hyllyn valituilla mitoilla. Auto-snap viereisten hyllyjen nurkkiin ja automaattinen leveyssuunta.</p>
 <span class="feature-card-link">Katso ohjeet →</span>
 </a>
 </section>
