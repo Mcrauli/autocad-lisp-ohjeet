@@ -32,7 +32,13 @@ lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
   toast() + kytkennät `.file-action[download]`-klikkeihin. Feature-
   detected, no-ops jos DOM puuttuu.
 - `favicon.svg` — (λ) amber neliössä
+- `apple-touch-icon.png` — 180×180 iOS kotinäyttöikoni, sama λ-aiheinen
+  tyyli (generoitu PowerShell System.Drawingilla, fontti Segoe UI Bold)
 - `robots.txt`, `sitemap.xml` — github.io-URL pohjalla
+- **JSON-LD structured data** (`<script type="application/ld+json">`):
+  `index.html` sisältää WebSite + Person + 3 SoftwareApplication -entryä
+  (Putkityökalu/Npallo/Kaato) @graph-rakenteessa. `ohjeet.html`
+  sisältää FAQPage-schemin FAQ-osion kysymyksistä.
 - `files/` — varsinaiset `.lsp` ja `.dwg` -tiedostot
 
 ## Visuaalinen identiteetti
@@ -180,13 +186,14 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
 9. FAQ-osio ohjeet-sivulle (`<details>`-accordion): C:\AutoCADLisp
    -kansio + Trusted Locations, Startup Suite, LT ei tue LISPiä,
    komennon etsintä-vianhaku. Uusi sidebar-ryhmä "Lisätietoa".
+10. Apple touch icon (180×180 PNG) + JSON-LD structured data:
+    index.html:n WebSite + 3 SoftwareApplication -entryä,
+    ohjeet.html:n FAQPage FAQ-osion kysymyksistä.
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 
 - **Kopioi-nappi `<code>`-pätkille** ohjeissa + toast-feedback.
   Järjestelmä ja toast-helperi on jo olemassa scriptissä.
-- **JSON-LD structured data** (SEO, SoftwareApplication)
-- **Apple touch icon** 180×180 PNG (iOS kotinäyttö)
 - **Print-stylesheet** ohjeille (Ctrl+P → siisti manuaali)
 - **Oikea screen-recording -GIF/MP4** AutoCADista SVG-animaatioiden
   rinnalle tai tilalle. SVG-wrapperin vaihtaminen `<video>`ksi on

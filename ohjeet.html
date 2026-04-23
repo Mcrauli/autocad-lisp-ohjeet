@@ -11,8 +11,59 @@
 <title>Ohjeet · AutoCAD LISP</title>
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=2">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "fi",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Minne LISP-tiedostot kannattaa tallentaa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tee oma kansio C-asemalle, esim. C:\\AutoCADLisp, ja tallenna kaikki .lsp-tiedostot sinne. Paikallinen sijainti C-asemalla on AutoCAD:n näkökulmasta luotettu. Vältä verkkoasemia, OneDrivea ja Downloads-kansiota — niistä AutoCAD antaa usein suojausvaroituksen joka latauskerralla."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "AutoCAD varoittaa latauksessa 'File Loading - Security Concern' — mitä teen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Lisää C:\\AutoCADLisp luotetuksi sijainniksi: kirjoita OPTIONS, avaa Files-välilehti, laajenna Trusted Locations, klikkaa Add ja valitse C:\\AutoCADLisp. Tämän jälkeen AutoCAD lataa kaikki kyseisestä kansiosta tulevat tiedostot ilman varoitusta."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Miten saan LISPit latautumaan automaattisesti AutoCAD:n käynnistyessä?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Käytä Startup Suitea: kirjoita APPLOAD, avaa Contents-nappi (Startup Suite), klikkaa Add ja valitse .lsp-tiedostot C:\\AutoCADLisp-kansiosta, Close. Tiedostot latautuvat jokaisen avatun piirustuksen mukana."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Toimivatko nämä AutoCAD LT:ssä?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Eivät — AutoCAD LT ei tue LISP-ohjelmointia. Tarvitaan täysversio AutoCAD tai sen päälle rakennettu paketti (AutoCAD Mechanical, MEP, Plant 3D)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Komento ei löydy vaikka tiedosto on ladattu — mitä nyt?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tarkista että APPLOAD näyttää tiedoston Loaded Applications -listassa, komento on kirjoitettu oikein, ja jos käytit APPLOADia kertalatauksena, lisää tiedosto Startup Suiteen pysyväksi."
+      }
+    }
+  ]
+}
+</script>
 
 <style>
 html { scroll-behavior: smooth; scroll-padding-top: 80px; }
