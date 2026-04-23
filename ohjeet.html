@@ -281,6 +281,75 @@ li {
   margin-bottom: 8px;
 }
 
+/* PIPE DEMO — animated SVG showing 3PTK */
+.pipe-demo-block {
+  padding: 20px;
+  background: rgba(2,6,23,0.5);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.pipe-demo-caption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: rgba(148,163,184,0.8);
+}
+
+.pipe-demo-caption::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245,158,11,0.4);
+}
+
+.pipe-demo {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.pipe-demo__line {
+  stroke-dasharray: 310;
+  stroke-dashoffset: 310;
+  opacity: 0;
+  animation: pipe-demo-draw 5.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.pipe-demo__line--2 { animation-delay: 0.05s; }
+.pipe-demo__line--3 { animation-delay: 0.1s; }
+
+.pipe-demo__p1 { animation: pipe-demo-fade 5.4s ease-in-out infinite; }
+.pipe-demo__p2 { animation: pipe-demo-fade 5.4s ease-in-out infinite; animation-delay: 0.5s; }
+
+.pipe-demo__label { opacity: 0; animation: pipe-demo-fade 5.4s ease-in-out infinite; }
+.pipe-demo__label--1 { animation-delay: 2s; }
+.pipe-demo__label--2 { animation-delay: 2.15s; }
+.pipe-demo__label--3 { animation-delay: 2.3s; }
+
+@keyframes pipe-demo-draw {
+  0%, 18%   { stroke-dashoffset: 310; opacity: 0; }
+  20%       { opacity: 1; }
+  42%       { stroke-dashoffset: 0; opacity: 1; }
+  88%       { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes pipe-demo-fade {
+  0%, 5%    { opacity: 0; }
+  10%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
 /* CODE */
 code {
   background: rgba(96,165,250,0.08);
@@ -416,6 +485,31 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 
 <div class="section" id="putket">
 <h2 class="category">Putkityökalu</h2>
+
+<div class="pipe-demo-block">
+<div class="pipe-demo-caption">Command: 3PTK</div>
+<svg class="pipe-demo" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3PTK-komento piirtää kolme putkea yhdellä vedolla">
+<defs>
+<pattern id="pipe-demo-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.06)" stroke-width="0.5"/>
+</pattern>
+</defs>
+<rect width="100%" height="100%" fill="url(#pipe-demo-grid)"/>
+
+<line class="pipe-demo__line pipe-demo__line--1" x1="60" y1="74" x2="370" y2="74" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"/>
+<line class="pipe-demo__line pipe-demo__line--2" x1="60" y1="90" x2="370" y2="90" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"/>
+<line class="pipe-demo__line pipe-demo__line--3" x1="60" y1="106" x2="370" y2="106" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"/>
+
+<circle class="pipe-demo__p1" cx="60" cy="90" r="4" fill="#f59e0b"/>
+<circle class="pipe-demo__p2" cx="370" cy="90" r="4" fill="#f59e0b"/>
+
+<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="500">
+<text class="pipe-demo__label pipe-demo__label--1" x="382" y="78" fill="#60a5fa">LT IMU</text>
+<text class="pipe-demo__label pipe-demo__label--2" x="382" y="94" fill="#f59e0b">MT NESTE</text>
+<text class="pipe-demo__label pipe-demo__label--3" x="382" y="110" fill="#60a5fa">MT IMU</text>
+</g>
+</svg>
+</div>
 
 <div class="block">
 <h3>Komennot:</h3>
