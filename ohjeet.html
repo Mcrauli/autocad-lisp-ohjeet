@@ -350,6 +350,57 @@ li {
   95%, 100% { opacity: 0; }
 }
 
+/* NPALLO demo — numbered markers appearing at click points */
+.npallo-demo__marker {
+  opacity: 0;
+  transform-origin: center;
+  animation: npallo-pop 6s ease-in-out infinite;
+}
+
+.npallo-demo__marker--1 { animation-delay: 0.3s; }
+.npallo-demo__marker--2 { animation-delay: 0.7s; }
+.npallo-demo__marker--3 { animation-delay: 1.1s; }
+.npallo-demo__marker--4 { animation-delay: 1.5s; }
+.npallo-demo__marker--5 { animation-delay: 1.9s; }
+
+@keyframes npallo-pop {
+  0%, 4%   { opacity: 0; transform: scale(0.6); }
+  10%      { opacity: 1; transform: scale(1.15); }
+  14%, 88% { opacity: 1; transform: scale(1); }
+  95%, 100% { opacity: 0; transform: scale(1); }
+}
+
+/* KAATO demo — line tilting from pivot */
+.kaato-demo__object {
+  transform-box: view-box;
+  transform-origin: 60px 90px;
+  animation: kaato-tilt 6s ease-in-out infinite;
+}
+
+.kaato-demo__pivot { animation: pipe-demo-fade 6s ease-in-out infinite; }
+
+.kaato-demo__arc {
+  opacity: 0;
+  animation: pipe-demo-fade 6s ease-in-out infinite;
+  animation-delay: 1.8s;
+}
+
+.kaato-demo__label {
+  opacity: 0;
+  animation: pipe-demo-fade 6s ease-in-out infinite;
+}
+
+.kaato-demo__label--rate { animation-delay: 0.3s; }
+.kaato-demo__label--angle { animation-delay: 2s; }
+
+@keyframes kaato-tilt {
+  0%, 10%  { transform: rotate(0deg); opacity: 0; }
+  15%      { opacity: 1; }
+  20%      { transform: rotate(0deg); }
+  45%, 85% { transform: rotate(6deg); opacity: 1; }
+  95%, 100% { transform: rotate(0deg); opacity: 0; }
+}
+
 /* CODE */
 code {
   background: rgba(96,165,250,0.08);
@@ -557,6 +608,41 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="section" id="npallo">
 <h2 class="category">Npallo</h2>
 
+<div class="pipe-demo-block">
+<div class="pipe-demo-caption">Command: NPALLO</div>
+<svg class="pipe-demo npallo-demo" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NPALLO-komento lisää numeroidut merkinnät klikattuihin pisteisiin">
+<defs>
+<pattern id="npallo-demo-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.06)" stroke-width="0.5"/>
+</pattern>
+</defs>
+<rect width="100%" height="100%" fill="url(#npallo-demo-grid)"/>
+
+<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="700">
+<g class="npallo-demo__marker npallo-demo__marker--1">
+<circle cx="110" cy="60" r="13" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.3"/>
+<text x="110" y="64" text-anchor="middle" fill="#f59e0b">1</text>
+</g>
+<g class="npallo-demo__marker npallo-demo__marker--2">
+<circle cx="200" cy="120" r="13" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.3"/>
+<text x="200" y="124" text-anchor="middle" fill="#f59e0b">2</text>
+</g>
+<g class="npallo-demo__marker npallo-demo__marker--3">
+<circle cx="300" cy="70" r="13" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.3"/>
+<text x="300" y="74" text-anchor="middle" fill="#f59e0b">3</text>
+</g>
+<g class="npallo-demo__marker npallo-demo__marker--4">
+<circle cx="390" cy="130" r="13" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.3"/>
+<text x="390" y="134" text-anchor="middle" fill="#f59e0b">4</text>
+</g>
+<g class="npallo-demo__marker npallo-demo__marker--5">
+<circle cx="480" cy="80" r="13" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.3"/>
+<text x="480" y="84" text-anchor="middle" fill="#f59e0b">5</text>
+</g>
+</g>
+</svg>
+</div>
+
 <div class="block">
 <h3>Komennot:</h3>
 <ul>
@@ -589,6 +675,36 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="section" id="kaato">
 
 <h2 class="category">Kaato</h2>
+
+<div class="pipe-demo-block">
+<div class="pipe-demo-caption">Command: KAATO3D</div>
+<svg class="pipe-demo kaato-demo" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="KAATO3D-komento kaataa objektin annetulla kaltevuudella">
+<defs>
+<pattern id="kaato-demo-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.06)" stroke-width="0.5"/>
+</pattern>
+</defs>
+<rect width="100%" height="100%" fill="url(#kaato-demo-grid)"/>
+
+<line class="kaato-demo__reference" x1="60" y1="90" x2="400" y2="90" stroke="rgba(148,163,184,0.25)" stroke-width="1" stroke-dasharray="3 4"/>
+
+<g class="kaato-demo__object">
+<rect x="60" y="82" width="340" height="12" rx="2" fill="rgba(96,165,250,0.15)" stroke="#60a5fa" stroke-width="1.3"/>
+</g>
+
+<circle class="kaato-demo__pivot" cx="60" cy="90" r="5" fill="#f59e0b"/>
+<circle class="kaato-demo__pivot" cx="60" cy="90" r="10" fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.5"/>
+
+<path class="kaato-demo__arc" d="M 100 90 A 40 40 0 0 1 99.78 94.19" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+
+<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="500">
+<text class="kaato-demo__label kaato-demo__label--rate" x="440" y="88" fill="#60a5fa">5 mm/m</text>
+<text class="kaato-demo__label kaato-demo__label--rate" x="440" y="104" fill="rgba(148,163,184,0.8)" font-size="10">KAATO</text>
+<text class="kaato-demo__label kaato-demo__label--angle" x="50" y="128" fill="#f59e0b" font-size="10">pivot</text>
+</g>
+</svg>
+</div>
+
 <div class="block">
 <h3>Komennot:</h3>
 <ul>
