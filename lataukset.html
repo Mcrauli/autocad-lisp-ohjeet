@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Lataukset</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
 body {
@@ -35,6 +35,8 @@ body {
   color: #94a3b8;
   text-decoration: none;
   font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease;
 }
 
 .topnav a.active {
@@ -46,8 +48,26 @@ body {
 }
 
 .container {
-  max-width: 700px;
-  padding: 100px 20px;
+  max-width: 720px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 110px 20px 96px;
+}
+
+h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 16px 0;
+}
+
+.container > p {
+  line-height: 1.75;
+  color: #cbd5f5;
+  margin-bottom: 48px;
+  max-width: 62ch;
 }
 
 a {
@@ -61,39 +81,81 @@ a {
   border-radius: 10px;
   margin-top: 22px;
   border: 1px solid rgba(255,255,255,0.05);
-  transition: 0.25s;
+  transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.block + .block {
+  margin-top: 16px;
 }
 
 .block:hover {
   transform: translateY(-2px);
   background: rgba(15,23,42,0.85);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 24px -16px rgba(0,0,0,0.55);
 }
 
 .block h2 {
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: -0.005em;
   margin: 0 0 8px 0;
   color: #facc15;
 }
 
 .block p {
-  line-height: 1.85;
+  line-height: 1.75;
   color: #cbd5f5;
   margin: 0;
 }
 
 .file {
-  margin: 15px 0;
+  margin: 12px 0;
   padding: 12px;
   background: #1e293b;
   border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.block + .file {
+  margin-top: 48px;
+  position: relative;
+}
+
+.block + .file::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
+}
+
+.file:hover {
+  background: #334155;
+  transform: translateY(-1px);
+  border-color: rgba(250,204,21,0.25);
 }
 
 .file h3 {
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 1em;
   font-weight: 700;
   margin: 0 0 4px 0;
   color: #e2e8f0;
+}
+
+.file a {
+  transition: color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .block:hover, .file:hover { transform: none !important; }
 }
 </style>
 </head>
