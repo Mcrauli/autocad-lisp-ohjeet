@@ -412,6 +412,78 @@ code {
   font-size: 0.9em;
 }
 
+/* FAQ */
+.faq-item {
+  background: rgba(2,6,23,0.75);
+  border-radius: 10px;
+  margin-top: 14px;
+  border: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.faq-item:hover {
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(15,23,42,0.82);
+}
+
+.faq-item[open] {
+  border-color: rgba(245,158,11,0.25);
+  background: rgba(15,23,42,0.85);
+}
+
+.faq-item summary {
+  padding: 16px 48px 16px 18px;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #e2e8f0;
+  list-style: none;
+  position: relative;
+  user-select: none;
+  line-height: 1.4;
+}
+
+.faq-item summary::-webkit-details-marker { display: none; }
+
+.faq-item summary::after {
+  content: "+";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f59e0b;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.faq-item[open] summary::after {
+  content: "−";
+}
+
+.faq-body {
+  padding: 0 18px 18px 18px;
+  color: #cbd5f5;
+}
+
+.faq-body p {
+  margin: 0 0 12px 0;
+  line-height: 1.7;
+}
+
+.faq-body p:last-child { margin-bottom: 0; }
+
+.faq-body ol,
+.faq-body ul {
+  margin: 8px 0 12px 20px;
+  line-height: 1.7;
+}
+
+.faq-body li { margin-bottom: 6px; }
+
 /* MOBILE: sidebar becomes horizontal chip row */
 @media (max-width: 900px) {
   .sidebar {
@@ -498,6 +570,8 @@ code {
 <a href="#putket">Putkityökalu</a>
 <a href="#npallo">Npallo</a>
 <a href="#kaato">Kaato</a>
+<span class="menu-group">Lisätietoa</span>
+<a href="#faq">Usein kysyttyä</a>
 </div>
 </div>
 
@@ -740,6 +814,65 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <li>Sopii toistuviin kaatoihin</li>
 </ul>
 </div>
+</div>
+
+<div class="section" id="faq">
+<h2 class="category">Usein kysyttyä</h2>
+
+<details class="faq-item reveal">
+<summary>Minne LISP-tiedostot kannattaa tallentaa?</summary>
+<div class="faq-body">
+<p>Tee oma kansio C-asemalle, esim. <code>C:\AutoCADLisp</code>, ja tallenna kaikki .lsp-tiedostot sinne. Paikallinen sijainti C-asemalla on AutoCAD:n näkökulmasta luotettu, ja järjestys pysyy selvänä kun kaikki työkalut ovat samassa paikassa.</p>
+<p>Vältä <b>verkkoasemia</b>, <b>OneDrivea</b> ja <b>Downloads</b>-kansiota — niistä AutoCAD antaa usein suojausvaroituksen joka latauskerralla.</p>
+</div>
+</details>
+
+<details class="faq-item reveal">
+<summary>AutoCAD varoittaa latauksessa "File Loading - Security Concern" — mitä teen?</summary>
+<div class="faq-body">
+<p>Lisää <code>C:\AutoCADLisp</code> luotetuksi sijainniksi, niin varoitus lakkaa tulemasta:</p>
+<ol>
+<li>Kirjoita komentoriville <code>OPTIONS</code></li>
+<li>Avaa <b>Files</b>-välilehti</li>
+<li>Laajenna <b>Trusted Locations</b></li>
+<li>Klikkaa <b>Add...</b> ja valitse <code>C:\AutoCADLisp</code></li>
+<li>OK → asetus tallentuu</li>
+</ol>
+<p>Tämän jälkeen AutoCAD lataa kaikki kyseisestä kansiosta tulevat tiedostot ilman varoitusta.</p>
+</div>
+</details>
+
+<details class="faq-item reveal">
+<summary>Miten saan LISPit latautumaan automaattisesti, ilman <code>APPLOAD</code>ia joka kerta?</summary>
+<div class="faq-body">
+<p>Käytä <b>Startup Suitea</b>, niin tiedostot latautuvat jokaisen avatun piirustuksen mukana:</p>
+<ol>
+<li>Kirjoita <code>APPLOAD</code></li>
+<li>Avaa <b>Contents...</b>-nappi (Startup Suite)</li>
+<li><b>Add...</b> → valitse .lsp-tiedostot <code>C:\AutoCADLisp</code>-kansiosta</li>
+<li>Close → valmis</li>
+</ol>
+</div>
+</details>
+
+<details class="faq-item reveal">
+<summary>Toimivatko nämä AutoCAD LT:ssä?</summary>
+<div class="faq-body">
+<p>Eivät — AutoCAD LT ei tue LISP-ohjelmointia. Tarvitaan täysversio AutoCAD tai sen päälle rakennettu paketti (esim. AutoCAD Mechanical, MEP, Plant 3D).</p>
+</div>
+</details>
+
+<details class="faq-item reveal">
+<summary>Komento ei löydy vaikka tiedosto on ladattu — mitä nyt?</summary>
+<div class="faq-body">
+<p>Yleisin syy: LSP-tiedosto ladattiin mutta sen sisällä oleva komento ei ole vielä rekisteröity komentoriviin. Tarkista että:</p>
+<ul>
+<li><code>APPLOAD</code> näyttää tiedoston listassa (Loaded Applications)</li>
+<li>Komento kirjoitetaan oikein ja isoilla kirjaimilla ei ole merkitystä</li>
+<li>Jos käytit <code>APPLOAD</code>ia, lataus on vain tälle istunnolle — lisää tiedosto Startup Suiteen pysyväksi</li>
+</ul>
+</div>
+</details>
 </div>
 
 <footer class="site-footer">

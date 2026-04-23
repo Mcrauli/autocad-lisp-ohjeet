@@ -20,7 +20,7 @@ lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
 | Tiedosto         | Sisältö                                                    |
 |------------------|------------------------------------------------------------|
 | `index.html`     | Hero (kicker + h1 + subtitle + teksti) · 3 feature-korttia · info-osio + highlight-boksit · footer |
-| `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 5 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Npallo · Kaato. Jokaisessa 1–4 `.block`-korttia. Kolme tuotetta (Putki/Npallo/Kaato) aloittavat animoidulla SVG-demolla. |
+| `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 6 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Npallo · Kaato · Usein kysyttyä. Kolme tuotetta (Putki/Npallo/Kaato) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
 | `lataukset.html` | Topnav + 3 kuvauskorttia · 4 latauskorttia (LSP- ja DWG-badge, tiedostokoko, "Lataa ↓" -nappi) · footer |
 
 ## Jaetut resurssit
@@ -177,6 +177,9 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
    mini-terminaalia käyttäjän palautteen jälkeen)
 8. Jaettu `style.css` + `script.js`, scroll-progress, scroll-
    reveal-animaatiot, toast-järjestelmä, robots/sitemap
+9. FAQ-osio ohjeet-sivulle (`<details>`-accordion): C:\AutoCADLisp
+   -kansio + Trusted Locations, Startup Suite, LT ei tue LISPiä,
+   komennon etsintä-vianhaku. Uusi sidebar-ryhmä "Lisätietoa".
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 
@@ -188,7 +191,6 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
 - **Oikea screen-recording -GIF/MP4** AutoCADista SVG-animaatioiden
   rinnalle tai tilalle. SVG-wrapperin vaihtaminen `<video>`ksi on
   pieni työ.
-- **FAQ-osio** ohjeet-sivulle ("Toimiiko AutoCAD LT:ssä?" jne.)
 - **Changelog / muutokset.html** — versiotiedot näkyville
 
 ## Tärkeimmät rajat
