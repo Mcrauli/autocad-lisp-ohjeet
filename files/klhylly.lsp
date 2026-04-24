@@ -439,9 +439,10 @@
 
 (defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldCecolor oldOsmode oldSnapmode
                      modeKw levyStr levy lenInput p1 p2 p3 length
-                     L W15 W60 Wrung
-                     entBefore rail1 rail2 rungs ss i center halfW e corner
-                     finalEnt minArr maxArr bboxRes )
+                     Lraw Lmag L Wraw dotLW Wperp Wmag W D
+                     msp mat solids rail1 rail2 rung
+                     i center halfW s ss
+                     finalEnt minArr maxArr )
 
   (defun *error* ( msg )
     (if oldOsmode   (setvar "OSMODE"   oldOsmode))
@@ -449,7 +450,6 @@
     (if oldCecolor  (setvar "CECOLOR"  oldCecolor))
     (if oldCmdecho  (setvar "CMDECHO"  oldCmdecho))
     (if oldClayer   (setvar "CLAYER"   oldClayer))
-    (vl-catch-all-apply 'command (list "_.UCS" "_P"))
     (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
       (princ (strcat "\nVirhe: " msg)))
     (princ)
@@ -475,7 +475,7 @@
   (setq p1 (getpoint "\nAlaosa tai ylaosa (base point): "))
   (if (null p1) (exit))
 
-  ;; Kaksi tapaa maaritella toinen pisteen:
+  ;; Kaksi tapaa maaritella toinen piste:
   ;;  N = numero (pituus mm alaspain p1:sta -- helpoin 2D-plan-nakymassa)
   ;;  P = piste (mika tahansa 3D-piste, vapaa orientaatio)
   (initget "N P")
@@ -488,7 +488,6 @@
       (if (or (null lenInput) (< (abs lenInput) 1.0))
         (progn (princ "\nPituus liian pieni.") (exit)))
       (setq length (abs lenInput))
-      ;; p2 suoraan p1:n alapuolella (tai ylapuolella jos lenInput negatiivinen)
       (setq p2 (list (car p1) (cadr p1) (- (caddr p1) lenInput)))
     )
     ((= modeKw "P")
@@ -503,92 +502,115 @@
   (setq p3 (getpoint p1 "\nLeveyden suunta (horisontaalinen viittauspiste): "))
   (if (null p3) (exit))
 
-  ;; Numerot ja pisteet string-muotoon period-desimaalilla --
-  ;; command-funktio konvertoisi pistelistat lokaalin pilkkudesimaalilla,
-  ;; mika rikkoisi BOX- ja UCS-syotteet suomalaisessa Windowsissa.
-  (setq L     (klhylly-num->str length))
-  (setq W15   (klhylly-num->str 15.0))
-  (setq W60   (klhylly-num->str 60.0))
-  (setq Wrung (klhylly-num->str (- levy 30.0)))
+  ;; --- Rakenna ladder COM API:lla WCS:ssa, sitten muuntomatriisilla kohdalleen.
+  ;; Tama valttaa command-funktion string-muunnos- ja UCS-parserin ongelmat
+  ;; jotka sotkivat aiemman BOX+UCS-toteutuksen lokaali-Windowsissa.
 
-  (setvar "OSMODE" 0)
-  (setvar "SNAPMODE" 0)
+  (vl-load-com)
+  (setq msp (vla-get-ModelSpace
+              (vla-get-ActiveDocument (vlax-get-acad-object))))
 
-  ;; Aseta UCS kolmella pisteella ilman keywordia (moderni AutoCAD hyvaksyy
-  ;; suoraan origin + X + Y). Pisteet string-muodossa locale-turvallisesti.
-  (command "_.UCS"
-           (klhylly-pt->str p1)
-           (klhylly-pt->str p2)
-           (klhylly-pt->str p3))
+  ;; 1) Laske target-akselit (unit vektorit WCS:ssa).
+  ;;    L = pituusakseli, W = leveysakseli, D = syvyysakseli (L x W).
+  (setq Lraw (mapcar '- p2 p1))
+  (setq Lmag (distance '(0.0 0.0 0.0) Lraw))
+  (if (< Lmag 1.0)
+    (progn (princ "\nPituus liian lyhyt.") (exit)))
+  (setq L (list (/ (car Lraw)   Lmag)
+                (/ (cadr Lraw)  Lmag)
+                (/ (caddr Lraw) Lmag)))
 
-  (princ "\nDebug UCS origin: ")
-  (princ (getvar "UCSORG"))
-
-  ;; Rail 1
-  (setq entBefore (entlast))
-  (command "_.BOX"
-           (klhylly-pt->str (trans '(0.0 0.0 0.0) 1 0))
-           "_L" L W15 W60)
-  (setq rail1 (entlast))
-
-  (if (eq rail1 entBefore)
+  (setq Wraw (mapcar '- p3 p1))
+  (setq dotLW (+ (* (car Wraw)   (car L))
+                 (* (cadr Wraw)  (cadr L))
+                 (* (caddr Wraw) (caddr L))))
+  (setq Wperp
+    (mapcar '-
+            Wraw
+            (list (* dotLW (car L))
+                  (* dotLW (cadr L))
+                  (* dotLW (caddr L)))))
+  (setq Wmag (distance '(0.0 0.0 0.0) Wperp))
+  (if (< Wmag 0.001)
     (progn
-      (princ "\nVIRHE: rail1 BOX-komento ei luonut uutta solidia.")
-      (command "_.UCS" "_P")
-      (setvar "OSMODE" oldOsmode)
-      (setvar "SNAPMODE" oldSnapmode)
-      (setvar "CECOLOR" oldCecolor)
-      (setvar "CMDECHO" oldCmdecho)
-      (setvar "CLAYER" oldClayer)
-      (exit)
-    )
-  )
+      (princ "\np3 on samalla suoralla kuin p1-p2. Valitse p3 kauemmas sivulle.")
+      (exit)))
+  (setq W (list (/ (car Wperp)   Wmag)
+                (/ (cadr Wperp)  Wmag)
+                (/ (caddr Wperp) Wmag)))
 
-  ;; Rail 2
-  (command "_.BOX"
-           (klhylly-pt->str (trans (list 0.0 (- levy 15.0) 0.0) 1 0))
-           "_L" L W15 W60)
-  (setq rail2 (entlast))
+  ;; D = L x W (oikeakatinen koordinaatisto)
+  (setq D (list
+            (- (* (cadr L)  (caddr W)) (* (caddr L) (cadr W)))
+            (- (* (caddr L) (car W))   (* (car L)   (caddr W)))
+            (- (* (car L)   (cadr W))  (* (cadr L)  (car W)))))
 
-  ;; Rungs
-  (setq i 1 center (* i 250.0) rungs nil halfW 7.5)
+  ;; 2) 4x4-muunnos: kanoniset akselit (X=length, Y=width, Z=depth) -> (L, W, D) + translate p1
+  (setq mat
+    (vlax-tmatrix
+      (list
+        (list (car L)   (car W)   (car D)   (car p1))
+        (list (cadr L)  (cadr W)  (cadr D)  (cadr p1))
+        (list (caddr L) (caddr W) (caddr D) (caddr p1))
+        (list 0.0 0.0 0.0 1.0))))
+
+  ;; 3) Luo kanoniset boxit WCS:ssa akselien mukaisesti.
+  ;;    vla-AddBox ottaa keskipisteen ja dimensiot (dimX, dimY, dimZ).
+  (setq solids nil)
+
+  (setq rail1
+    (vla-AddBox msp
+                (vlax-3d-point (list (/ length 2.0) 7.5 30.0))
+                length 15.0 60.0))
+  (setq solids (cons rail1 solids))
+
+  (setq rail2
+    (vla-AddBox msp
+                (vlax-3d-point (list (/ length 2.0) (- levy 7.5) 30.0))
+                length 15.0 60.0))
+  (setq solids (cons rail2 solids))
+
+  (setq i 1 center (* i 250.0) halfW 7.5)
   (while (<= (+ center halfW) length)
-    (setq corner (trans (list (- center halfW) 15.0 10.0) 1 0))
-    (command "_.BOX"
-             (klhylly-pt->str corner)
-             "_L" (klhylly-num->str 15.0) Wrung (klhylly-num->str 15.0))
-    (setq rungs (cons (entlast) rungs))
+    (setq rung
+      (vla-AddBox msp
+                  (vlax-3d-point (list center (/ levy 2.0) 17.5))
+                  15.0 (- levy 30.0) 15.0))
+    (setq solids (cons rung solids))
     (setq i (1+ i))
     (setq center (* i 250.0))
   )
 
-  ;; UNION
+  ;; 4) Muunnos jokaiselle solidille (rotaatio + translaatio kerralla)
+  (foreach s solids
+    (vla-TransformBy s mat)
+  )
+
+  ;; 5) UNION yhdeksi soliditeetiksi
   (setq ss (ssadd))
-  (setq ss (ssadd rail1 ss))
-  (setq ss (ssadd rail2 ss))
-  (foreach e rungs (setq ss (ssadd e ss)))
+  (foreach s solids
+    (setq ss (ssadd (vlax-vla-object->ename s) ss)))
   (command "_.UNION" ss "")
   (setq finalEnt (entlast))
 
-  ;; Debug: kerro mihin paatyi
+  ;; 6) Debug-bbox: tulisi olla p1:n lahella
   (if finalEnt
     (progn
-      (setq bboxRes
-        (vl-catch-all-apply 'vla-GetBoundingBox
-          (list (vlax-ename->vla-object finalEnt) 'minArr 'maxArr)))
-      (if (and (not (vl-catch-all-error-p bboxRes)) minArr maxArr)
+      (setq minArr nil maxArr nil)
+      (vl-catch-all-apply
+        'vla-GetBoundingBox
+        (list (vlax-ename->vla-object finalEnt) 'minArr 'maxArr))
+      (if (and minArr maxArr)
         (progn
-          (princ "\nDebug solid bbox min: ")
+          (princ "\nTikas bbox min: ")
           (princ (vlax-safearray->list minArr))
-          (princ "\nDebug solid bbox max: ")
+          (princ "\nTikas bbox max: ")
           (princ (vlax-safearray->list maxArr))
         )
       )
     )
   )
 
-  ;; Palauta UCS ja sysvarit
-  (command "_.UCS" "_P")
   (setvar "OSMODE"   oldOsmode)
   (setvar "SNAPMODE" oldSnapmode)
   (setvar "CECOLOR"  oldCecolor)
