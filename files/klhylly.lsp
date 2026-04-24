@@ -427,11 +427,21 @@
   )
 )
 
-(defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldCecolor oldOsmode
-                     oldAutosnap oldSnapmode
-                     levyStr levy p1 p2 p3 length
-                     L W15 W60 Wminus15 Wrung Wrungdepth rungZ
-                     entBefore rail1 rail2 rungs ss i center halfW e corner )
+;; Muuntaa 3D-pisteen "x,y,z"-merkkijonoksi piste-desimaaleilla.
+;; Tarpeellinen koska AutoLISP muuntaa pistelistat command:lle lokaalin
+;; desimaalierottimella — pilkku-lokaalissa "1,5 2,7 3,9" tulkitaan
+;; kuudeksi numeroksi.
+(defun klhylly-pt->str ( p )
+  (strcat (klhylly-num->str (car p)) ","
+          (klhylly-num->str (cadr p)) ","
+          (klhylly-num->str (caddr p)))
+)
+
+(defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldCecolor oldOsmode oldSnapmode
+                     modeKw levyStr levy lenInput p1 p2 p3 length
+                     L W15 W60 Wrung
+                     entBefore rail1 rail2 rungs ss i center halfW e corner
+                     finalEnt minArr maxArr bboxRes )
 
   (defun *error* ( msg )
     (if oldOsmode   (setvar "OSMODE"   oldOsmode))
@@ -462,41 +472,68 @@
   (if (null levyStr) (setq levyStr "300"))
   (setq levy (atof levyStr))
 
-  (setq p1 (getpoint "\nAlaosa (base point): "))
+  (setq p1 (getpoint "\nAlaosa tai ylaosa (base point): "))
   (if (null p1) (exit))
 
-  (setq p2 (getpoint p1 "\nYlaosa (length end): "))
-  (if (null p2) (exit))
-  (setq length (distance p1 p2))
-  (if (< length 1.0)
-    (progn (princ "\nPituus liian lyhyt.") (exit)))
+  ;; Kaksi tapaa maaritella toinen pisteen:
+  ;;  N = numero (pituus mm alaspain p1:sta -- helpoin 2D-plan-nakymassa)
+  ;;  P = piste (mika tahansa 3D-piste, vapaa orientaatio)
+  (initget "N P")
+  (setq modeKw (getkword "\nToinen piste [N=numerona alaspain / P=pisteena] <N>: "))
+  (if (null modeKw) (setq modeKw "N"))
 
-  (setq p3 (getpoint p1 "\nLeveyden suunta (width direction reference): "))
+  (cond
+    ((= modeKw "N")
+      (setq lenInput (getreal "\nPituus mm (positiivinen = alaspain p1:sta): "))
+      (if (or (null lenInput) (< (abs lenInput) 1.0))
+        (progn (princ "\nPituus liian pieni.") (exit)))
+      (setq length (abs lenInput))
+      ;; p2 suoraan p1:n alapuolella (tai ylapuolella jos lenInput negatiivinen)
+      (setq p2 (list (car p1) (cadr p1) (- (caddr p1) lenInput)))
+    )
+    ((= modeKw "P")
+      (setq p2 (getpoint p1 "\nYlaosa (length end): "))
+      (if (null p2) (exit))
+      (setq length (distance p1 p2))
+      (if (< length 1.0)
+        (progn (princ "\nPituus liian lyhyt.") (exit)))
+    )
+  )
+
+  (setq p3 (getpoint p1 "\nLeveyden suunta (horisontaalinen viittauspiste): "))
   (if (null p3) (exit))
 
-  ;; Kaikki numeroparametrit tekstinä period-desimaalilla,
-  ;; BOX-komennon numerosarjat eivät sotkeennu pilkku-lokalessa.
-  (setq L        (klhylly-num->str length))
-  (setq W15      (klhylly-num->str 15.0))
-  (setq W60      (klhylly-num->str 60.0))
-  (setq Wminus15 (klhylly-num->str (- levy 15.0)))
-  (setq Wrung    (klhylly-num->str (- levy 30.0)))
+  ;; Numerot ja pisteet string-muotoon period-desimaalilla --
+  ;; command-funktio konvertoisi pistelistat lokaalin pilkkudesimaalilla,
+  ;; mika rikkoisi BOX- ja UCS-syotteet suomalaisessa Windowsissa.
+  (setq L     (klhylly-num->str length))
+  (setq W15   (klhylly-num->str 15.0))
+  (setq W60   (klhylly-num->str 60.0))
+  (setq Wrung (klhylly-num->str (- levy 30.0)))
 
-  ;; Aseta UCS kolmella pisteellä implisiittisesti
-  ;; (ei _3P-keywordia -- moderni AutoCAD ottaa suoraan origin + X + Y).
-  ;; Snappi pois UCS:n ja BOX:n ajaksi jotta tarkat pisteet/koordinaatit menevat.
   (setvar "OSMODE" 0)
   (setvar "SNAPMODE" 0)
-  (command "_.UCS" p1 p2 p3)
 
-  ;; Rail 1: UCS (0,0,0), L=length (UCS X), 15 (UCS Y), 60 (UCS Z)
+  ;; Aseta UCS kolmella pisteella ilman keywordia (moderni AutoCAD hyvaksyy
+  ;; suoraan origin + X + Y). Pisteet string-muodossa locale-turvallisesti.
+  (command "_.UCS"
+           (klhylly-pt->str p1)
+           (klhylly-pt->str p2)
+           (klhylly-pt->str p3))
+
+  (princ "\nDebug UCS origin: ")
+  (princ (getvar "UCSORG"))
+
+  ;; Rail 1
   (setq entBefore (entlast))
-  (command "_.BOX" (trans '(0.0 0.0 0.0) 1 0) "_L" L W15 W60)
+  (command "_.BOX"
+           (klhylly-pt->str (trans '(0.0 0.0 0.0) 1 0))
+           "_L" L W15 W60)
   (setq rail1 (entlast))
 
   (if (eq rail1 entBefore)
     (progn
-      (princ "\nVIRHE: BOX-komento ei luonut rail1:ta. Tarkista UCS- ja BOX-lupa.")
+      (princ "\nVIRHE: rail1 BOX-komento ei luonut uutta solidia.")
       (command "_.UCS" "_P")
       (setvar "OSMODE" oldOsmode)
       (setvar "SNAPMODE" oldSnapmode)
@@ -507,31 +544,48 @@
     )
   )
 
-  ;; Rail 2: UCS (0, levy-15, 0)
+  ;; Rail 2
   (command "_.BOX"
-           (trans (list 0.0 (- levy 15.0) 0.0) 1 0)
+           (klhylly-pt->str (trans (list 0.0 (- levy 15.0) 0.0) 1 0))
            "_L" L W15 W60)
   (setq rail2 (entlast))
 
-  ;; Poikkitikat 250 mm valein, 15 x (levy-30) x 15, aloittaen z=10
+  ;; Rungs
   (setq i 1 center (* i 250.0) rungs nil halfW 7.5)
   (while (<= (+ center halfW) length)
     (setq corner (trans (list (- center halfW) 15.0 10.0) 1 0))
-    (command "_.BOX" corner "_L"
-             (klhylly-num->str 15.0)
-             Wrung
-             (klhylly-num->str 15.0))
+    (command "_.BOX"
+             (klhylly-pt->str corner)
+             "_L" (klhylly-num->str 15.0) Wrung (klhylly-num->str 15.0))
     (setq rungs (cons (entlast) rungs))
     (setq i (1+ i))
     (setq center (* i 250.0))
   )
 
-  ;; UNION kaikki yhdeksi solidiksi
+  ;; UNION
   (setq ss (ssadd))
   (setq ss (ssadd rail1 ss))
   (setq ss (ssadd rail2 ss))
   (foreach e rungs (setq ss (ssadd e ss)))
   (command "_.UNION" ss "")
+  (setq finalEnt (entlast))
+
+  ;; Debug: kerro mihin paatyi
+  (if finalEnt
+    (progn
+      (setq bboxRes
+        (vl-catch-all-apply 'vla-GetBoundingBox
+          (list (vlax-ename->vla-object finalEnt) 'minArr 'maxArr)))
+      (if (and (not (vl-catch-all-error-p bboxRes)) minArr maxArr)
+        (progn
+          (princ "\nDebug solid bbox min: ")
+          (princ (vlax-safearray->list minArr))
+          (princ "\nDebug solid bbox max: ")
+          (princ (vlax-safearray->list maxArr))
+        )
+      )
+    )
+  )
 
   ;; Palauta UCS ja sysvarit
   (command "_.UCS" "_P")

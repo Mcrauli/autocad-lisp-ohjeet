@@ -1020,12 +1020,17 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 
 <div class="block reveal">
 <h3>Pysty-TIKAS (<code>KLHYLLYV</code>):</h3>
-<p>Kun TIKAS-hyllyn pitää nousta pystyyn (esim. seinätikas) tai kulkea viistosti 3D-tilassa, käytä <code>KLHYLLYV</code>-komentoa. Tämä toimii 3D-näkymässä.</p>
+<p>Kun TIKAS-hyllyn pitää nousta pystyyn tai kulkea viistosti 3D-tilassa, käytä <code>KLHYLLYV</code>-komentoa. Toimii myös 2D-plan-näkymässä koska pituuden voi antaa numerona.</p>
 <ol>
 <li>Kirjoita <code>KLHYLLYV</code></li>
 <li>Valitse leveys: <code>300</code>, <code>400</code> tai <code>500</code></li>
-<li>Klikkaa <b>alaosa</b> — mikä tahansa 3D-piste</li>
-<li>Klikkaa <b>yläosa</b> — määrittää pituuden ja suunnan; voi olla suoraan p1:n yläpuolella (pystysuora) tai viistossa</li>
+<li>Klikkaa <b>base point</b> — mikä tahansa 3D-piste (yleensä tikkaan yläosan kiinnityskohta)</li>
+<li>Valitse toinen piste:
+  <ul>
+    <li><b>N = Numerona</b> (oletus): anna pituus millimetreinä, tikas ripustuu suoraan alaspäin. Tämä on helpoin 2D-plan-näkymässä.</li>
+    <li><b>P = Pisteenä</b>: klikkaa 3D-piste (viisto tai vaakasuora orientaatio).</li>
+  </ul>
+</li>
 <li>Klikkaa <b>leveyden viittauspiste</b> — UCS projisoi automaattisesti kohtisuoran leveyssuunnan pituusakselia vasten</li>
 </ol>
 <p>Tikas rakentuu BOX-komennoilla UCS-akseleiden mukaan ja UCS palautuu edelliseen tilaan lopuksi. Tulos on yksi UNIONed 3D-solidi kuten vaakasuora TIKAS.</p>
