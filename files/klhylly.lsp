@@ -418,25 +418,38 @@
 ;;; Toteutus: UCS 3-piste origin=p1, +X=p2, +Y=p3 niin etta rails ja
 ;;; poikkitikat piirtyvat BOX:illa UCS-akseleiden mukaan. UCS palautetaan
 ;;; edelliseen tilaan lopuksi (_P).
+;; Muuntaa real-luvun merkkijonoksi piste-desimaalilla (ei lokaalista riippuvaa pilkkua).
+(defun klhylly-num->str ( n / s )
+  (setq s (rtos n 2 8))
+  (if (vl-string-search "," s)
+    (vl-string-translate "," "." s)
+    s
+  )
+)
+
 (defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldCecolor oldOsmode
+                     oldAutosnap oldSnapmode
                      levyStr levy p1 p2 p3 length
-                     rail1 rail2 rungs ss i center halfW e corner )
+                     L W15 W60 Wminus15 Wrung Wrungdepth rungZ
+                     entBefore rail1 rail2 rungs ss i center halfW e corner )
 
   (defun *error* ( msg )
-    (if oldOsmode  (setvar "OSMODE"  oldOsmode))
-    (if oldCecolor (setvar "CECOLOR" oldCecolor))
-    (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
-    (if oldClayer  (setvar "CLAYER"  oldClayer))
+    (if oldOsmode   (setvar "OSMODE"   oldOsmode))
+    (if oldSnapmode (setvar "SNAPMODE" oldSnapmode))
+    (if oldCecolor  (setvar "CECOLOR"  oldCecolor))
+    (if oldCmdecho  (setvar "CMDECHO"  oldCmdecho))
+    (if oldClayer   (setvar "CLAYER"   oldClayer))
     (vl-catch-all-apply 'command (list "_.UCS" "_P"))
     (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
       (princ (strcat "\nVirhe: " msg)))
     (princ)
   )
 
-  (setq oldClayer  (getvar "CLAYER"))
-  (setq oldCmdecho (getvar "CMDECHO"))
-  (setq oldCecolor (getvar "CECOLOR"))
-  (setq oldOsmode  (getvar "OSMODE"))
+  (setq oldClayer   (getvar "CLAYER"))
+  (setq oldCmdecho  (getvar "CMDECHO"))
+  (setq oldCecolor  (getvar "CECOLOR"))
+  (setq oldOsmode   (getvar "OSMODE"))
+  (setq oldSnapmode (getvar "SNAPMODE"))
 
   (setvar "CMDECHO" 0)
   (setvar "CECOLOR" "BYLAYER")
@@ -461,26 +474,53 @@
   (setq p3 (getpoint p1 "\nLeveyden suunta (width direction reference): "))
   (if (null p3) (exit))
 
-  ;; Aseta UCS: origin=p1, +X=p1->p2 suunta, +Y=projisoitu p3-suunta.
-  ;; Snappi pois UCS:n ajaksi jotta tarkat pisteet menevat oikein.
-  (setvar "OSMODE" 0)
-  (command "_.UCS" "_3P" p1 p2 p3)
+  ;; Kaikki numeroparametrit tekstinä period-desimaalilla,
+  ;; BOX-komennon numerosarjat eivät sotkeennu pilkku-lokalessa.
+  (setq L        (klhylly-num->str length))
+  (setq W15      (klhylly-num->str 15.0))
+  (setq W60      (klhylly-num->str 60.0))
+  (setq Wminus15 (klhylly-num->str (- levy 15.0)))
+  (setq Wrung    (klhylly-num->str (- levy 30.0)))
 
-  ;; Rail 1: UCS (0,0,0), L=length, W=15 (UCS Y), D=60 (UCS Z)
-  (command "_.BOX" (trans '(0.0 0.0 0.0) 1 0) "_L" length 15.0 60.0)
+  ;; Aseta UCS kolmella pisteellä implisiittisesti
+  ;; (ei _3P-keywordia -- moderni AutoCAD ottaa suoraan origin + X + Y).
+  ;; Snappi pois UCS:n ja BOX:n ajaksi jotta tarkat pisteet/koordinaatit menevat.
+  (setvar "OSMODE" 0)
+  (setvar "SNAPMODE" 0)
+  (command "_.UCS" p1 p2 p3)
+
+  ;; Rail 1: UCS (0,0,0), L=length (UCS X), 15 (UCS Y), 60 (UCS Z)
+  (setq entBefore (entlast))
+  (command "_.BOX" (trans '(0.0 0.0 0.0) 1 0) "_L" L W15 W60)
   (setq rail1 (entlast))
+
+  (if (eq rail1 entBefore)
+    (progn
+      (princ "\nVIRHE: BOX-komento ei luonut rail1:ta. Tarkista UCS- ja BOX-lupa.")
+      (command "_.UCS" "_P")
+      (setvar "OSMODE" oldOsmode)
+      (setvar "SNAPMODE" oldSnapmode)
+      (setvar "CECOLOR" oldCecolor)
+      (setvar "CMDECHO" oldCmdecho)
+      (setvar "CLAYER" oldClayer)
+      (exit)
+    )
+  )
 
   ;; Rail 2: UCS (0, levy-15, 0)
   (command "_.BOX"
            (trans (list 0.0 (- levy 15.0) 0.0) 1 0)
-           "_L" length 15.0 60.0)
+           "_L" L W15 W60)
   (setq rail2 (entlast))
 
-  ;; Poikkitikat 250 mm valein, 15x(levy-30)x15, aloittaen z=10
+  ;; Poikkitikat 250 mm valein, 15 x (levy-30) x 15, aloittaen z=10
   (setq i 1 center (* i 250.0) rungs nil halfW 7.5)
   (while (<= (+ center halfW) length)
     (setq corner (trans (list (- center halfW) 15.0 10.0) 1 0))
-    (command "_.BOX" corner "_L" 15.0 (- levy 30.0) 15.0)
+    (command "_.BOX" corner "_L"
+             (klhylly-num->str 15.0)
+             Wrung
+             (klhylly-num->str 15.0))
     (setq rungs (cons (entlast) rungs))
     (setq i (1+ i))
     (setq center (* i 250.0))
@@ -495,10 +535,11 @@
 
   ;; Palauta UCS ja sysvarit
   (command "_.UCS" "_P")
-  (setvar "OSMODE"  oldOsmode)
-  (setvar "CECOLOR" oldCecolor)
-  (setvar "CMDECHO" oldCmdecho)
-  (setvar "CLAYER"  oldClayer)
+  (setvar "OSMODE"   oldOsmode)
+  (setvar "SNAPMODE" oldSnapmode)
+  (setvar "CECOLOR"  oldCecolor)
+  (setvar "CMDECHO"  oldCmdecho)
+  (setvar "CLAYER"   oldClayer)
 
   (princ "\nKLHYLLYV valmis.")
   (princ)
