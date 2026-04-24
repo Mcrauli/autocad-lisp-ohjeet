@@ -4,9 +4,10 @@
 ;;; Layerit: LEVY -> KYL-LEVYHYLLY, TIKAS -> KYL-TIKASHYLLY.
 ;;;
 ;;; Leveyspuoli valitaan automaattisesti: jos p1:n toisella puolella on jo
-;;; KYL-*HYLLY-entiteetti ja toisella ei, uusi hylly levenee tyhjalle
-;;; puolelle (ei piirry vanhan paalle). Jos molemmat puolet tyhjia tai molemmat
-;;; varatut, oletus on CCW (+90 vetosuunnasta).
+;;; KYL-*HYLLY-entiteetti ja toisella ei, uusi hylly levenee sille puolelle
+;;; jossa vanha hylly on - nain L-mutkat saadaan samaan linjaan ilman
+;;; manuaalista siirtoa. Probe 5 mm ja 50 mm etaisyyksilla. Jos molemmat
+;;; puolet tyhjia tai molemmat varatut, oletus on CCW (+90 vetosuunnasta).
 ;;;
 ;;; Aloituspiste: kaksi-tasoinen snap:
 ;;;   (a) OSMODE pakotetaan ENDP+INT:iin pickin ajaksi -> AutoCADin natiivi
@@ -255,19 +256,28 @@
 )
 
 ;; Valitsee perp-suunnan automaattisesti: probiaa p1:n molemmilla puolilla
-;; pienen offsetin paassa ja valitsee sen puolen, joka on tyhja.
-;; Jos molemmat tyhjia tai molemmat varatut, palauttaa oletus-CCW.
-(defun klhylly-auto-perp ( p1 ang / perpCCW perpCW pCCW pCW occCCW occCW )
+;; ja valitsee sen puolen jossa on jo KYL-*HYLLY-entiteetti lahella.
+;; Tama tuottaa puhtaita L-mutkia: uuden hyllyn leveys jatkaa olemassa
+;; olevan hyllyn sisemmalle puolelle (huoneen sisaosa) ulkopinnan sijaan.
+;; Probe kahdella etaisyydella (5 mm ja 50 mm) - tarttuu nurkkasnappiin
+;; mutta myos loyhasti valittuihin p1-pisteisiin. Jos molemmat tyhjia
+;; tai molemmat varatut, palauttaa oletus-CCW.
+(defun klhylly-auto-perp ( p1 ang / perpCCW perpCW occCCW occCW d )
   (setq perpCCW (+ ang (/ pi 2.0)))
   (setq perpCW  (- ang (/ pi 2.0)))
-  (setq pCCW    (polar p1 perpCCW 1.0))
-  (setq pCW     (polar p1 perpCW  1.0))
-  (setq occCCW  (klhylly-point-occupied-p pCCW))
-  (setq occCW   (klhylly-point-occupied-p pCW))
+  (setq occCCW nil occCW nil)
+  (foreach d '(5.0 50.0)
+    (if (null occCCW)
+      (if (klhylly-point-occupied-p (polar p1 perpCCW d))
+        (setq occCCW T)))
+    (if (null occCW)
+      (if (klhylly-point-occupied-p (polar p1 perpCW d))
+        (setq occCW T)))
+  )
   (cond
-    ((and occCCW (not occCW)) perpCW)
-    ((and (not occCCW) occCW) perpCCW)
-    (t perpCCW)
+    ((and occCCW (not occCW)) perpCCW)    ; toward CCW side (occupied)
+    ((and (not occCCW) occCW) perpCW)     ; toward CW side (occupied)
+    (t perpCCW)                            ; default CCW
   )
 )
 
@@ -345,7 +355,8 @@
   (if (<= pituus 0.0) (exit))
   (setq ang (angle p1 p2))
 
-  ;; 5) Leveyssuunnan automaattinen valinta: tyhjalle puolelle p1:sta.
+  ;; 5) Leveyssuunnan automaattinen valinta: sille puolelle jossa on jo hylly
+  ;;    (L-mutkien puhdas yhteensovitus). Fallback: CCW jos molemmat tyhjia.
   (setq perp (klhylly-auto-perp p1 ang))
 
   (cond
