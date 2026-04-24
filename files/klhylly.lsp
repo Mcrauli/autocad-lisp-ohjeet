@@ -406,6 +406,104 @@
   (princ)
 )
 
+;;; KLHYLLYV: TIKAS-hylly vapaaseen 3D-suuntaan (pystysuoraan tai viistosti).
+;;; Kaytto:
+;;;   1. KLHYLLYV
+;;;   2. Leveys 300/400/500
+;;;   3. Alaosa (base point) - mika tahansa 3D-piste
+;;;   4. Ylaosa (length end) - maarittaa pituuden ja suunnan (voi olla 3D)
+;;;   5. Leveyden viittauspiste - UCS projisoi automaattisesti kohtisuoran
+;;;      leveyssuunnan pituusakselia vasten
+;;;
+;;; Toteutus: UCS 3-piste origin=p1, +X=p2, +Y=p3 niin etta rails ja
+;;; poikkitikat piirtyvat BOX:illa UCS-akseleiden mukaan. UCS palautetaan
+;;; edelliseen tilaan lopuksi (_P).
+(defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldCecolor oldOsmode
+                     levyStr levy p1 p2 p3 length
+                     rail1 rail2 rungs ss i center halfW e corner )
+
+  (defun *error* ( msg )
+    (if oldOsmode  (setvar "OSMODE"  oldOsmode))
+    (if oldCecolor (setvar "CECOLOR" oldCecolor))
+    (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
+    (if oldClayer  (setvar "CLAYER"  oldClayer))
+    (vl-catch-all-apply 'command (list "_.UCS" "_P"))
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
+      (princ (strcat "\nVirhe: " msg)))
+    (princ)
+  )
+
+  (setq oldClayer  (getvar "CLAYER"))
+  (setq oldCmdecho (getvar "CMDECHO"))
+  (setq oldCecolor (getvar "CECOLOR"))
+  (setq oldOsmode  (getvar "OSMODE"))
+
+  (setvar "CMDECHO" 0)
+  (setvar "CECOLOR" "BYLAYER")
+
+  (klhylly-ensure-layer "KYL-TIKASHYLLY" 76 76 153)
+  (setvar "CLAYER" "KYL-TIKASHYLLY")
+
+  (initget "300 400 500")
+  (setq levyStr (getkword "\nLeveys [300/400/500] <300>: "))
+  (if (null levyStr) (setq levyStr "300"))
+  (setq levy (atof levyStr))
+
+  (setq p1 (getpoint "\nAlaosa (base point): "))
+  (if (null p1) (exit))
+
+  (setq p2 (getpoint p1 "\nYlaosa (length end): "))
+  (if (null p2) (exit))
+  (setq length (distance p1 p2))
+  (if (< length 1.0)
+    (progn (princ "\nPituus liian lyhyt.") (exit)))
+
+  (setq p3 (getpoint p1 "\nLeveyden suunta (width direction reference): "))
+  (if (null p3) (exit))
+
+  ;; Aseta UCS: origin=p1, +X=p1->p2 suunta, +Y=projisoitu p3-suunta.
+  ;; Snappi pois UCS:n ajaksi jotta tarkat pisteet menevat oikein.
+  (setvar "OSMODE" 0)
+  (command "_.UCS" "_3P" p1 p2 p3)
+
+  ;; Rail 1: UCS (0,0,0), L=length, W=15 (UCS Y), D=60 (UCS Z)
+  (command "_.BOX" (trans '(0.0 0.0 0.0) 1 0) "_L" length 15.0 60.0)
+  (setq rail1 (entlast))
+
+  ;; Rail 2: UCS (0, levy-15, 0)
+  (command "_.BOX"
+           (trans (list 0.0 (- levy 15.0) 0.0) 1 0)
+           "_L" length 15.0 60.0)
+  (setq rail2 (entlast))
+
+  ;; Poikkitikat 250 mm valein, 15x(levy-30)x15, aloittaen z=10
+  (setq i 1 center (* i 250.0) rungs nil halfW 7.5)
+  (while (<= (+ center halfW) length)
+    (setq corner (trans (list (- center halfW) 15.0 10.0) 1 0))
+    (command "_.BOX" corner "_L" 15.0 (- levy 30.0) 15.0)
+    (setq rungs (cons (entlast) rungs))
+    (setq i (1+ i))
+    (setq center (* i 250.0))
+  )
+
+  ;; UNION kaikki yhdeksi solidiksi
+  (setq ss (ssadd))
+  (setq ss (ssadd rail1 ss))
+  (setq ss (ssadd rail2 ss))
+  (foreach e rungs (setq ss (ssadd e ss)))
+  (command "_.UNION" ss "")
+
+  ;; Palauta UCS ja sysvarit
+  (command "_.UCS" "_P")
+  (setvar "OSMODE"  oldOsmode)
+  (setvar "CECOLOR" oldCecolor)
+  (setvar "CMDECHO" oldCmdecho)
+  (setvar "CLAYER"  oldClayer)
+
+  (princ "\nKLHYLLYV valmis.")
+  (princ)
+)
+
 ;;; HYLLYKORKO: siirtaa valitut hyllyt (tai mita tahansa objekteja) absoluuttiselle
 ;;; Z-korolle. Lukee valinnan alimman bounding-box Z:n ja laskee siirtyman
 ;;; niin etta matalin alareuna osuu annettuun Z:aan. Kaytto:
@@ -461,5 +559,5 @@
   (princ)
 )
 
-(princ "\nKLHYLLY + HYLLYKORKO ladattu. Komennot: KLHYLLY, HYLLYKORKO")
+(princ "\nKLHYLLY + KLHYLLYV + HYLLYKORKO ladattu. Komennot: KLHYLLY, KLHYLLYV, HYLLYKORKO")
 (princ)

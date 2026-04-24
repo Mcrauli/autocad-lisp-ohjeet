@@ -985,7 +985,8 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="block reveal">
 <h3>Komennot:</h3>
 <ul>
-<li><code>KLHYLLY</code> — piirtää hyllyn z=0:lle</li>
+<li><code>KLHYLLY</code> — piirtää hyllyn z=0:lle (vaakasuora, LEVY tai TIKAS)</li>
+<li><code>KLHYLLYV</code> — piirtää TIKAS-hyllyn pystyyn tai vapaaseen 3D-suuntaan</li>
 <li><code>HYLLYKORKO</code> — siirtää valitut hyllyt kerralla halutulle z-korolle</li>
 </ul>
 </div>
@@ -1015,6 +1016,19 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <li>Klikkaa loppupiste — pituus ja suunta määräytyvät kahdesta pisteestä</li>
 <li>Leveyspuoli valitaan automaattisesti tyhjälle puolelle, jos toisella puolella on jo hylly</li>
 </ol>
+</div>
+
+<div class="block reveal">
+<h3>Pysty-TIKAS (<code>KLHYLLYV</code>):</h3>
+<p>Kun TIKAS-hyllyn pitää nousta pystyyn (esim. seinätikas) tai kulkea viistosti 3D-tilassa, käytä <code>KLHYLLYV</code>-komentoa. Tämä toimii 3D-näkymässä.</p>
+<ol>
+<li>Kirjoita <code>KLHYLLYV</code></li>
+<li>Valitse leveys: <code>300</code>, <code>400</code> tai <code>500</code></li>
+<li>Klikkaa <b>alaosa</b> — mikä tahansa 3D-piste</li>
+<li>Klikkaa <b>yläosa</b> — määrittää pituuden ja suunnan; voi olla suoraan p1:n yläpuolella (pystysuora) tai viistossa</li>
+<li>Klikkaa <b>leveyden viittauspiste</b> — UCS projisoi automaattisesti kohtisuoran leveyssuunnan pituusakselia vasten</li>
+</ol>
+<p>Tikas rakentuu BOX-komennoilla UCS-akseleiden mukaan ja UCS palautuu edelliseen tilaan lopuksi. Tulos on yksi UNIONed 3D-solidi kuten vaakasuora TIKAS.</p>
 </div>
 
 <div class="block reveal">
