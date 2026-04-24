@@ -441,8 +441,7 @@
                      modeKw levyStr levy lenInput p1 p2 p3 length
                      Lraw Lmag L Wraw dotLW Wperp Wmag W D
                      msp mat solids rail1 rail2 rung
-                     i center halfW s ss
-                     finalEnt minArr maxArr )
+                     i center halfW s ss )
 
   (defun *error* ( msg )
     (if oldOsmode   (setvar "OSMODE"   oldOsmode))
@@ -591,25 +590,6 @@
   (foreach s solids
     (setq ss (ssadd (vlax-vla-object->ename s) ss)))
   (command "_.UNION" ss "")
-  (setq finalEnt (entlast))
-
-  ;; 6) Debug-bbox: tulisi olla p1:n lahella
-  (if finalEnt
-    (progn
-      (setq minArr nil maxArr nil)
-      (vl-catch-all-apply
-        'vla-GetBoundingBox
-        (list (vlax-ename->vla-object finalEnt) 'minArr 'maxArr))
-      (if (and minArr maxArr)
-        (progn
-          (princ "\nTikas bbox min: ")
-          (princ (vlax-safearray->list minArr))
-          (princ "\nTikas bbox max: ")
-          (princ (vlax-safearray->list maxArr))
-        )
-      )
-    )
-  )
 
   (setvar "OSMODE"   oldOsmode)
   (setvar "SNAPMODE" oldSnapmode)
