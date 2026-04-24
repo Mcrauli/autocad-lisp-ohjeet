@@ -406,5 +406,60 @@
   (princ)
 )
 
-(princ "\nKLHYLLY ladattu. Kirjoita komento: KLHYLLY")
+;;; HYLLYKORKO: siirtaa valitut hyllyt (tai mita tahansa objekteja) absoluuttiselle
+;;; Z-korolle. Lukee valinnan alimman bounding-box Z:n ja laskee siirtyman
+;;; niin etta matalin alareuna osuu annettuun Z:aan. Kaytto:
+;;;   1. Piirra hyllyt rauhassa z=0:lle KLHYLLY:lla.
+;;;   2. Kun suunnitelma valmis, valitse yhden tason hyllyt.
+;;;   3. HYLLYKORKO -> anna kohdekorko (absoluuttinen Z mm) -> siirtyy yhdella
+;;;      kerralla. Toimii sekä LEVY-ryhmille että TIKAS-3D-soldeille.
+(defun c:HYLLYKORKO ( / ss i ent obj minArr maxArr res mn curZ targetZ delta )
+
+  (prompt "\nValitse hyllyt: ")
+  (setq ss (ssget))
+
+  (if (null ss)
+    (progn
+      (princ "\nEi valittuja kohteita.")
+      (princ)
+    )
+    (progn
+      ;; Etsi valinnan alin Z bounding boxeista
+      (setq i 0 curZ nil)
+      (while (< i (sslength ss))
+        (setq ent (ssname ss i))
+        (setq obj (vlax-ename->vla-object ent))
+        (setq minArr nil maxArr nil)
+        (setq res
+          (vl-catch-all-apply 'vla-GetBoundingBox (list obj 'minArr 'maxArr)))
+        (if (and (not (vl-catch-all-error-p res)) minArr)
+          (progn
+            (setq mn (vlax-safearray->list minArr))
+            (if (or (null curZ) (< (nth 2 mn) curZ))
+              (setq curZ (nth 2 mn)))
+          )
+        )
+        (setq i (1+ i))
+      )
+      (if (null curZ) (setq curZ 0.0))
+
+      (princ (strcat "\nNykyinen Z (alareuna): " (rtos curZ 2 1) " mm"))
+      (setq targetZ (getreal "\nKohdekorko (absoluuttinen Z mm): "))
+
+      (if (null targetZ)
+        (princ "\nKeskeytetty.")
+        (progn
+          (setq delta (- targetZ curZ))
+          (command "_.MOVE" ss "" '(0.0 0.0 0.0) (list 0.0 0.0 delta))
+          (princ
+            (strcat "\nSiirretty " (rtos delta 2 1) " mm -> Z = "
+                    (rtos targetZ 2 1)))
+        )
+      )
+    )
+  )
+  (princ)
+)
+
+(princ "\nKLHYLLY + HYLLYKORKO ladattu. Komennot: KLHYLLY, HYLLYKORKO")
 (princ)

@@ -985,7 +985,8 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="block reveal">
 <h3>Komennot:</h3>
 <ul>
-<li><code>KLHYLLY</code></li>
+<li><code>KLHYLLY</code> — piirtää hyllyn z=0:lle</li>
+<li><code>HYLLYKORKO</code> — siirtää valitut hyllyt kerralla halutulle z-korolle</li>
 </ul>
 </div>
 
@@ -1014,6 +1015,18 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <li>Klikkaa loppupiste — pituus ja suunta määräytyvät kahdesta pisteestä</li>
 <li>Leveyspuoli valitaan automaattisesti tyhjälle puolelle, jos toisella puolella on jo hylly</li>
 </ol>
+</div>
+
+<div class="block reveal">
+<h3>Z-korko jälkikäteen (<code>HYLLYKORKO</code>):</h3>
+<p>Z-korko on yleensä suunnittelussa viimeisenä selviävä asia ja se voi muuttua monta kertaa. Piirrä siis hyllyt rauhassa oletuksena z=0:lle, aseta korot lopuksi:</p>
+<ol>
+<li>Valitse yhden tason hyllyt (window-select tai klikki per hylly)</li>
+<li>Kirjoita <code>HYLLYKORKO</code></li>
+<li>Komento näyttää valinnan nykyisen alimman Z:n</li>
+<li>Anna kohdekorko absoluuttisena Z:nä (mm) → hyllyt siirtyvät yhdellä kerralla</li>
+</ol>
+<p>Toimii sekä LEVY-ryhmille että TIKAS-3D-solideille, ja oikeastaan millä tahansa muullakin valinnalla — laskee siirtymän bounding-boxin alareunan ja kohdekorkeuden välille.</p>
 </div>
 
 <div class="block reveal">
