@@ -79,8 +79,18 @@ uusi aksentti jossakin, mieti ensin voiko käyttää jo olemassa olevaa.
   amber "+"-merkkiä sivun nurkissa, yläkulmat topnavin alapuolella
   (78px top). Piilossa <600px.
 - **Topnav** — kiinteä, blurred: `(λ)`-brand vasemmalla, linkit
-  keskellä animoidulla alaviivalla, `v1.0` oikealla (cyan
+  keskellä animoidulla alaviivalla, `v1.1` oikealla (cyan
   JetBrains Mono, mobiilissa piilossa)
+- **Mobile TOC dropdown** (vain `ohjeet.html`, vain <900px):
+  chevron-nappi `(▾)` "Ohjeet"-linkin vieressä topnavissa avaa
+  alasvetovalikon (`#mobile-toc`) joka sisältää sidebarin
+  `.menu`-rakenteen kopion (3 ryhmää, numeroidut linkit). CSS
+  override mediakyselyn sisällä palauttaa vertical-tyylin koska
+  `.menu` muutoin saisi chip-rivi-tyylin samassa breakpointissa.
+  Sulkeminen: linkin klikkaus, ESC, ulkopuolen klikkaus, resize
+  ≥900px. Scroll-spy `.menu a` -selektori valaisee active-tilan
+  sekä sidebarin että mobile-tocin linkkeihin samanaikaisesti.
+  Chip-rivi mobiilissa pysyi entisellään.
 - **Footer** — `© 2026 Lauri Rekola`, heikko erotinviiva yläpuolella
 - **Section bead** (vain ohjeet.html): viivojen välissä hehkuva amber
   pallo. Huom: käytä aina `.section + .section` -selektoria, EI
@@ -153,7 +163,7 @@ http://localhost:8765/index.html?v=17
 ```
 
 Tai nosta `style.css?v=N` ja `script.js?v=N` kaikissa kolmessa
-HTML:ssä. Nykyiset versionumerot: `style.css?v=2`, `script.js?v=1`.
+HTML:ssä. Nykyiset versionumerot: `style.css?v=3`, `script.js?v=2`.
 
 Animoitujen elementtien screenshot: pysäytä CSS-animaatio
 `element.style.animationPlayState = 'paused'` ja tarvittaessa pakota
@@ -204,6 +214,11 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     sidebar-linkki, FAQ-entry LEVY/TIKAS-erosta, index feature-card
     (4-col grid) + SoftwareApplication JSON-LD, lataukset .block
     + LSP-latauskortti (klhylly.lsp 15.8 KB).
+12. Mobile TOC dropdown ohjeet-sivulle: chevron-nappi "Ohjeet"-linkin
+    vieressä avaa fixed-positioidun alasvetovalikon mobiilissa
+    (<900px). Sidebar-chip-rivi pysyi entisellään. Scroll-spy
+    laajeni automaattisesti molemmille (`.menu a` matchaa kumpaankin).
+    Versionumero topnavissa nostettu v1.0 → v1.1.
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 

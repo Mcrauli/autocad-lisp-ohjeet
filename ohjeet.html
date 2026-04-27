@@ -13,7 +13,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 
 <script type="application/ld+json">
 {
@@ -618,6 +618,139 @@ code {
 
 .faq-body li { margin-bottom: 6px; }
 
+/* MOBILE TOC dropdown — chevron next to "Ohjeet" opens full TOC */
+.topnav-toc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.toc-toggle { display: none; }
+.mobile-toc { display: none; }
+
+@media (max-width: 900px) {
+  .toc-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+  .toc-toggle:hover {
+    border-color: rgba(245,158,11,0.4);
+    color: #f59e0b;
+  }
+  .toc-toggle:focus-visible {
+    outline: 2px solid #f59e0b;
+    outline-offset: 2px;
+  }
+  .toc-toggle[aria-expanded="true"] {
+    background: rgba(245,158,11,0.08);
+    border-color: rgba(245,158,11,0.5);
+    color: #f59e0b;
+  }
+  .toc-toggle svg {
+    width: 12px;
+    height: 8px;
+    transition: transform 0.25s ease;
+  }
+  .toc-toggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+
+  .mobile-toc {
+    display: block;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    background: rgba(2,6,23,0.97);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 4px 0 16px;
+    transform: translateY(-12px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.22s ease, opacity 0.22s ease;
+    z-index: 9998;
+    counter-reset: menu-counter;
+  }
+  .mobile-toc[aria-hidden="false"] {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Override chip-rivi rules inside mobile-toc — keep vertical sidebar look */
+  .mobile-toc .menu-group {
+    display: block;
+    padding: 14px 22px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .mobile-toc .menu {
+    display: block;
+    padding: 0;
+    overflow: visible;
+  }
+  .mobile-toc .menu a {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 22px;
+    flex-shrink: initial;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    font-size: 15px;
+    counter-increment: menu-counter;
+  }
+  .mobile-toc .menu a::before {
+    display: inline-block;
+    content: counter(menu-counter, decimal-leading-zero);
+    color: #60a5fa;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    opacity: 0.6;
+  }
+  .mobile-toc .menu a:hover {
+    color: #e2e8f0;
+    background: rgba(255,255,255,0.03);
+    transform: none;
+    box-shadow: inset 2px 0 0 #f59e0b;
+  }
+  .mobile-toc .menu a.active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.06);
+    box-shadow: inset 3px 0 0 #f59e0b;
+    border-color: transparent;
+  }
+  .mobile-toc .menu a.active::before {
+    color: #f59e0b;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toc-toggle svg,
+  .mobile-toc {
+    transition: none;
+  }
+}
+
 /* MOBILE: sidebar becomes horizontal chip row */
 @media (max-width: 900px) {
   .sidebar {
@@ -688,11 +821,31 @@ code {
 <a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
 <nav class="topnav-links">
 <a href="index.html">Etusivu</a>
+<span class="topnav-toc">
 <a href="ohjeet.html" class="active">Ohjeet</a>
+<button type="button" class="toc-toggle" aria-expanded="false" aria-controls="mobile-toc" aria-label="Avaa sisällysluettelo">
+<svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+</span>
 <a href="lataukset.html">Lataukset</a>
 </nav>
-<span class="version">v1.0</span>
+<span class="version">v1.1</span>
 </div>
+
+<nav id="mobile-toc" class="mobile-toc" aria-hidden="true" aria-label="Ohjesivun sisällysluettelo">
+<div class="menu">
+<span class="menu-group">Alkuun</span>
+<a href="#intro">Johdanto</a>
+<a href="#kayttoonotto">Käyttöönotto</a>
+<span class="menu-group">Työkalut</span>
+<a href="#putket">Putkityökalu</a>
+<a href="#positio">Positio</a>
+<a href="#kaato">Kaato</a>
+<a href="#klhylly">Kylmälaitehylly</a>
+<span class="menu-group">Lisätietoa</span>
+<a href="#faq">Usein kysyttyä</a>
+</div>
+</nav>
 
 <div class="sidebar">
 <a href="#top" class="title">AutoCAD LISP ohjeet</a>
@@ -1136,7 +1289,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 
 <button class="back-to-top" aria-label="Takaisin ylös" title="Takaisin ylös">↑</button>
 
-<script src="script.js?v=1" defer></script>
+<script src="script.js?v=2" defer></script>
 <script>
 const sections = document.querySelectorAll(".section");
 const links = document.querySelectorAll(".menu a");
@@ -1180,6 +1333,34 @@ if (backToTop) {
     backToTop.classList.toggle("visible", window.scrollY > 600);
   });
   backToTop.addEventListener("click", scrollToTop);
+}
+
+// Mobile TOC dropdown toggle
+const mobileToc = document.getElementById("mobile-toc");
+const tocToggle = document.querySelector(".toc-toggle");
+if (mobileToc && tocToggle) {
+  const setOpen = (open) => {
+    tocToggle.setAttribute("aria-expanded", String(open));
+    mobileToc.setAttribute("aria-hidden", String(!open));
+  };
+  tocToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = tocToggle.getAttribute("aria-expanded") === "true";
+    setOpen(!isOpen);
+  });
+  mobileToc.addEventListener("click", (e) => {
+    if (e.target.closest("a")) setOpen(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setOpen(false);
+  });
+  document.addEventListener("click", (e) => {
+    if (mobileToc.getAttribute("aria-hidden") === "true") return;
+    if (e.target.closest("#mobile-toc") || e.target.closest(".toc-toggle")) return;
+    setOpen(false);
+  });
+  const mq = window.matchMedia("(min-width: 900px)");
+  mq.addEventListener("change", (e) => { if (e.matches) setOpen(false); });
 }
 </script>
 
