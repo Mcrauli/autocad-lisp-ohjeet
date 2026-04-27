@@ -6,6 +6,10 @@
 
 /* ---------- Base ---------- */
 
+html {
+  background-color: #020617;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
