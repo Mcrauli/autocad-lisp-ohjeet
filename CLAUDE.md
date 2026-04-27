@@ -84,13 +84,13 @@ uusi aksentti jossakin, mieti ensin voiko käyttää jo olemassa olevaa.
 - **Mobile TOC dropdown** (vain `ohjeet.html`, vain <900px):
   chevron-nappi `(▾)` "Ohjeet"-linkin vieressä topnavissa avaa
   alasvetovalikon (`#mobile-toc`) joka sisältää sidebarin
-  `.menu`-rakenteen kopion (3 ryhmää, numeroidut linkit). CSS
-  override mediakyselyn sisällä palauttaa vertical-tyylin koska
-  `.menu` muutoin saisi chip-rivi-tyylin samassa breakpointissa.
-  Sulkeminen: linkin klikkaus, ESC, ulkopuolen klikkaus, resize
-  ≥900px. Scroll-spy `.menu a` -selektori valaisee active-tilan
-  sekä sidebarin että mobile-tocin linkkeihin samanaikaisesti.
-  Chip-rivi mobiilissa pysyi entisellään.
+  `.menu`-rakenteen kopion (3 ryhmää, numeroidut linkit). Käyttää
+  desktop `.menu`-tyylejä suoraan — mobile breakpoint piilottaa
+  `.sidebar` kokonaan, joten ei chip-rivi-CSS:ää joka tarvitsisi
+  override:a mobile-tocissa. Sulkeminen: linkin klikkaus, ESC,
+  ulkopuolen klikkaus, resize ≥900px. Scroll-spy `.menu a`
+  -selektori valaisee active-tilan sekä desktop-sidebarin että
+  mobile-tocin linkkeihin samanaikaisesti.
 - **Footer** — `© 2026 Lauri Rekola`, heikko erotinviiva yläpuolella
 - **Section bead** (vain ohjeet.html): viivojen välissä hehkuva amber
   pallo. Huom: käytä aina `.section + .section` -selektoria, EI
@@ -216,9 +216,10 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     + LSP-latauskortti (klhylly.lsp 15.8 KB).
 12. Mobile TOC dropdown ohjeet-sivulle: chevron-nappi "Ohjeet"-linkin
     vieressä avaa fixed-positioidun alasvetovalikon mobiilissa
-    (<900px). Sidebar-chip-rivi pysyi entisellään. Scroll-spy
-    laajeni automaattisesti molemmille (`.menu a` matchaa kumpaankin).
-    Versionumero topnavissa nostettu v1.0 → v1.1.
+    (<900px). Aiempi sidebar-chip-rivi piilotettiin koska dropdown
+    kattaa saman tarpeen ja chip-rivi olisi duplikaatti. Scroll-spy
+    laajeni automaattisesti molemmille (`.menu a` matchaa desktop-
+    sidebarin ja mobile-tocin linkit). Versionumero v1.0 → v1.1.
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 
