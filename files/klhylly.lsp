@@ -339,18 +339,29 @@
   ;; 3) Aloituspiste. Kaksi-tasoinen snap:
   ;;    (a) OSMODE pakotetaan ENDP+INT:iin pick-ajaksi -> AutoCADin natiivi
   ;;        OSNAP nappaa kulman visuaalisella markerilla aukon sisalla.
+  ;;        16383-mask tyhjentaa 16384-bitin (snap off) jotta pakotus
+  ;;        toimii vaikka kayttajalla F3 olisi pois paalta.
   ;;    (b) Fallback: ssget-pohjainen haku lahimpaan LWPOLYLINE-vertexiin
   ;;        <= 80 mm paahan jos natiivi OSNAP ei lauennut.
-  (setvar "OSMODE" (logior oldOsmode 33))  ;; 1=ENDP, 32=INT
+  ;;    (c) Pickin Z-komponentti tiputetaan z=0:aan koska LEVY/TIKAS on
+  ;;        2D-objekti — muuten 3D-snap (esim. seinan ylakulma z=2400) tekisi
+  ;;        (distance p1 p2):sta absurdin pitkan.
+  (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))  ;; ENDP+INT, snap forced on
   (setq p1 (getpoint "\nPick start point: "))
   (setvar "OSMODE" oldOsmode)
   (if (null p1) (exit))
+  (setq p1 (list (car p1) (cadr p1) 0.0))
   (setq p1snap (klhylly-snap-corner p1))
   (if p1snap (setq p1 p1snap))
 
-  ;; 4) Pituuden loppupiste (maarittaa pituuden ja suunnan)
+  ;; 4) Pituuden loppupiste (maarittaa pituuden ja suunnan).
+  ;;    Sama snap-pakotus kuin p1:lle -> myos toinen pää voi napata olemassa
+  ;;    olevan hyllyn nurkkaan (puhtaat L-mutkat). Z=0 sama syy kuin p1:ssa.
+  (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
   (setq p2 (getpoint p1 "\nPick length end point: "))
+  (setvar "OSMODE" oldOsmode)
   (if (null p2) (exit))
+  (setq p2 (list (car p2) (cadr p2) 0.0))
   (setq pituus (distance p1 p2))
   (if (<= pituus 0.0) (exit))
   (setq ang (angle p1 p2))
