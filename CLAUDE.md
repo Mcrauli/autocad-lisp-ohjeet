@@ -246,6 +246,13 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     Setup-installerille (v0.1.8a1 → v0.1.9a1) sekä index.html:n
     SoftwareApplication-JSON-LD:n softwareVersion + downloadUrl.
 
+16. **Sivun pinnaus v0.1.10-alpha1:een**: itsepäivityksen "Failed to start
+    embedded python interpreter" -bootloader-bugi korjattu (3 s viive
+    PowerShell-launcherilla + SHA-256-sidecar-verifiointi). Help-menun
+    "Käyttöohjeet (selain)" -duplikaatti-action poistettu (About-dialogi
+    riittää). dxf2ifc.html lataus-URL + index.html JSON-LD bumpattu
+    Setup-installerille v0.1.9a1 → v0.1.10a1.
+
 14. **Sivuston rebrand + selkokielistys**:
     - Brand "AutoCAD LISP" → **"Suunnittelutyökalut"** kaikilla 4 sivulla
       (topnav, title-tagit, og-tagit, JSON-LD WebSite.name, etusivun h1).
