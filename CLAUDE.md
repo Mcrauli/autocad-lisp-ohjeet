@@ -29,7 +29,7 @@ og-tagit ja JSON-LD `WebSite.name` on päivitetty.
 | `index.html`     | Hero (kicker + h1 "Suunnittelutyökalut" + subtitle) · `.spotlight` dxf2ifc-blokki (amber gradient-border, "BIM-konvertteri · uusi" -badge, "Tutustu projektiin →" -linkki) · `.lisp-heading` divider ("AutoCAD LISP -komennot") · 4 feature-korttia · info-osio + highlight-boksit · footer |
 | `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 7 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Positio · Kaato · Kylmälaitehylly · Usein kysyttyä. Neljä tuotetta (Putki/Positio/Kaato/KLHylly) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
 | `lataukset.html` | Topnav + 3 kuvauskorttia · 4 latauskorttia (LSP- ja DWG-badge, tiedostokoko, "Lataa ↓" -nappi) · footer |
-| `dxf2ifc.html`   | Topnav (dxf2ifc aktiivinen) · hero kicker+h1+subtitle · 4 `.block`-lohkoa (Mitä se tekee, Avain-ominaisuudet `.feature-list`, Asennus + `.req-tag`-chipit, `.block.warning` SmartScreen-varoitus) · 2 `.file`-latauskorttia (Setup + standalone exe, WIN-badge, GitHub Releases asset-URL pinnattu v0.1.8-alpha1:een) · footer. Linkit menevät `https://github.com/Mcrauli/dxf2ifc/releases/download/...`-osoitteisiin (yksi klikki → lataus). |
+| `dxf2ifc.html`   | Topnav (dxf2ifc aktiivinen) · hero kicker+h1+subtitle · 4 `.block`-lohkoa (Mitä se tekee, Avain-ominaisuudet `.feature-list`, Asennus + `.req-tag`-chipit, `.block.warning` SmartScreen-varoitus) · `.file primary` Setup-installer-latauskortti (WIN/SETUP-badge, GitHub Releases asset-URL pinnattu **v0.1.9-alpha1**:een) · footer. Linkki menee `https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.9-alpha1/dxf2ifc-Setup-0.1.9a1.exe` (yksi klikki → lataus). |
 
 ## Jaetut resurssit
 
@@ -240,6 +240,12 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     (amber vasen reuna). SoftwareApplication JSON-LD lisätty etusivun
     `@graph`:iin (5 entryä) sekä omana documenttina dxf2ifc.html:ssä.
     Sitemap.xml päivitetty.
+15. **Sivun pinnaus v0.1.9-alpha1:een**: dxf2ifc-softan "Help → Käyttöohjeet"
+    -menulinkki avaa nyt automaattisesti tämän sivun selaimessa, ja
+    About-dialogissa on linkki samaan sivuun. Sivun lataus-URL bumpattu
+    Setup-installerille (v0.1.8a1 → v0.1.9a1) sekä index.html:n
+    SoftwareApplication-JSON-LD:n softwareVersion + downloadUrl.
+
 14. **Sivuston rebrand + selkokielistys**:
     - Brand "AutoCAD LISP" → **"Suunnittelutyökalut"** kaikilla 4 sivulla
       (topnav, title-tagit, og-tagit, JSON-LD WebSite.name, etusivun h1).
