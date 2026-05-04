@@ -6,8 +6,9 @@ suuntaan.
 
 ## Mikä tämä on
 
-Staattinen kolmen sivun HTML-sivusto joka esittelee ja tarjoaa
-lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
+Staattinen neljän sivun HTML-sivusto joka esittelee ja tarjoaa
+lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja sekä
+dxf2ifc-projektin (Python DXF→IFC4-konvertteri).
 
 - **Tekijä:** Lauri Rekola
 - **Käyttäjäkunta:** kylmälaite- ja putkikaaviosuunnittelijat
@@ -22,6 +23,7 @@ lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
 | `index.html`     | Hero (kicker + h1 + subtitle + teksti) · 3 feature-korttia · info-osio + highlight-boksit · footer |
 | `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 7 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Positio · Kaato · Kylmälaitehylly · Usein kysyttyä. Neljä tuotetta (Putki/Positio/Kaato/KLHylly) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
 | `lataukset.html` | Topnav + 3 kuvauskorttia · 4 latauskorttia (LSP- ja DWG-badge, tiedostokoko, "Lataa ↓" -nappi) · footer |
+| `dxf2ifc.html`   | Topnav (dxf2ifc aktiivinen) · hero kicker+h1+subtitle · 4 `.block`-lohkoa (Mitä se tekee, Avain-ominaisuudet `.feature-list`, Asennus + `.req-tag`-chipit, `.block.warning` SmartScreen-varoitus) · 2 `.file`-latauskorttia (Setup + standalone exe, WIN-badge, GitHub Releases asset-URL pinnattu v0.1.8-alpha1:een) · footer. Linkit menevät `https://github.com/Mcrauli/dxf2ifc/releases/download/...`-osoitteisiin (yksi klikki → lataus). |
 
 ## Jaetut resurssit
 
@@ -36,9 +38,11 @@ lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja.
   tyyli (generoitu PowerShell System.Drawingilla, fontti Segoe UI Bold)
 - `robots.txt`, `sitemap.xml` — github.io-URL pohjalla
 - **JSON-LD structured data** (`<script type="application/ld+json">`):
-  `index.html` sisältää WebSite + Person + 4 SoftwareApplication -entryä
-  (Putkityökalu/Positio/Kaato/Kylmälaitehylly) @graph-rakenteessa.
+  `index.html` sisältää WebSite + Person + 5 SoftwareApplication -entryä
+  (Putkityökalu/Positio/Kaato/Kylmälaitehylly/dxf2ifc) @graph-rakenteessa.
   `ohjeet.html` sisältää FAQPage-schemin FAQ-osion kysymyksistä.
+  `dxf2ifc.html` sisältää oman SoftwareApplication-entryn (downloadUrl
+  osoittaa GitHub Releases asset-URLiin, ei github.io/files-polkuun).
 - `files/` — varsinaiset `.lsp` ja `.dwg` -tiedostot
 
 ## Visuaalinen identiteetti
@@ -220,6 +224,16 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     kattaa saman tarpeen ja chip-rivi olisi duplikaatti. Scroll-spy
     laajeni automaattisesti molemmille (`.menu a` matchaa desktop-
     sidebarin ja mobile-tocin linkit). Versionumero v1.0 → v1.1.
+13. **dxf2ifc-projektisivu** lisätty (`dxf2ifc.html`) v0.1.8-alpha1
+    Setup-installerin ja standalone-exe:n latauskorteilla. Linkit
+    osoittavat suoraan GitHub Releases asset-URLeihin
+    (`releases/download/v0.1.8-alpha1/...`) — yksi klikki → lataus.
+    Topnav laajennettu 4 linkkiin kaikilla 4 sivulla, version v1.1
+    → v1.2. Uusi `.feature-list` (▸-bullet, sininen), `.req-tag`-chipit
+    järjestelmävaatimuksille, `.block.warning` SmartScreen-varoitukselle
+    (amber vasen reuna). SoftwareApplication JSON-LD lisätty etusivun
+    `@graph`:iin (5 entryä) sekä omana documenttina dxf2ifc.html:ssä.
+    Sitemap.xml päivitetty.
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 

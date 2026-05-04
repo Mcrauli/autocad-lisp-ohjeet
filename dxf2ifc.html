@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#020617">
+<meta name="description" content="dxf2ifc — AutoCAD DXF→IFC4-konvertteri kylmälaite- ja LVI-suunnitteluun. RAVA-luokitus, Talo2000, Solibri-yhteensopiva.">
+<meta property="og:title" content="dxf2ifc · DXF→IFC-konvertteri">
+<meta property="og:description" content="DXF→IFC4-konvertteri kylmälaite- ja LVI-suunnitteluun. Talo2000 + RAVA-koodit, Solibri-yhteensopiva.">
+<meta property="og:type" content="website">
+<title>dxf2ifc · DXF→IFC-konvertteri</title>
+
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=4">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "dxf2ifc",
+  "description": "AutoCAD DXF→IFC4-konvertteri kylmälaite- ja LVI-suunnitteluun. Talo2000 + RAVA-LVI/RAVA-TATE -luokitus, 6 suomalaista PSettiä per IFC-tuote, POSITIO-blokin auto-linkitys, Solibri-yhteensopiva.",
+  "applicationCategory": "DesignApplication",
+  "applicationSubCategory": "BIM converter",
+  "operatingSystem": "Windows 10/11 x64",
+  "softwareRequirements": "AutoCAD 2018+ (accoreconsole.exe ACIS-bodyjen tessellaatioon)",
+  "softwareVersion": "0.1.8-alpha1",
+  "inLanguage": "fi",
+  "author": {
+    "@type": "Person",
+    "name": "Lauri Rekola"
+  },
+  "license": "https://opensource.org/licenses/MIT",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR",
+    "availability": "https://schema.org/InStock"
+  },
+  "downloadUrl": "https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-Setup-0.1.8a1.exe",
+  "url": "https://mcrauli.github.io/autocad-lisp-ohjeet/dxf2ifc.html"
+}
+</script>
+
+<style>
+body {
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  max-width: 760px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 110px 20px 96px;
+}
+
+/* Hero kicker — amber JetBrains Mono uppercase, mirrors index.html style */
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: #f59e0b;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  opacity: 0.85;
+}
+
+.hero-kicker::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245,158,11,0.6);
+}
+
+h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 16px 0;
+}
+
+.hero-subtitle {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #cbd5f5;
+  margin: 0 0 48px 0;
+  max-width: 62ch;
+}
+
+a {
+  color: #f59e0b;
+  text-decoration: none;
+}
+
+.block {
+  background: rgba(2,6,23,0.75);
+  padding: 22px 24px;
+  border-radius: 10px;
+  margin-top: 20px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.block:hover {
+  transform: translateY(-2px);
+  background: rgba(15,23,42,0.85);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 24px -16px rgba(0,0,0,0.55);
+}
+
+.block h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  margin: 0 0 12px 0;
+  color: #f59e0b;
+}
+
+.block p {
+  line-height: 1.75;
+  color: #cbd5f5;
+  margin: 0 0 12px 0;
+}
+
+.block p:last-child {
+  margin-bottom: 0;
+}
+
+/* Feature list — short scannable bullets with amber bullet markers */
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-list li {
+  position: relative;
+  padding-left: 22px;
+  line-height: 1.7;
+  color: #e2e8f0;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.feature-list li:last-child {
+  margin-bottom: 0;
+}
+
+.feature-list li::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #60a5fa;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.feature-list strong {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+/* Tag chips for system requirements */
+.req-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 0;
+}
+
+.req-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: rgba(96,165,250,0.08);
+  border: 1px solid rgba(96,165,250,0.22);
+  color: #cbd5f5;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.req-tag::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #60a5fa;
+}
+
+/* Warning callout — amber left border, used for SmartScreen note */
+.block.warning {
+  border-left: 3px solid #f59e0b;
+  background: rgba(245,158,11,0.04);
+}
+
+.block.warning h2 {
+  color: #f59e0b;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.block.warning code {
+  background: rgba(96,165,250,0.1);
+  border: 1px solid rgba(96,165,250,0.18);
+  color: #60a5fa;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Download card — same .file pattern as lataukset.html, just WIN badge */
+.file {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  margin: 14px 0;
+  padding: 18px 20px;
+  background: rgba(2,6,23,0.55);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: border-color 0.2s ease;
+}
+
+.file.primary {
+  border-color: rgba(245,158,11,0.25);
+  background: rgba(245,158,11,0.04);
+}
+
+.block + .file {
+  margin-top: 48px;
+  position: relative;
+}
+
+.block + .file::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
+}
+
+.file:hover {
+  border-color: rgba(255,255,255,0.08);
+}
+
+.file.primary:hover {
+  border-color: rgba(245,158,11,0.45);
+}
+
+.file-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: rgba(148,163,184,0.08);
+  border: 1px solid rgba(148,163,184,0.22);
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #cbd5f5;
+}
+
+.file-badge.recommended {
+  background: rgba(245,158,11,0.1);
+  border-color: rgba(245,158,11,0.28);
+  color: #f59e0b;
+}
+
+.file-meta h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #e2e8f0;
+  letter-spacing: -0.005em;
+}
+
+.file-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.file-meta-line span + span::before {
+  content: "·";
+  margin-right: 10px;
+  opacity: 0.5;
+}
+
+.file-meta-note {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.file-meta-sha {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.file-meta-sha a {
+  color: #64748b;
+  border-bottom: 1px dotted rgba(100,116,139,0.4);
+}
+
+.file-meta-sha a:hover {
+  color: #94a3b8;
+  border-bottom-color: rgba(148,163,184,0.6);
+}
+
+.file-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: #f59e0b;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.file.primary .file-action {
+  background: rgba(245,158,11,0.18);
+  border-color: rgba(245,158,11,0.4);
+}
+
+.file-action:hover {
+  background: rgba(245,158,11,0.22);
+  border-color: rgba(245,158,11,0.55);
+  transform: translateY(-1px);
+}
+
+.file-action:active {
+  transform: translateY(0);
+}
+
+.file-action-arrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+@media (max-width: 520px) {
+  h1 { font-size: 34px; }
+  .container { padding: 96px 18px 72px; }
+  .file {
+    grid-template-columns: 48px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .file-badge { width: 48px; height: 48px; }
+  .file-action {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-top: 6px;
+  }
+}
+</style>
+</head>
+
+<body>
+<span class="crosshair tl"></span>
+<span class="crosshair tr"></span>
+<span class="crosshair bl"></span>
+<span class="crosshair br"></span>
+
+<div class="scroll-progress"><div class="scroll-progress__fill"></div></div>
+<div class="toast-host"></div>
+
+<div class="topnav">
+<a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
+<nav class="topnav-links">
+<a href="index.html">Etusivu</a>
+<a href="ohjeet.html">Ohjeet</a>
+<a href="lataukset.html">Lataukset</a>
+<a href="dxf2ifc.html" class="active">dxf2ifc</a>
+</nav>
+<span class="version">v1.2</span>
+</div>
+
+<div class="container">
+
+<span class="hero-kicker">BIM-konversio · v0.1.8-alpha1</span>
+<h1>dxf2ifc</h1>
+<p class="hero-subtitle">
+AutoCAD DXF → IFC 4 -konvertteri suomalaisiin kylmälaite- ja LVI-suunnitteluprojekteihin.
+Yksi komento DXF:stä Solibri-valmiiseen IFC-malliin — Talo2000-koodit, RAVA-luokitus
+ja kuusi suomalaista PSettiä jokaiselle tuotteelle automaattisesti.
+</p>
+
+<div class="block reveal">
+<h2>Mitä se tekee</h2>
+<p>
+Tunnistaa kylmälaite- ja LVI-elementit DXF:n layer-nimien perusteella ja kirjoittaa
+niistä IFC 4 -tiedoston, jonka Solibri lukee suoraan oikeilla luokituksilla.
+Höyrystimet, kylmäkoneikot, hyllyjärjestelmät, putket ja kaapelityökanavat saavat
+automaattisesti RAVA-LVI tai RAVA-TATE -koodit, suunnittelualan (Jäähdytys),
+sekä kuusi <strong>FI_*</strong>-PSettiä (Asennus, Geometria, Komponentti, Tuote,
+Tekninen, Sijainti) Solibrin välilehtiä varten.
+</p>
+<p>
+POSITIO-blokin kautta kylmälaitteille linkittyy automaattisesti koneikko-
+ja laitetunnustieto, ja erillinen energiateho-Excel/CSV mergeytyy
+FI_Tekninen-PSettiin. Geometria georeferensoidaan ETRS-TM35FIN-koordinaatistoon.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Avain-ominaisuudet</h2>
+<ul class="feature-list">
+<li><strong>Talo2000 + RAVA-koodit</strong> Solibri-yhteensopivasti — single-classification per elementti</li>
+<li><strong>POSITIO-blokin auto-linkitys</strong> — koneikko + laitetunnus poimitaan DXF:n positiov2-blokeista</li>
+<li><strong>Headless ACIS-tessellaatio</strong> — `accoreconsole.exe` käsittelee 3DSOLID-bodyt taustalla; ei AutoCAD-popup-ikkunaa, ei Recent Files -saastutusta</li>
+<li><strong>Energiateho-merge</strong> — Excel/CSV-listalta tehot suoraan FI_Tekninen-PSettiin (RefDesign-konventio)</li>
+<li><strong>PySide6-GUI</strong> — layer-preview, profiili-editori, taustasäikeen konversio + itsepäivitys-banneri</li>
+<li><strong>CLI</strong> komentorivilta — <code>dxf2ifc convert input.dxf output.ifc</code></li>
+</ul>
+</div>
+
+<div class="block reveal">
+<h2>Asennus</h2>
+<p>
+Asennus tapahtuu per-user-pohjaisesti — ohjelma asentuu polkuun
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(96,165,250,0.08); padding: 1px 6px; border-radius: 4px; color: #60a5fa;">%LOCALAPPDATA%\Programs\dxf2ifc\</code>
+ilman UAC-kehotusta. Vapaakäynnistys Käynnistä-valikosta tai työpöydältä.
+</p>
+<div class="req-tags">
+<span class="req-tag">Windows 10 / 11 x64</span>
+<span class="req-tag">AutoCAD 2018+</span>
+<span class="req-tag">accoreconsole.exe</span>
+</div>
+<p class="file-meta-note" style="margin-top: 14px;">
+AutoCAD-täysiversio tarvitaan ACIS-bodyjen (3DSOLID) tessellaatioon —
+LT ei toimi, koska accoreconsole on osa täysiversion asennusta.
+</p>
+</div>
+
+<div class="block warning reveal">
+<h2>SmartScreen-varoitus asennuksen yhteydessä</h2>
+<p>
+Ohjelma on tällä hetkellä <strong>allekirjoittamaton</strong>. Windows SmartScreen
+voi näyttää "<em>Windows protected your PC</em>" -varoituksen ensiasennuksessa.
+Klikkaa <code>More info</code> → <code>Run anyway</code> jatkaaksesi.
+</p>
+<p>
+Allekirjoitettu versio tulee kun SignPath OSS Foundation -hakemus hyväksytään
+(odottaa).
+</p>
+</div>
+
+<div class="file primary reveal">
+<span class="file-badge recommended">WIN<br>SETUP</span>
+<div class="file-meta">
+<h3>Setup-installeri (suositus)</h3>
+<div class="file-meta-line"><span>dxf2ifc-Setup-0.1.8a1.exe</span><span>~100 MB</span><span>v0.1.8-alpha1</span></div>
+<div class="file-meta-note">Inno Setup -asennusohjelma. Per-user, ei UAC, näkyy Apps &amp; Features -listassa.</div>
+<div class="file-meta-sha">SHA256: <a href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-Setup-0.1.8a1.exe.sha256">.sha256-tarkistussumma</a></div>
+</div>
+<a class="file-action" href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-Setup-0.1.8a1.exe" download>Lataa Setup<span class="file-action-arrow">↓</span></a>
+</div>
+
+<div class="file reveal">
+<span class="file-badge">WIN<br>EXE</span>
+<div class="file-meta">
+<h3>Standalone-exe</h3>
+<div class="file-meta-line"><span>dxf2ifc-0.1.8a1.exe</span><span>~100 MB</span><span>v0.1.8-alpha1</span></div>
+<div class="file-meta-note">Yksi tiedosto, ei asennusta. CLI + GUI samassa exe:ssä — kaksoisklikkaus avaa GUI:n. Edistyneille käyttäjille.</div>
+<div class="file-meta-sha">SHA256: <a href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-0.1.8a1.exe.sha256">.sha256-tarkistussumma</a></div>
+</div>
+<a class="file-action" href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-0.1.8a1.exe" download>Lataa exe<span class="file-action-arrow">↓</span></a>
+</div>
+
+<footer class="site-footer">
+© 2026 Lauri Rekola
+</footer>
+
+</div>
+
+<script src="script.js?v=2" defer></script>
+</body>
+</html>
