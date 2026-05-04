@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#020617">
-<meta name="description" content="dxf2ifc — AutoCAD DXF→IFC4-konvertteri kylmälaite- ja LVI-suunnitteluun. RAVA-luokitus, Talo2000, Solibri-yhteensopiva.">
+<meta name="description" content="dxf2ifc — AutoCAD DXF→IFC-konvertteri kylmälaitesuunnittelijoille. RAVA3Pro-luokitus, suomenkieliset PSetit, Solibri-yhteensopiva.">
 <meta property="og:title" content="dxf2ifc · DXF→IFC-konvertteri">
-<meta property="og:description" content="DXF→IFC4-konvertteri kylmälaite- ja LVI-suunnitteluun. Talo2000 + RAVA-koodit, Solibri-yhteensopiva.">
+<meta property="og:description" content="DXF→IFC-konvertteri kylmälaitesuunnittelijoille. RAVA3Pro-luokitus, Solibri-yhteensopiva.">
 <meta property="og:type" content="website">
 <title>dxf2ifc · DXF→IFC-konvertteri</title>
 
@@ -20,7 +20,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "dxf2ifc",
-  "description": "AutoCAD DXF→IFC4-konvertteri kylmälaite- ja LVI-suunnitteluun. Talo2000 + RAVA-LVI/RAVA-TATE -luokitus, 6 suomalaista PSettiä per IFC-tuote, POSITIO-blokin auto-linkitys, Solibri-yhteensopiva.",
+  "description": "AutoCAD DXF→IFC-konvertteri kylmälaitesuunnittelijoille. RAVA3Pro-luokitus, suomenkieliset PSetit (FI_*), POSITIO-blokin auto-linkitys, Solibri-yhteensopiva.",
   "applicationCategory": "DesignApplication",
   "applicationSubCategory": "BIM converter",
   "operatingSystem": "Windows 10/11 x64",
@@ -403,7 +403,7 @@ a {
 <div class="toast-host"></div>
 
 <div class="topnav">
-<a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">AutoCAD LISP</span></a>
+<a href="index.html" class="brand"><span class="brand-icon">(λ)</span><span class="brand-text">Suunnittelutyökalut</span></a>
 <nav class="topnav-links">
 <a href="index.html">Etusivu</a>
 <a href="ohjeet.html">Ohjeet</a>
@@ -418,37 +418,37 @@ a {
 <span class="hero-kicker">BIM-konversio · v0.1.8-alpha1</span>
 <h1>dxf2ifc</h1>
 <p class="hero-subtitle">
-AutoCAD DXF → IFC 4 -konvertteri suomalaisiin kylmälaite- ja LVI-suunnitteluprojekteihin.
-Yksi komento DXF:stä Solibri-valmiiseen IFC-malliin — Talo2000-koodit, RAVA-luokitus
-ja kuusi suomalaista PSettiä jokaiselle tuotteelle automaattisesti.
+Tekee AutoCAD-piirustuksesta Solibri-valmiin IFC-mallin yhdellä komennolla.
+Suunniteltu kylmälaitesuunnittelijoille — RAVA3Pro-luokitukset, suomenkieliset
+ominaisuussivut ja laitetunnukset löytyvät mallista automaattisesti.
 </p>
 
 <div class="block reveal">
 <h2>Mitä se tekee</h2>
 <p>
-Tunnistaa kylmälaite- ja LVI-elementit DXF:n layer-nimien perusteella ja kirjoittaa
-niistä IFC 4 -tiedoston, jonka Solibri lukee suoraan oikeilla luokituksilla.
-Höyrystimet, kylmäkoneikot, hyllyjärjestelmät, putket ja kaapelityökanavat saavat
-automaattisesti RAVA-LVI tai RAVA-TATE -koodit, suunnittelualan (Jäähdytys),
-sekä kuusi <strong>FI_*</strong>-PSettiä (Asennus, Geometria, Komponentti, Tuote,
-Tekninen, Sijainti) Solibrin välilehtiä varten.
+Avaat DXF-tiedoston, painat "Konvertoi", saat takaisin IFC-tiedoston jonka voit
+viedä Solibriin tai jakaa muille suunnittelijoille. Layer-nimien perusteella
+ohjelma tunnistaa höyrystimet, kylmäkoneikot, hyllyt, putket ja kaapelihyllyt
+— kullekin annetaan oikea RAVA3Pro-luokitus ja Solibrin välilehdille
+suomenkieliset tiedot (asennus, mitat, komponentti, tuote, tekniset arvot,
+sijainti).
 </p>
 <p>
-POSITIO-blokin kautta kylmälaitteille linkittyy automaattisesti koneikko-
-ja laitetunnustieto, ja erillinen energiateho-Excel/CSV mergeytyy
-FI_Tekninen-PSettiin. Geometria georeferensoidaan ETRS-TM35FIN-koordinaatistoon.
+POSITIO-blokin numerointi tarttuu automaattisesti laitteisiin, ja jos sinulla
+on energiatehot Excelissä, ohjelma osaa lukea sieltä jäähdytysteho-, sähköteho-
+ja vastusteho-arvot suoraan IFC-malliin.
 </p>
 </div>
 
 <div class="block reveal">
 <h2>Avain-ominaisuudet</h2>
 <ul class="feature-list">
-<li><strong>Talo2000 + RAVA-koodit</strong> Solibri-yhteensopivasti — single-classification per elementti</li>
-<li><strong>POSITIO-blokin auto-linkitys</strong> — koneikko + laitetunnus poimitaan DXF:n positiov2-blokeista</li>
-<li><strong>Headless ACIS-tessellaatio</strong> — `accoreconsole.exe` käsittelee 3DSOLID-bodyt taustalla; ei AutoCAD-popup-ikkunaa, ei Recent Files -saastutusta</li>
-<li><strong>Energiateho-merge</strong> — Excel/CSV-listalta tehot suoraan FI_Tekninen-PSettiin (RefDesign-konventio)</li>
-<li><strong>PySide6-GUI</strong> — layer-preview, profiili-editori, taustasäikeen konversio + itsepäivitys-banneri</li>
-<li><strong>CLI</strong> komentorivilta — <code>dxf2ifc convert input.dxf output.ifc</code></li>
+<li><strong>RAVA3Pro-luokitus automaattisesti</strong> — Solibri lukee mallin oikein heti, ei manuaalista koodien syöttöä</li>
+<li><strong>POSITIO-blokit linkittyvät laitteisiin</strong> — koneikon nimi ja laitetunnus löytyvät jokaisesta höyrystimestä mallissa</li>
+<li><strong>Tehot Excelistä mukaan</strong> — kylmäteho, sähköteho, vastusteho ja jäähdyttävä vaikutus mergaytyvät FI_Tekninen-välilehdelle</li>
+<li><strong>Suomenkieliset ominaisuussivut</strong> — Solibri näyttää Asennus, Geometria, Komponentti, Tuote, Tekninen ja Sijainti -välilehdet ilman erillistä mappausta</li>
+<li><strong>Ei AutoCAD-ikkunoita auki</strong> — 3D-objektit käsitellään taustalla, sun työpöytä pysyy rauhallisena eikä Recent Files täyty</li>
+<li><strong>Helppo käyttöliittymä</strong> — valitset DXF-tiedoston, näet ennakkoon mitä layereitä on, painat "Konvertoi". Itsepäivitys hoitaa uudet versiot automaattisesti.</li>
 </ul>
 </div>
 
@@ -486,23 +486,12 @@ Allekirjoitettu versio tulee kun SignPath OSS Foundation -hakemus hyväksytään
 <div class="file primary reveal">
 <span class="file-badge recommended">WIN<br>SETUP</span>
 <div class="file-meta">
-<h3>Setup-installeri (suositus)</h3>
+<h3>Setup-installeri</h3>
 <div class="file-meta-line"><span>dxf2ifc-Setup-0.1.8a1.exe</span><span>~100 MB</span><span>v0.1.8-alpha1</span></div>
-<div class="file-meta-note">Inno Setup -asennusohjelma. Per-user, ei UAC, näkyy Apps &amp; Features -listassa.</div>
+<div class="file-meta-note">Asennusohjelma jonka kanssa ohjelma näkyy normaalisti Käynnistä-valikossa ja Apps &amp; Features -listassa. Ei vaadi pääkäyttäjäoikeuksia.</div>
 <div class="file-meta-sha">SHA256: <a href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-Setup-0.1.8a1.exe.sha256">.sha256-tarkistussumma</a></div>
 </div>
 <a class="file-action" href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-Setup-0.1.8a1.exe" download>Lataa Setup<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge">WIN<br>EXE</span>
-<div class="file-meta">
-<h3>Standalone-exe</h3>
-<div class="file-meta-line"><span>dxf2ifc-0.1.8a1.exe</span><span>~100 MB</span><span>v0.1.8-alpha1</span></div>
-<div class="file-meta-note">Yksi tiedosto, ei asennusta. CLI + GUI samassa exe:ssä — kaksoisklikkaus avaa GUI:n. Edistyneille käyttäjille.</div>
-<div class="file-meta-sha">SHA256: <a href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-0.1.8a1.exe.sha256">.sha256-tarkistussumma</a></div>
-</div>
-<a class="file-action" href="https://github.com/Mcrauli/dxf2ifc/releases/download/v0.1.8-alpha1/dxf2ifc-0.1.8a1.exe" download>Lataa exe<span class="file-action-arrow">↓</span></a>
 </div>
 
 <footer class="site-footer">

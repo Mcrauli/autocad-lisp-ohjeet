@@ -1,4 +1,4 @@
-# AutoCAD LISP -työkalut — projektimuistio
+# Suunnittelutyökalut — projektimuistio
 
 Tämä tiedosto on Claudelle. Lue tämä aina kun jatkat sivustoa, niin
 pääset nopeasti kiinni kontekstiin ja vältyt menemästä väärään
@@ -7,8 +7,14 @@ suuntaan.
 ## Mikä tämä on
 
 Staattinen neljän sivun HTML-sivusto joka esittelee ja tarjoaa
-lataukseen Laurin kirjoittamia AutoCAD LISP -työkaluja sekä
-dxf2ifc-projektin (Python DXF→IFC4-konvertteri).
+lataukseen Lauri'n suunnittelutyökaluja kylmälaitesuunnitteluun:
+AutoCAD LISP -komennot piirustustyöhön sekä dxf2ifc DXF→IFC4
+-konvertteri Solibri-tason BIM-mallin tuottamiseen.
+
+**Sivuston nimi muutettu 2026-05-04**: aiemmin "AutoCAD LISP -työkalut"
+→ nyt **"Suunnittelutyökalut"** kun dxf2ifc nostettiin omalle sivulle
+ja ei ole enää LISP-only-sivusto. Brand-text topnavissa, title-tagit,
+og-tagit ja JSON-LD `WebSite.name` on päivitetty.
 
 - **Tekijä:** Lauri Rekola
 - **Käyttäjäkunta:** kylmälaite- ja putkikaaviosuunnittelijat
@@ -20,7 +26,7 @@ dxf2ifc-projektin (Python DXF→IFC4-konvertteri).
 
 | Tiedosto         | Sisältö                                                    |
 |------------------|------------------------------------------------------------|
-| `index.html`     | Hero (kicker + h1 + subtitle + teksti) · 3 feature-korttia · info-osio + highlight-boksit · footer |
+| `index.html`     | Hero (kicker + h1 "Suunnittelutyökalut" + subtitle) · `.spotlight` dxf2ifc-blokki (amber gradient-border, "BIM-konvertteri · uusi" -badge, "Tutustu projektiin →" -linkki) · `.lisp-heading` divider ("AutoCAD LISP -komennot") · 4 feature-korttia · info-osio + highlight-boksit · footer |
 | `ohjeet.html`    | Topnav + sidebar (numeroidut ryhmät) · 7 `.section`-lohkoa: Johdanto · Käyttöönotto · Putkityökalu · Positio · Kaato · Kylmälaitehylly · Usein kysyttyä. Neljä tuotetta (Putki/Positio/Kaato/KLHylly) aloittavat animoidulla SVG-demolla. FAQ käyttää `<details>`-accordionia (`.faq-item` + `.faq-body`, +/− -merkki). |
 | `lataukset.html` | Topnav + 3 kuvauskorttia · 4 latauskorttia (LSP- ja DWG-badge, tiedostokoko, "Lataa ↓" -nappi) · footer |
 | `dxf2ifc.html`   | Topnav (dxf2ifc aktiivinen) · hero kicker+h1+subtitle · 4 `.block`-lohkoa (Mitä se tekee, Avain-ominaisuudet `.feature-list`, Asennus + `.req-tag`-chipit, `.block.warning` SmartScreen-varoitus) · 2 `.file`-latauskorttia (Setup + standalone exe, WIN-badge, GitHub Releases asset-URL pinnattu v0.1.8-alpha1:een) · footer. Linkit menevät `https://github.com/Mcrauli/dxf2ifc/releases/download/...`-osoitteisiin (yksi klikki → lataus). |
@@ -234,6 +240,20 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     (amber vasen reuna). SoftwareApplication JSON-LD lisätty etusivun
     `@graph`:iin (5 entryä) sekä omana documenttina dxf2ifc.html:ssä.
     Sitemap.xml päivitetty.
+14. **Sivuston rebrand + selkokielistys**:
+    - Brand "AutoCAD LISP" → **"Suunnittelutyökalut"** kaikilla 4 sivulla
+      (topnav, title-tagit, og-tagit, JSON-LD WebSite.name, etusivun h1).
+    - Etusivulle uusi `.spotlight`-blokki dxf2ifc:lle (amber gradient
+      border, isompi badge ja CTA, ennen LISP-feature-korttirivi:ä).
+      LISP-cards saavat oman `.lisp-heading`-erottimen.
+    - dxf2ifc.html: standalone-exe-latauskortti poistettu (Setup-only),
+      Talo2000-maininnat poistettu (kylmälaitehomma käyttää vain RAVA3Pro:ta),
+      ETRS-TM35FIN georeferointi -maininta poistettu (ei käyttäjälle
+      relevantti). "Mitä se tekee" + "Avain-ominaisuudet" kirjoitettu
+      uudelleen selkokielisesti — pois jargon ("FI_*-PSetit",
+      "headless ACIS-tessellaatio", "RAVA-LVI/RAVA-TATE single-classification")
+      ja sisään käyttäjäkohtainen kuvaus (mitä Solibrissa näkyy, mitä
+      AutoCADissa tapahtuu).
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 
