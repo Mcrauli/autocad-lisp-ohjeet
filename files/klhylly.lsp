@@ -228,12 +228,15 @@
 ;; KLHYLLY (vaakaversio: LEVY tai TIKAS)
 ;; ============================================================
 
-(defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode
+(defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode oldFiledia oldCmddia oldExpert
                      tyyppi levyStr levy p1 p1snap p2 pituus ang perp
-                     blockName blockPath layerName scaleY ent obj
-                     firstTime )
+                     blockName blockPath layerName scaleY firstTime
+                     doc ms ins )
 
   (defun *error* ( msg )
+    (if oldExpert  (setvar "EXPERT"  oldExpert))
+    (if oldCmddia  (setvar "CMDDIA"  oldCmddia))
+    (if oldFiledia (setvar "FILEDIA" oldFiledia))
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
     (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
     (if oldClayer  (setvar "CLAYER"  oldClayer))
@@ -242,11 +245,21 @@
     (princ)
   )
 
+  (vl-load-com)
+
+  ;; Tallenna sysvarit; FILEDIA/CMDDIA/EXPERT vaadittavia jotta -INSERT
+  ;; ei avaa file dialogia kun blokki ladataan klhylly.dwg:sta ensikerralla.
   (setq oldClayer  (getvar "CLAYER"))
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldOsmode  (getvar "OSMODE"))
+  (setq oldFiledia (getvar "FILEDIA"))
+  (setq oldCmddia  (getvar "CMDDIA"))
+  (setq oldExpert  (getvar "EXPERT"))
 
   (setvar "CMDECHO" 0)
+  (setvar "FILEDIA" 0)
+  (setvar "CMDDIA"  0)
+  (setvar "EXPERT"  5)
 
   ;; 1) Tyyppi
   (initget "LEVY TIKAS")
@@ -277,6 +290,10 @@
         (progn
           (princ "\nVIRHE: klhylly.dwg ei loydy. Varmista etta klhylly.dwg on samassa")
           (princ "\nkansiossa kuin klhylly.lsp.")
+          (setvar "EXPERT"  oldExpert)
+          (setvar "CMDDIA"  oldCmddia)
+          (setvar "FILEDIA" oldFiledia)
+          (setvar "CMDECHO" oldCmdecho)
           (exit)
         )
       )
@@ -314,22 +331,30 @@
   ;; 7) Layer luonti tarvittaessa
   (klhylly-ensure-layer layerName 175)
 
-  ;; 8) INSERT
-  ;;    Argumentti-jarjestys: insertion / X-scale / Y-scale / rotation(deg)
+  ;; 8) Lataa block-maaritys ensikerralla -INSERT:lla origin:iin ja poista
+  ;;    valittomasti — varsinainen sijoitus tehdaan vla-InsertBlock-API:lla
+  ;;    joka ei prompttaa lainkaan (positio.lsp:n pattern).
   (if firstTime
-    (command "_.-INSERT" (strcat blockName "=" blockPath)
-             p1 1.0 scaleY (* 180.0 (/ ang pi)))
-    (command "_.-INSERT" blockName
-             p1 1.0 scaleY (* 180.0 (/ ang pi)))
+    (progn
+      (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+      (if (entlast) (entdel (entlast)))
+    )
   )
 
-  ;; 9) Aseta layer + dynaamiset properties
-  (setq ent (entlast))
-  (setq obj (vlax-ename->vla-object ent))
-  (vla-put-Layer obj layerName)
-  (klhylly-set-dyn-prop ent "Pituus" pituus)
-  (klhylly-set-dyn-prop ent "Leveys" levy)
+  ;; 9) Sijoita instanssi vla-InsertBlock:lla — rotation radiaaneina,
+  ;;    scaleY = -1.0 mirroria varten kun perp on CW.
+  (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
+  (setq ms  (vla-get-ModelSpace doc))
+  (setq ins (vla-InsertBlock ms (vlax-3d-point p1) blockName 1.0 scaleY 1.0 ang))
 
+  ;; 10) Aseta layer + dynaamiset properties
+  (vla-put-Layer ins layerName)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
+
+  (setvar "EXPERT"  oldExpert)
+  (setvar "CMDDIA"  oldCmddia)
+  (setvar "FILEDIA" oldFiledia)
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
@@ -347,13 +372,17 @@
 ;; joten Properties-paletti ja stretch toimivat samoin kuin vaakaversiossa.
 
 (defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldOsmode
+                     oldFiledia oldCmddia oldExpert
                      blockName blockPath layerName firstTime
                      levyStr levy modeKw lenInput
                      p1 p2 p3 length
                      Lraw Lmag L Wraw dotLW Wperp Wmag W D
-                     mat ent obj )
+                     mat doc ms ins )
 
   (defun *error* ( msg )
+    (if oldExpert  (setvar "EXPERT"  oldExpert))
+    (if oldCmddia  (setvar "CMDDIA"  oldCmddia))
+    (if oldFiledia (setvar "FILEDIA" oldFiledia))
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
     (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
     (if oldClayer  (setvar "CLAYER"  oldClayer))
@@ -362,11 +391,19 @@
     (princ)
   )
 
+  (vl-load-com)
+
   (setq oldClayer  (getvar "CLAYER"))
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldOsmode  (getvar "OSMODE"))
+  (setq oldFiledia (getvar "FILEDIA"))
+  (setq oldCmddia  (getvar "CMDDIA"))
+  (setq oldExpert  (getvar "EXPERT"))
 
   (setvar "CMDECHO" 0)
+  (setvar "FILEDIA" 0)
+  (setvar "CMDDIA"  0)
+  (setvar "EXPERT"  5)
 
   (setq blockName "KLHYLLY-TIKAS")
   (setq layerName "KYL-TIKASHYLLY")
@@ -452,16 +489,22 @@
   ;; 5) Layer luonti
   (klhylly-ensure-layer layerName 175)
 
-  ;; 6) INSERT WCS-origoon, rotation 0, scale 1
+  ;; 6) Lataa block-maaritys ensikerralla -INSERT:lla, sijoita ja poista —
+  ;;    varsinainen instanssi tehdaan vla-InsertBlock:lla joka ei prompttaa.
   (if firstTime
-    (command "_.-INSERT" (strcat blockName "=" blockPath)
-             "0,0,0" 1.0 1.0 0.0)
-    (command "_.-INSERT" blockName "0,0,0" 1.0 1.0 0.0)
+    (progn
+      (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+      (if (entlast) (entdel (entlast)))
+    )
   )
-  (setq ent (entlast))
-  (setq obj (vlax-ename->vla-object ent))
 
-  ;; 7) 4x4-muunnos: kanonisen X-akselin -> L, Y-akselin -> W, Z-akselin -> D,
+  ;; 7) Sijoita instanssi WCS-origoon vla-InsertBlock:lla
+  (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
+  (setq ms  (vla-get-ModelSpace doc))
+  (setq ins (vla-InsertBlock ms (vlax-3d-point '(0.0 0.0 0.0))
+                             blockName 1.0 1.0 1.0 0.0))
+
+  ;; 8) 4x4-muunnos: kanonisen X-akselin -> L, Y-akselin -> W, Z-akselin -> D,
   ;;    sijoitus pisteeseen p1
   (setq mat
     (vlax-tmatrix
@@ -470,13 +513,16 @@
         (list (cadr L)  (cadr W)  (cadr D)  (cadr p1))
         (list (caddr L) (caddr W) (caddr D) (caddr p1))
         (list 0.0 0.0 0.0 1.0))))
-  (vla-TransformBy obj mat)
+  (vla-TransformBy ins mat)
 
-  ;; 8) Layer + dynaamiset properties
-  (vla-put-Layer obj layerName)
-  (klhylly-set-dyn-prop ent "Pituus" length)
-  (klhylly-set-dyn-prop ent "Leveys" levy)
+  ;; 9) Layer + dynaamiset properties
+  (vla-put-Layer ins layerName)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" length)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
 
+  (setvar "EXPERT"  oldExpert)
+  (setvar "CMDDIA"  oldCmddia)
+  (setvar "FILEDIA" oldFiledia)
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
