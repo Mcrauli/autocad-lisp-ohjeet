@@ -37,19 +37,43 @@
   )
 )
 
-(defun positio-find-block-file ( / folder)
-  (cond
-    ((findfile "positio.dwg"))
-    ((and (setq folder (positio-self-folder))
-          (findfile (strcat folder "\\positio.dwg"))))
+(defun positio-find-block-file ( / cands self prefix)
+  (vl-load-com)
+  (setq cands '())
+  (if (setq self (positio-self-folder))
+    (setq cands (cons (strcat self "\\positio.dwg") cands)))
+  (setq prefix (getvar "DWGPREFIX"))
+  (setq cands (append cands
+    (list
+      (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\positio.dwg")
+      (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\positio.dwg")
+      "C:\\AutoCADLisp\\positio.dwg"
+      (if prefix (strcat prefix "positio.dwg")))))
+  (or
+    (findfile "positio.dwg")
+    (vl-some '(lambda (p) (if (and p (vl-file-systime p)) p)) cands)
   )
+)
+
+;; Diagnostic command — printtaa mita positio-find-block-file palauttaa.
+;; Aja "POSDEBUG" kommandiriviltä jos POSITIO ei loyda DWG:ta.
+(defun c:POSDEBUG ( / s b)
+  (princ (strcat "\nDWGPREFIX = " (vl-princ-to-string (getvar "DWGPREFIX"))))
+  (princ (strcat "\nUSERPROFILE = " (vl-princ-to-string (getenv "USERPROFILE"))))
+  (princ (strcat "\nfindfile positio.lsp = " (vl-princ-to-string (findfile "positio.lsp"))))
+  (princ (strcat "\nfindfile positio.dwg = " (vl-princ-to-string (findfile "positio.dwg"))))
+  (setq s (positio-self-folder))
+  (princ (strcat "\npositio-self-folder = " (vl-princ-to-string s)))
+  (setq b (positio-find-block-file))
+  (princ (strcat "\npositio-find-block-file = " (vl-princ-to-string b)))
+  (princ)
 )
 
 (defun c:POSITIO ( / pt ent blockName blockPath firstTime)
   (setvar "ATTREQ" 0)
   (setvar "ATTDIA" 0)
 
-  (setq blockName "POSITIOV2")
+  (setq blockName "POSITIO")
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
   (setq blockPath (if firstTime (positio-find-block-file)))
 
