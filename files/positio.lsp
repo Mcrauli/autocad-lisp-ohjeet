@@ -7,9 +7,10 @@
 )
 
 ;; Etsi positio.lsp:n lataushakemisto. Yritetaan ensin findfile (jos Support
-;; Path:lla); muuten skannataan APPLOADin MRU-rekisteri ja palautetaan
-;; siita loytyneen positio.lsp:n hakemisto.
-(defun positio-self-folder ( / found regbase target ver prod prof appkey vn val)
+;; Path:lla); muuten luetaan APPLOADin MainDialog-arvo (viimeisin APPLOAD-
+;; kansio) jokaiselta AutoCAD-profiililta ja katsotaan loytyyko sielta
+;; positio.lsp.
+(defun positio-self-folder ( / found regbase target ver prod prof appkey val)
   (vl-load-com)
   (setq target "positio.lsp")
   (cond
@@ -24,14 +25,11 @@
                          (strcat regbase "\\" ver "\\" prod "\\Profiles"))
            (setq appkey (strcat regbase "\\" ver "\\" prod
                                 "\\Profiles\\" prof "\\Dialogs\\Appload"))
-           (foreach vn (vl-registry-descendents appkey T)
-             (if (and (not found)
-                      (setq val (vl-registry-read appkey vn))
-                      (= (type val) 'STR)
-                      (vl-string-search target (strcase val T)))
-               (setq found (vl-filename-directory val))
-             )
-           )
+           (if (and (not found)
+                    (setq val (vl-registry-read appkey "MainDialog"))
+                    (= (type val) 'STR)
+                    (findfile (strcat val "\\" target)))
+             (setq found val))
          )
        )
      )
