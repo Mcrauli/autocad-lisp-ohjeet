@@ -69,9 +69,20 @@
   (princ)
 )
 
-(defun c:POSITIO ( / pt ent blockName blockPath firstTime)
-  (setvar "ATTREQ" 0)
-  (setvar "ATTDIA" 0)
+(defun c:POSITIO ( / pt ent blockName blockPath firstTime
+                     savedAttreq savedAttdia savedCmddia savedFiledia savedExpert)
+  ;; Tallenna kayttajan sysvarit ja palauta lopussa
+  (setq savedAttreq  (getvar "ATTREQ"))
+  (setq savedAttdia  (getvar "ATTDIA"))
+  (setq savedCmddia  (getvar "CMDDIA"))
+  (setq savedFiledia (getvar "FILEDIA"))
+  (setq savedExpert  (getvar "EXPERT"))
+  ;; Hiljenna kaikki INSERT-promptit + dialog-popupit
+  (setvar "ATTREQ"  0)   ; ei kysy attribuuttiarvoja
+  (setvar "ATTDIA"  0)   ; ei avaa attribuutti-dialogia
+  (setvar "CMDDIA"  0)   ; INSERT/OPEN command-line, ei dialog
+  (setvar "FILEDIA" 0)   ; tiedostodialog pois
+  (setvar "EXPERT"  5)   ; ohita "block already defined, redefine?" tms.
 
   (setq blockName "POSITIO")
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
@@ -121,5 +132,11 @@
     (princ (strcat "\nLisätty numero: " (itoa *numero*)))
   )
 
+  ;; Palauta kayttajan sysvarit
+  (setvar "ATTREQ"  savedAttreq)
+  (setvar "ATTDIA"  savedAttdia)
+  (setvar "CMDDIA"  savedCmddia)
+  (setvar "FILEDIA" savedFiledia)
+  (setvar "EXPERT"  savedExpert)
   (princ)
 )
