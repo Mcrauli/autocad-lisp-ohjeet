@@ -39,6 +39,14 @@
     },
     {
       "@type": "Question",
+      "name": "POSITIO antaa virheen 'positio.dwg ei löydy' — mitä teen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "POSITIO-työkalu lataa numerointiblokin positio.dwg-tiedostosta. LISP etsii tiedostoa automaattisesti AutoCADin Support File Search Pathilta sekä siitä kansiosta mistä positio.lsp ladattiin (haetaan APPLOADin rekisterilokista). Tyypillisin syy virheelle: positio.dwg on jossain muualla. Pura ZIP-paketin sisältö yhteen kansioon (esim. C:\\AutoCADLisp) ja lataa positio.lsp sieltä — niin DWG löytyy."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Miten saan LISPit latautumaan automaattisesti AutoCAD:n käynnistyessä?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -739,7 +747,7 @@ code {
 <a href="lataukset.html">Lataukset</a>
 <a href="dxf2ifc.html">dxf2ifc</a>
 </nav>
-<span class="version">v1.2</span>
+<span class="version">v1.3</span>
 </div>
 
 <nav id="mobile-toc" class="mobile-toc" aria-hidden="true" aria-label="Ohjesivun sisällysluettelo">
@@ -806,6 +814,9 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <li>Kirjoita <code>APPLOAD</code></li>
 <li>Lataa .lsp tiedostot</li>
 </ol>
+<p style="margin-top:14px;color:#94a3b8;font-size:14px;line-height:1.6;">
+POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code>positio.lsp</code>. Jos lataat ZIP-paketin, pura kaikki tiedostot yhteen kansioon ja LISP löytää DWG:n automaattisesti.
+</p>
 </div>
 </div>
 
@@ -1154,6 +1165,18 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <li>OK → asetus tallentuu</li>
 </ol>
 <p>Tämän jälkeen AutoCAD lataa kaikki kyseisestä kansiosta tulevat tiedostot ilman varoitusta.</p>
+</div>
+</details>
+
+<details class="faq-item reveal">
+<summary>POSITIO antaa virheen "<code>positio.dwg</code> ei löydy" — mitä teen?</summary>
+<div class="faq-body">
+<p>POSITIO-työkalu lataa numerointiblokin <code>positio.dwg</code>-tiedostosta. LISP etsii tiedostoa kahdesta paikasta automaattisesti:</p>
+<ol>
+<li>AutoCADin Support File Search Path</li>
+<li>Sama kansio mistä <code>positio.lsp</code> ladattiin (haetaan APPLOADin rekisterilokista)</li>
+</ol>
+<p>Tyypillisin syy virheelle: <code>positio.dwg</code> on jossain muualla. Pura ZIP-paketin sisältö yhteen kansioon (esim. <code>C:\AutoCADLisp</code>) ja lataa <code>positio.lsp</code> sieltä — niin DWG löytyy.</p>
 </div>
 </details>
 

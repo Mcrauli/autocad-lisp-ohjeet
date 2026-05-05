@@ -117,6 +117,15 @@ a {
   border-color: rgba(255,255,255,0.08);
 }
 
+.file.primary {
+  border-color: rgba(245,158,11,0.28);
+  background: rgba(245,158,11,0.04);
+}
+
+.file.primary:hover {
+  border-color: rgba(245,158,11,0.5);
+}
+
 .file-badge {
   display: flex;
   align-items: center;
@@ -137,6 +146,17 @@ a {
   background: rgba(245,158,11,0.08);
   border-color: rgba(245,158,11,0.22);
   color: #f59e0b;
+}
+
+.file-badge.zip {
+  background: rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.32);
+  color: #f59e0b;
+}
+
+.file.primary .file-action {
+  background: rgba(245,158,11,0.18);
+  border-color: rgba(245,158,11,0.42);
 }
 
 .file-meta h3 {
@@ -226,7 +246,7 @@ a {
 <a href="lataukset.html" class="active">Lataukset</a>
 <a href="dxf2ifc.html">dxf2ifc</a>
 </nav>
-<span class="version">v1.2</span>
+<span class="version">v1.3</span>
 </div>
 
 <div class="container">
@@ -255,6 +275,15 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <div class="block reveal">
 <h2>KLHYLLY</h2>
 <p>Kylmälaitehylly-työkalu: LEVY tai TIKAS, leveys 300/400/500 mm. Piirtää 3D-hyllyn kahdella klikkauksella, auto-snap viereisten hyllyjen nurkkiin.</p>
+</div>
+
+<div class="file primary reveal">
+<span class="file-badge zip">ZIP</span>
+<div class="file-meta">
+<h3>Kaikki työkalut</h3>
+<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>32.8 KB</span><span>4 LSP + positio.dwg</span></div>
+</div>
+<a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>
 
 <div class="file reveal">

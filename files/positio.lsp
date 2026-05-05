@@ -6,21 +6,58 @@
   (princ)
 )
 
+;; Etsi positio.lsp:n lataushakemisto. Yritetaan ensin findfile (jos Support
+;; Path:lla); muuten skannataan APPLOADin MRU-rekisteri ja palautetaan
+;; siita loytyneen positio.lsp:n hakemisto.
+(defun positio-self-folder ( / found regbase target ver prod prof appkey vn val)
+  (vl-load-com)
+  (setq target "positio.lsp")
+  (cond
+    ((setq found (findfile target))
+     (vl-filename-directory found))
+    (T
+     (setq found nil)
+     (setq regbase "HKEY_CURRENT_USER\\SOFTWARE\\Autodesk\\AutoCAD")
+     (foreach ver (vl-registry-descendents regbase)
+       (foreach prod (vl-registry-descendents (strcat regbase "\\" ver))
+         (foreach prof (vl-registry-descendents
+                         (strcat regbase "\\" ver "\\" prod "\\Profiles"))
+           (setq appkey (strcat regbase "\\" ver "\\" prod
+                                "\\Profiles\\" prof "\\Dialogs\\Appload"))
+           (foreach vn (vl-registry-descendents appkey T)
+             (if (and (not found)
+                      (setq val (vl-registry-read appkey vn))
+                      (= (type val) 'STR)
+                      (vl-string-search target (strcase val T)))
+               (setq found (vl-filename-directory val))
+             )
+           )
+         )
+       )
+     )
+     found)
+  )
+)
+
+(defun positio-find-block-file ( / folder)
+  (cond
+    ((findfile "positio.dwg"))
+    ((and (setq folder (positio-self-folder))
+          (findfile (strcat folder "\\positio.dwg"))))
+  )
+)
+
 (defun c:POSITIO ( / pt ent blockName blockPath firstTime)
   (setvar "ATTREQ" 0)
   (setvar "ATTDIA" 0)
 
   (setq blockName "POSITIOV2")
-  (setq blockPath "C:\\Users\\LauriRekola\\CAD_LISP\\positio.dwg")
-
-  ;; Jos block ei ole maariteltyna piirroksessa, ladataan se tiedostosta
-  ;; ensimmaisen insertin yhteydessa (syntaxi NAME=PATH).
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
+  (setq blockPath (if firstTime (positio-find-block-file)))
 
-  ;; Varmista etta tiedosto on olemassa jos lataus tarvitaan
-  (if (and firstTime (not (findfile blockPath)))
+  (if (and firstTime (not blockPath))
     (progn
-      (princ (strcat "\nVIRHE: Block-tiedostoa ei loydy: " blockPath))
+      (princ "\nVIRHE: positio.dwg ei loydy. Varmista etta positio.dwg on samassa kansiossa kuin positio.lsp.")
       (exit)
     )
   )

@@ -253,6 +253,19 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     riittää). dxf2ifc.html lataus-URL + index.html JSON-LD bumpattu
     Setup-installerille v0.1.9a1 → v0.1.10a1.
 
+17. **positio.lsp portable + ZIP-paketti**: hardkoodattu polku
+    `C:\Users\LauriRekola\CAD_LISP\positio.dwg` poistettu LSP:stä; uusi
+    `positio-find-block-file` etsii DWG:n ensin Support Pathilta ja sitten
+    samasta kansiosta josta `positio.lsp` ladattiin (haetaan APPLOADin
+    `HKCU\...\Dialogs\Appload`-rekisterin MRU-arvoista). Tukee scenario:
+    pura ZIP yhteen kansioon → APPLOAD → POSITIO toimii ilman OPTIONS-
+    asetuksia. Lataus-sivulle uusi `.file.primary`-korostettu ZIP-kortti
+    "Kaikki työkalut" (`files/suunnittelutyokalut.zip` 32.8 KB, sisältö
+    4 LSP + positio.dwg). Repo-juuressa `make-bundle.ps1` rebuild-skripti
+    joka ajetaan kun LSP/DWG muuttuu. Ohjeet-sivulle uusi FAQ-entry
+    "POSITIO antaa virheen 'positio.dwg ei löydy'" + Käyttöönotto-osion
+    huomautus + JSON-LD FAQPage-entry. Topnav v1.2 → v1.3.
+
 14. **Sivuston rebrand + selkokielistys**:
     - Brand "AutoCAD LISP" → **"Suunnittelutyökalut"** kaikilla 4 sivulla
       (topnav, title-tagit, og-tagit, JSON-LD WebSite.name, etusivun h1).
