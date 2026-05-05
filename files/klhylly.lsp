@@ -1,14 +1,18 @@
 ;;; KLHYLLY.LSP - Kylmalaitehyllyn piirtokomennot (parametriset block-instanssit)
 ;;;
-;;; Riippuvuus: rinnalla files/klhylly.dwg-block-kirjasto, joka sisaltaa
-;;; dynamic blockit KLHYLLY-LEVY ja KLHYLLY-TIKAS. Blockit on parametrisoitu:
-;;; Pituus (Linear, continuous) ja Leveys (Linear, List 300/400/500),
-;;; molemmat muokattavissa Properties-paletissa. Pituutta voi myos
-;;; stretchata gripeilla; TIKAS:n rungit lisataan/poistetaan automaattisesti
-;;; 250 mm askeleella array-actionin myota.
+;;; Riippuvuus: rinnalla files/klhylly-levy.dwg ja files/klhylly-tikas.dwg
+;;; -block-kirjastot, jotka sisaltavat dynamic blockit KLHYLLY-LEVY ja
+;;; KLHYLLY-TIKAS. Blockit on parametrisoitu: Pituus (Linear, continuous)
+;;; ja Leveys (Linear, List 300/400/500), molemmat muokattavissa
+;;; Properties-paletissa. Pituutta voi myos stretchata gripeilla; TIKAS:n
+;;; rungit lisataan/poistetaan automaattisesti 250 mm askeleella array-
+;;; actionin myota.
 ;;;
-;;; Lataa: APPLOAD -> valitse tama tiedosto. (klhylly.dwg loydetaan
-;;; automaattisesti samasta kansiosta tai Support Path:lta.)
+;;; Erilliset DWG:t per blocki valttaa AutoCAD:n self-reference-virheet
+;;; jotka voivat syntya kun molemmat blockit ovat samassa lahde-DWG:ssa.
+;;;
+;;; Lataa: APPLOAD -> valitse tama tiedosto. (klhylly-levy.dwg ja
+;;; klhylly-tikas.dwg loydetaan automaattisesti samasta kansiosta.)
 ;;;
 ;;; Komennot:
 ;;;   KLHYLLY    -> LEVY/TIKAS -> 300/400/500 -> pick start -> pick end
@@ -176,10 +180,13 @@
   )
 )
 
-(defun klhylly-find-block-file ( / cands self prefix found p )
+;; Etsii block-DWG:n nimella (klhylly-levy.dwg tai klhylly-tikas.dwg).
+;; Erilliset DWG:t valttavat self-reference-virheet jotka tulevat kun
+;; molemmat blockit ovat samassa lahde-DWG:ssa.
+(defun klhylly-find-block-file ( dwgName / cands self prefix found p )
   (vl-load-com)
   ;; 1. Support Path
-  (setq found (findfile "klhylly.dwg"))
+  (setq found (findfile dwgName))
   (if (and found (= (type found) 'STR))
     found
     (progn
@@ -188,19 +195,17 @@
       (setq cands '())
       (if (setq self (klhylly-self-folder))
         (if (= (type self) 'STR)
-          (setq cands (list (strcat self "\\klhylly.dwg")))))
+          (setq cands (list (strcat self "\\" dwgName)))))
       (setq prefix (getvar "DWGPREFIX"))
       (setq cands (append cands
         (list
-          (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\klhylly.dwg")
-          (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\klhylly.dwg")
-          "C:\\AutoCADLisp\\klhylly.dwg")))
+          (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\" dwgName)
+          (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\" dwgName)
+          (strcat "C:\\AutoCADLisp\\" dwgName))))
       (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0))
-        (setq cands (append cands (list (strcat prefix "klhylly.dwg")))))
+        (setq cands (append cands (list (strcat prefix dwgName)))))
       ;; Iteroi listaa, palauta ensimmainen olemassaoleva. Type-check
-      ;; varmistaa ettei T tai muu non-string vuoda lapi (aiheutti
-      ;; strcat-virheen "bad argument type: stringp T" kun kutsuja
-      ;; (strcat blockName "=" blockPath) yritti rakentaa INSERT-stringia).
+      ;; varmistaa ettei T tai muu non-string vuoda lapi.
       (foreach p cands
         (if (and (not found)
                  (= (type p) 'STR)
@@ -210,17 +215,20 @@
   )
 )
 
-;; Diagnostic command — printtaa mita klhylly-find-block-file palauttaa.
+;; Diagnostic command — printtaa mita locator palauttaa.
 ;; Aja "KLHDEBUG" komentoriviltä jos KLHYLLY/KLHYLLYV ei loyda DWG:ta.
-(defun c:KLHDEBUG ( / s b )
+(defun c:KLHDEBUG ( / s lvy tks )
   (princ (strcat "\nDWGPREFIX = " (vl-princ-to-string (getvar "DWGPREFIX"))))
   (princ (strcat "\nUSERPROFILE = " (vl-princ-to-string (getenv "USERPROFILE"))))
   (princ (strcat "\nfindfile klhylly.lsp = " (vl-princ-to-string (findfile "klhylly.lsp"))))
-  (princ (strcat "\nfindfile klhylly.dwg = " (vl-princ-to-string (findfile "klhylly.dwg"))))
+  (princ (strcat "\nfindfile klhylly-levy.dwg = " (vl-princ-to-string (findfile "klhylly-levy.dwg"))))
+  (princ (strcat "\nfindfile klhylly-tikas.dwg = " (vl-princ-to-string (findfile "klhylly-tikas.dwg"))))
   (setq s (klhylly-self-folder))
   (princ (strcat "\nklhylly-self-folder = " (vl-princ-to-string s)))
-  (setq b (klhylly-find-block-file))
-  (princ (strcat "\nklhylly-find-block-file = " (vl-princ-to-string b)))
+  (setq lvy (klhylly-find-block-file "klhylly-levy.dwg"))
+  (princ (strcat "\nklhylly-find-block-file LEVY = " (vl-princ-to-string lvy)))
+  (setq tks (klhylly-find-block-file "klhylly-tikas.dwg"))
+  (princ (strcat "\nklhylly-find-block-file TIKAS = " (vl-princ-to-string tks)))
   (princ)
 )
 
@@ -246,7 +254,7 @@
 
 (defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode
                      tyyppi levyStr levy p1 p1snap p2 pituus ang perp
-                     blockName blockPath layerName scaleY firstTime
+                     blockName dwgName blockPath layerName scaleY firstTime
                      doc ms ins
                      savedFiledia savedCmddia savedExpert )
 
@@ -275,9 +283,11 @@
   (cond
     ((= tyyppi "TIKAS")
       (setq blockName "KLHYLLY-TIKAS")
+      (setq dwgName   "klhylly-tikas.dwg")
       (setq layerName "KYL-TIKASHYLLY"))
     (t
       (setq blockName "KLHYLLY-LEVY")
+      (setq dwgName   "klhylly-levy.dwg")
       (setq layerName "KYL-LEVYHYLLY"))
   )
 
@@ -287,14 +297,14 @@
   (if (null levyStr) (setq levyStr "300"))
   (setq levy (atof levyStr))
 
-  ;; 3) Block-maaritys: ensikerralla lookup klhylly.dwg:n polku
+  ;; 3) Block-maaritys: ensikerralla lookup vastaavan DWG:n polku
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
   (if firstTime
     (progn
-      (setq blockPath (klhylly-find-block-file))
+      (setq blockPath (klhylly-find-block-file dwgName))
       (if (null blockPath)
         (progn
-          (princ "\nVIRHE: klhylly.dwg ei loydy. Varmista etta klhylly.dwg on samassa")
+          (princ (strcat "\nVIRHE: " dwgName " ei loydy. Varmista etta tiedosto on samassa"))
           (princ "\nkansiossa kuin klhylly.lsp.")
           (setvar "CMDECHO" oldCmdecho)
           (setvar "CLAYER"  oldClayer)
@@ -385,7 +395,7 @@
 ;; joten Properties-paletti ja stretch toimivat samoin kuin vaakaversiossa.
 
 (defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldOsmode
-                     blockName blockPath layerName firstTime
+                     blockName dwgName blockPath layerName firstTime
                      levyStr levy modeKw lenInput
                      p1 p2 p3 length
                      Lraw Lmag L Wraw dotLW Wperp Wmag W D
@@ -410,6 +420,7 @@
   (setvar "CMDECHO" 0)
 
   (setq blockName "KLHYLLY-TIKAS")
+  (setq dwgName   "klhylly-tikas.dwg")
   (setq layerName "KYL-TIKASHYLLY")
 
   ;; 1) Leveys
@@ -422,9 +433,9 @@
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
   (if firstTime
     (progn
-      (setq blockPath (klhylly-find-block-file))
+      (setq blockPath (klhylly-find-block-file dwgName))
       (if (null blockPath)
-        (progn (princ "\nVIRHE: klhylly.dwg ei loydy.") (exit))
+        (progn (princ (strcat "\nVIRHE: " dwgName " ei loydy.")) (exit))
       )
     )
   )

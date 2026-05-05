@@ -1,15 +1,15 @@
 # KLHYLLY-BEDIT-OHJEET
 
-Step-by-step ohjeet `files/klhylly.dwg`-block-kirjaston rakentamiseen.
-Tehdään **kerran**, kun block-määrityksiä luodaan tai mitoituksia muutetaan.
+Step-by-step ohjeet `files/klhylly-levy.dwg` ja `files/klhylly-tikas.dwg`
+-block-kirjastojen rakentamiseen. Tehdään **kerran**, kun block-määrityksiä
+luodaan tai mitoituksia muutetaan.
 
-> **Versio v2 — 5.5.2026:** geometria on **2D-LWPOLYLINEja joilla thickness**
-> (eli vertikaalinen extrudointi Z-suuntaan), EI 3D-soliditeetteja. Syy:
-> dynamic blockin stretch-action toimii LWPOLYLINEille luotettavasti, mutta
-> 3D-soliditeetit eivät stretchaudu vaikka olisivat akseliyhdensuuntaisia
-> primitiivi-BOXeja. Visuaalisesti polyline+thickness rendaa kuten ohut
-> 3D-laatikko (4 pystyseinämää, ei ylä-/alapintaa) — peltihyllyssä paksuus
-> 1.25 mm tekee top/bottom-pinnat käytännössä näkymättömiksi.
+> **Versio v3 — 5.5.2026:** kaksi erillistä DWG-tiedostoa, yksi blockia
+> kohden, jotta vältetään AutoCAD:n "Block X references itself" -virheet.
+>
+> Geometria on **2D-LWPOLYLINEja joilla thickness** (vertikaalinen
+> extrudointi Z-suuntaan) + **3DFACEt ylakansiksi** Realistic-tilaa varten.
+> Stretch-action toimii LWPOLYLINEille mutta ei 3D-soliditeeteille.
 
 ---
 
@@ -18,9 +18,9 @@ Tehdään **kerran**, kun block-määrityksiä luodaan tai mitoituksia muutetaan
 1. Avaa AutoCAD, **tyhjä DWG** (esim. File → New → acadiso.dwt-pohja).
 2. Varmista yksiköt: komentorivillä `UNITS` → Length: Decimal, Insertion units: Millimeters → OK.
 3. APPLOAD → valitse `tools/build-klhylly-blocks.lsp` repon polusta.
-4. Komentorivillä: `KLHYLLY-BUILD-BLOCKS` ↵
-   - Konsoliin tulee teksti: *"Lisatty 2 block-maaritysta: KLHYLLY-LEVY, KLHYLLY-TIKAS"*
-   - Modelspace pysyy tyhjänä (block-määritykset ovat block-tablessa, eivät näkyvinä).
+4. Komentorivillä: `KLHYLLY-BUILD-LEVY` ↵
+   - Konsoliin: *"KLHYLLY-LEVY block-maaritys luotu (8 entiteettia)."*
+   - Modelspace pysyy tyhjänä (block-määritys on block-tablessa).
 
 ---
 
@@ -113,16 +113,30 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 
 ---
 
-## Vaihe 5 — Tallennus + Block Editor sulku (LEVY)
+## Vaihe 5 — Tallennus + LEVY-DWG:n luonti
 
 1. Komentorivillä: `BSAVE` ↵ — tallentaa block-määrityksen muutokset.
 2. Komentorivillä: `BCLOSE` ↵ — poistuu Block Editor:sta.
+3. **Pikatesti modelspace:ssa**: `-INSERT KLHYLLY-LEVY` ↵ → `0,0,0` ↵ → `1` ↵ → `1` ↵ → `0` ↵.
+   - Klikkaa instanssia → Properties (Ctrl+1) → Custom-otsikon alla pitäisi näkyä **Pituus** ja **Leveys**
+   - Vaihda Leveys 500 → 300 → hylly kapenee, hatch venyy
+   - Tartu Pituus-grippiin → vedä → hylly venyy
+   - Realistic-tilassa (`VSCURRENT R`) pohja näkyy täytenä
+4. **Lopputallennus:**
+   - `ERASE ALL ↵ ↵` — poista testi-instanssi
+   - `SAVEAS` → Files of type **AutoCAD 2018 Drawing** → File name `klhylly-levy` → polku
+     `C:\Users\LauriRekola\OneDrive - RADIKA OY\Työpöytä\work\autocad-lisp-ohjeet\files` → Save
+5. **Sulje DWG** (älä tallenna muutoksia jos kysytään)
 
 ---
 
-## Vaihe 6 — KLHYLLY-TIKAS: parametrit
+## Vaihe 6 — KLHYLLY-TIKAS: omassa tyhjässä DWG:ssä
 
-1. `BEDIT` ↵ → `KLHYLLY-TIKAS` → OK.
+1. **Avaa toinen tyhjä DWG** (File → New → acadiso.dwt)
+2. APPLOAD `tools/build-klhylly-blocks.lsp` (jos ei vielä ladattu)
+3. Komentorivillä: `KLHYLLY-BUILD-TIKAS` ↵
+   - Konsoliin: *"KLHYLLY-TIKAS block-maaritys luotu (6 entiteettia)."*
+4. `BEDIT` ↵ → `KLHYLLY-TIKAS` → OK.
    Näet **2 rail-LWPOLYLINEia** + **1 rung-LWPOLYLINE** (master, X=242.5–257.5)
    + **3 3DFACEa** (rail1-Top z=60, rail2-Top z=60, rung-Top z=25) =
    **6 entiteettiä yhteensä**.
@@ -183,99 +197,55 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 
 ---
 
-## Vaihe 10 — Tallennus + Block Editor sulku (TIKAS)
+## Vaihe 10 — Tallennus + TIKAS-DWG:n luonti
 
 1. `BSAVE` ↵
 2. `BCLOSE` ↵
+3. **Pikatesti modelspace:ssa**: `-INSERT KLHYLLY-TIKAS` ↵ → `0,0,0` ↵ → `1` `1` `0` ↵.
+   - Properties → vaihda Pituus 1000 → 2500 → kiskot pidentyvät, rungit lisääntyvät 250 mm askeleella
+   - Vaihda Leveys → kiskot lähentyvät, rungit kapenevat
+4. **Lopputallennus:**
+   - `ERASE ALL ↵ ↵`
+   - `SAVEAS` → File name `klhylly-tikas` → polku `files/`-kansioon → Save
+5. Sulje DWG.
 
----
+## Vaihe 11 — Yhteistesti (klhylly.lsp:n rinnalla)
 
-## Vaihe 11 — Pikatesti BEDIT-vaiheen jälkeen
-
-Modelspace pitäisi olla tyhjä. Testaa molemmat blockit:
-
-**LEVY-testi:**
-1. Komentorivillä: `-INSERT` ↵
-2. Block name: `KLHYLLY-LEVY` ↵
-3. Insertion point: `0,0,0` ↵
-4. X scale: `1` ↵, Y scale: `1` ↵, Rotation: `0` ↵
-5. Klikkaa instanssia. Ctrl+1 → Properties → otsikon **Custom** alta löytyy:
-   - **Pituus** *(numeerinen syöttö)*
-   - **Leveys** *(dropdown 300/400/500)*
-6. Vaihda Leveys 500 → 300 → hylly kapenee Y-suunnassa.
-   - Hatch venyy mukana ja outline-frame seuraa.
-7. Tartu Pituus-grippiin (oikea pää) → vedä → hylly venyy X-suunnassa.
-   Hatch venyy mukana.
-
-**TIKAS-testi:**
-1. `-INSERT` → `KLHYLLY-TIKAS` → `0,500,0` (siirrä toiseen kohtaan ettei
-   mene päällekkäin) → 1 1 0 ↵
-2. Properties → vaihda Pituus 1000 → 2000 → kiskot pidentyvät, **rungit
-   lisääntyvät** automaattisesti 250 mm askeleella.
-3. Vaihda Leveys 500 → 300 → kiskot lähentyvät, rungit kapenevat.
-
-**Jos jokin ei toimi:**
-- Stretch frame ei kata grippiä → BEDIT, klikkaa actionia, Properties
-  paletista *"Stretch frame"* uudestaan
-- Selection set väärä → BEDIT, klikkaa actionia, Properties paletista
-  *"Selection set"* → "..." → muokkaa
-- Array ei toistu → varmista että action on liitetty Pituus-parametriin
-  (eikä Leveys), ja että distance = 250
-- Jos päädyt umpikujaan → poista ko. action canvasilta ERASE:llä,
-  lisää uudestaan.
-
----
-
-## Vaihe 12 — Lopputallennus klhylly.dwg
-
-1. Poista testi-instanssit modelspaceesta: `ERASE` ↵ → `ALL` ↵ → ↵
-2. Komentorivillä: `SAVEAS` ↵
-   - Files of type: **AutoCAD 2018 Drawing (\*.dwg)** *(tai uudempi
-     2018-formaatti — älä vie aivan uusinta versioon, jotta vanhat
-     AutoCAD-versiot löytäisivät)*
-   - File name: `klhylly.dwg`
-   - Polku: `C:\Users\LauriRekola\OneDrive - RADIKA OY\Työpöytä\work\autocad-lisp-ohjeet\files\klhylly.dwg`
-   - Save
-3. Sulje DWG.
-4. Tarkista kansiossa: `files/klhylly.dwg` on nyt olemassa, ja `files/klhylly.lsp`
-   on rinnalla.
-
----
-
-## Vaihe 13 — Lopullinen yhteistesti (klhylly.lsp:n rinnalla)
-
-Avaa **uusi** tyhjä DWG (ei se jossa rakensit blockit). APPLOAD `klhylly.lsp`.
-Aja:
+Avaa **uusi tyhjä DWG**. APPLOAD `klhylly.lsp`. Aja:
 
 1. `KLHYLLY` → LEVY → 500 → klikkaa kaksi pistettä → block-instanssi syntyy
-   - Tarkista Properties: Pituus = etäisyys, Leveys = 500
-   - Layer = KYL-LEVYHYLLY
+   - Layer = KYL-LEVYHYLLY (color 175)
+   - Properties: Pituus, Leveys
 2. `KLHYLLY` → TIKAS → 400 → klikkaa kaksi pistettä → block-instanssi
    - Layer = KYL-TIKASHYLLY
 3. `KLHYLLYV` → 500 → kolme pistettä → vino tikashylly
 4. `HYLLYKORKO` → valitse hyllyt → 2400 → siirtyy oikealle korolle
 
-Jos toimii, blocks-kirjasto on valmis. Aja repon juuressa
+Jos toimii, block-kirjastot ovat valmiit. Aja repon juuressa
 `make-bundle.ps1` PowerShellissä → `files/suunnittelutyokalut.zip`
-päivittyy sisältämään `klhylly.dwg`:n.
+päivittyy sisältämään sekä `klhylly-levy.dwg` että `klhylly-tikas.dwg`.
 
 ---
 
 ## Yleisia virheitä
 
-- **"Block already exists"** kun ajat `KLHYLLY-BUILD-BLOCKS` toista kertaa
+- **"Block already exists"** kun ajat BUILD-komennon toista kertaa
   → avaa tyhjä DWG.
-- **Properties-paletissa ei näy Pituus/Leveys** → joko block-määritys ei
-  ole dynamic (parametria/actionia puuttuu), tai INSERT-instanssi viittaa
+- **"Block X references itself"** kun KLHYLLY yrittää INSERT:ata
+  → block-määrityksen sisällä on viittaus itseensä. BEDIT, tarkista
+  ettei kanvasilla ole INSERT-tyypin entiteettiä, ERASE jos on,
+  BSAVE → BCLOSE → SAVE. Tämä on syy miksi blockit ovat erillisissä
+  DWG-tiedostoissa (yhden DWG:n sisällä molemmat aiheuttivat
+  vastaavia virheitä).
+- **Properties-paletissa ei näy Pituus/Leveys** → block-määritys ei ole
+  dynamic (parametria/actionia puuttuu) tai INSERT-instanssi viittaa
   väärään blockiin. Tarkista BEDIT.
 - **Stretch venyttää väärää suuntaa** → parameter point liitetty väärään
-  grippiin (vrt. ohjeessa "oikea pää" / "yläpää"). Korjaa BEDIT:ssä.
+  grippiin. Korjaa BEDIT:ssä.
 - **Array-rungit eivät katoa kun pituus pienenee** → tarkista Array-actionin
   Column distance = 250 ja että parametri on Pituus.
 - **Hatch jää paikalleen kun stretchaa** → hatchin pitää olla associative
-  (HPASSOC=1 luonti-hetkellä, mikä on helper-skriptin oletusarvo) ja
-  liittyä outline-polylineen — jos ei, BEDIT → poista hatch → luo uudestaan
-  associative HATCH-komennolla.
+  (HPASSOC=1 helper-skriptin oletusarvo) ja liittyä outline-polylineen.
 
 ---
 

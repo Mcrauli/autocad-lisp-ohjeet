@@ -292,16 +292,23 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     soveltaa `vla-TransformBy` 4×4-matriisin haluttuun 3D-orientaatioon.
     HYLLYKORKO säilyy ennallaan (toimii sekä uusille block-instansseille
     että vanhoille UNION-soliditeeteille).
-    - **Riippuvuus:** klhylly.lsp tarvitsee rinnalleen klhylly.dwg:n samasta
-      kansiosta tai Support Path:lta — sama locator-pattern kuin
-      positio.lsp:llä (`klhylly-self-folder` + `klhylly-find-block-file`,
-      kopioitu positio.lsp:stä `klhylly-`-prefiksillä).
-    - **Block-kirjaston rakentaminen:** `tools/build-klhylly-blocks.lsp`
-      luo geometrian (5 LWPOLYLINEa thickness:lla + outline-polyline +
-      DASH-hatch LEVY:lle; 2 rail-LWPOLYLINEa + 1 rung-LWPOLYLINE TIKAS:lle,
-      kaikki layerilla 0/BYBLOCK). Manuaalinen BEDIT-vaihe lisää parametrit
-      ja actionit step-by-step ohjeen `tools/KLHYLLY-BEDIT-OHJEET.md` mukaan.
-      Helper ei sisälly ZIP-pakettiin — `make-bundle.ps1` ottaa vain `files/`:n.
+    - **Riippuvuus:** klhylly.lsp tarvitsee rinnalleen kaksi DWG:tä:
+      `klhylly-levy.dwg` ja `klhylly-tikas.dwg`. Erilliset DWG:t per
+      blocki välttää AutoCAD:n "Block X references itself" -virheet
+      jotka voivat syntyä kun molemmat blockit ovat samassa lähde-DWG:ssä
+      ja käyttäjän BEDIT-historia jättää orphan-referenssejä. Locator-
+      pattern (`klhylly-self-folder` + `klhylly-find-block-file dwgName`)
+      on kopioitu positio.lsp:stä `klhylly-`-prefiksillä.
+    - **Block-kirjastojen rakentaminen:** `tools/build-klhylly-blocks.lsp`
+      tarjoaa kaksi komentoa: `KLHYLLY-BUILD-LEVY` ja `KLHYLLY-BUILD-TIKAS`,
+      jotka ajetaan erikseen tyhjissä DWG:issä. LEVY: 5 LWPOLYLINEa
+      thickness:lla + 3DFACE pohjalle + outline + DASH-hatch.
+      TIKAS: 2 rail + 1 rung-master + 3 3DFACEa ylakansiksi.
+      Kaikki layerilla 0/BYBLOCK. Manuaalinen BEDIT lisää Linear-parametrit
+      ja Stretch/Array-actionit step-by-step ohjeen
+      `tools/KLHYLLY-BEDIT-OHJEET.md` mukaan. Lopuksi ERASE ALL + SAVEAS
+      omiin DWG-tiedostoihin. Helper ei sisälly ZIP-pakettiin — vain
+      files/-kansion sisältö.
     - **Geometria-valinta — KRIITTINEN:** block-määrityksessä geometria on
       **2D-LWPOLYLINEja joilla thickness** (Z-extrudointi vertikaalisesti),
       EI 3D-soliditeetteja. Syy: AutoCAD:n dynamic blockin stretch-action
