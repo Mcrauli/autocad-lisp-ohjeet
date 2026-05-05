@@ -281,6 +281,46 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
       ja sisään käyttäjäkohtainen kuvaus (mitä Solibrissa näkyy, mitä
       AutoCADissa tapahtuu).
 
+18. **KLHYLLY → parametrinen dynamic block**: `files/klhylly.lsp` ei enää
+    UNION:oi 5 slabia (LEVY) tai 2 kiskoa + N rungia (TIKAS) yhdeksi
+    3DSOLIDiksi vaan INSERT:ää valmiit dynamic blockit uudesta
+    `files/klhylly.dwg`-block-kirjastosta. Block-määritykset (`KLHYLLY-LEVY`,
+    `KLHYLLY-TIKAS`) sisältävät Linear-parametrit Pituus (continuous) ja
+    Leveys (Value Set = List 300/400/500), plus stretch-action-pareja ja
+    TIKAS:lle Array-action joka arrayttaa rung-master:n 250 mm askeleella
+    automaattisesti. KLHYLLYV käyttää samaa KLHYLLY-TIKAS-blockia ja
+    soveltaa `vla-TransformBy` 4×4-matriisin haluttuun 3D-orientaatioon.
+    HYLLYKORKO säilyy ennallaan (toimii sekä uusille block-instansseille
+    että vanhoille UNION-soliditeeteille).
+    - **Riippuvuus:** klhylly.lsp tarvitsee rinnalleen klhylly.dwg:n samasta
+      kansiosta tai Support Path:lta — sama locator-pattern kuin
+      positio.lsp:llä (`klhylly-self-folder` + `klhylly-find-block-file`,
+      kopioitu positio.lsp:stä `klhylly-`-prefiksillä).
+    - **Block-kirjaston rakentaminen:** `tools/build-klhylly-blocks.lsp`
+      luo geometrian (5 BOXia + outline-polyline + DASH-hatch LEVY:lle;
+      2 rail-BOXia + 1 rung-BOX TIKAS:lle, kaikki layerilla 0/BYBLOCK).
+      Manuaalinen BEDIT-vaihe lisää parametrit ja actionit step-by-step
+      ohjeen `tools/KLHYLLY-BEDIT-OHJEET.md` mukaan. Helper ei sisälly
+      ZIP-pakettiin — `make-bundle.ps1` ottaa vain `files/`:n.
+    - **Block-rajoitukset:** EI UNION:eja block-määritysten sisällä
+      (stretch-action vaatii akseliyhdensuuntaisia primitiivi-BOX-soliditeetteja).
+      "Yks klikki valitsee" -ominaisuus säilyy block-instanssin kautta
+      (yksi entiteetti vaikka sisällä on monta solidia).
+    - **dxf2ifc-yhteensovitus:** `~/dxf2ifc/src/dxf2ifc/core/preprocessing.py`
+      Phase 2 INSERT-räjäytys-filteri laajennettu `KLHYLLY-*`:llä
+      (`*yrystin*,*ahdutin*,*pressori*,KLHYLLY-*`) jotta klhylly-blockien
+      sisältö (BOX-solidit) räjähtää ja tulee STL-louhituksi.
+      `mapper.py`:n layer-pattern-säännöt (`KYL-LEVYHYLLY*`, `KYL-TIKASHYLLY*`)
+      tunnistavat lopputuloksen → IfcCableCarrierSegment + CABLELADDERSEGMENT
+      / CABLETRAYSEGMENT, sama IFC-lopputulos kuin ennen.
+    - **Backward compat:** vanhat UNION-pohjaiset hyllyt eivät automaattisesti
+      muutu parametrisiksi; piirustukset säilyttävät visuaalisen identtisyyden.
+      Ei migraatio-työkalua (YAGNI).
+    - Sivustolle: KLHYLLY-osioon "Muokkaaminen jälkikäteen" -block, kaksi
+      uutta FAQ-entryä (klhylly.dwg-puuttuu-virhe, miksi vanha hylly ei
+      muokkaannu), JSON-LD FAQPage päivitetty. Lataukset-sivulle uusi
+      DWG-latauskortti klhylly.dwg:lle, ZIP-meta päivitetty 4 LSP + 2 DWG.
+
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 
 - **Kopioi-nappi `<code>`-pätkille** ohjeissa + toast-feedback.

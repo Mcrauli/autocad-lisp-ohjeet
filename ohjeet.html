@@ -74,7 +74,23 @@
       "name": "Mitä eroa on LEVY- ja TIKAS-tyyppisellä kylmälaitehyllyllä KLHYLLY-työkalussa?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "LEVY on taivutettu peltihylly: 60 mm korkea, 1.25 mm peltipaksuus, 9 mm lippa sisäänpäin käännetty. Pohjapiirrokseen tulee DASH-hatch (scale 40, angle 45°). TIKAS on tikashylly: 2 kiskoa reunoilla (15 × 60 mm) ja poikkitikat (15 × 15 mm) 250 mm välein. Molemmissa 3D-solidi muodostuu yhdellä klikkauksella valittavaksi kokonaisuudeksi. LEVY käytetään tyypillisesti umpihyllynä ja TIKAS reikähyllynä."
+        "text": "LEVY on taivutettu peltihylly: 60 mm korkea, 1.25 mm peltipaksuus, 9 mm lippa sisäänpäin käännetty. Pohjapiirrokseen tulee DASH-hatch (scale 40, angle 45°). TIKAS on tikashylly: 2 kiskoa reunoilla (15 × 60 mm) ja poikkitikat (15 × 15 mm) 250 mm välein. Molemmissa block-instanssi yhdellä klikkauksella valittavaksi kokonaisuudeksi. LEVY käytetään tyypillisesti umpihyllynä ja TIKAS reikähyllynä."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "KLHYLLY antaa virheen 'klhylly.dwg ei löydy' — mitä teen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "KLHYLLY-komento INSERT:ää parametrisen dynamic blockin tiedostosta klhylly.dwg. Tiedoston pitää olla samassa kansiossa kuin klhylly.lsp tai AutoCAD:n Support Path:lla. Lataa molemmat samaan kansioon (esim. C:\\AutoCADLisp) tai pura ZIP-paketti yhteen kansioon → komento löytää DWG:n automaattisesti."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Vanhan piirustuksen hyllyä ei voi muokata Properties-paletista — miksi?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aiemmilla versioilla piirretyt hyllyt ovat UNION:oituja 3D-soliditeetteja, eivät dynamic blockeja — niissä ei ole Pituus/Leveys-parametreja. Uudet KLHYLLY-komennot tuottavat parametrisia block-instansseja jotka voi muokata Properties-paletista ja stretch-gripeillä. Vanhat hyllyt jäävät paikalleen ja näkyvät identtisesti, mutta jos haluat parametrista muokattavuutta, piirrä hyllyt uusiksi uudella komennolla."
       }
     }
   ]
@@ -1107,7 +1123,18 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 </li>
 <li>Klikkaa <b>leveyden viittauspiste</b> — UCS projisoi automaattisesti kohtisuoran leveyssuunnan pituusakselia vasten</li>
 </ol>
-<p>Tikas rakentuu BOX-komennoilla UCS-akseleiden mukaan ja UCS palautuu edelliseen tilaan lopuksi. Tulos on yksi UNIONed 3D-solidi kuten vaakasuora TIKAS.</p>
+<p>Tikas sijoittuu pisteiden määrittämään 3D-orientaatioon. Lopputuloksena on parametrinen <code>KLHYLLY-TIKAS</code>-block-instanssi (sama kuin vaakaversiossa), johon voi muuttaa leveyttä ja pituutta jälkikäteen.</p>
+</div>
+
+<div class="block reveal">
+<h3>Muokkaaminen jälkikäteen:</h3>
+<p>KLHYLLY ja KLHYLLYV tuottavat <b>parametrisen dynamic blockin</b>, joten hyllyä ei tarvitse piirtää uusiksi mittojen muuttuessa. Klikkaa hyllyä → avaa Properties-paletti (<code>Ctrl+1</code>) → otsikon <b>Custom</b> alta löytyy:</p>
+<ul>
+<li><b>Pituus</b> — numeerinen syöttö millimetreinä, tai vedä oikean pään grip-kahvaa hiirellä</li>
+<li><b>Leveys</b> — dropdown 300 / 400 / 500</li>
+</ul>
+<p>TIKAS-hyllyssä rungit lisääntyvät tai poistuvat automaattisesti 250 mm askeleella kun pituutta venyttää — ei tarvitse miettiä mihin viimeinen tikka osuu. Hatch venyy mukana LEVY-hyllyssä.</p>
+<p>Riippuvuus: <code>klhylly.lsp</code>:n rinnalla pitää olla <code>klhylly.dwg</code> samassa kansiossa. ZIP-paketissa kummatkin ovat mukana.</p>
 </div>
 
 <div class="block reveal">
@@ -1138,6 +1165,7 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 <li>Automaattinen leveyssuunta → viereiset hyllyt eivät mene päällekkäin</li>
 <li>Yhdellä klikkauksella valitaan koko hylly</li>
 <li>Layerit muodostuvat automaattisesti jos puuttuvat</li>
+<li>Pituus ja leveys muokattavissa jälkikäteen Properties-paletista ja stretch-gripeillä — ei tarvitse piirtää hyllyä uusiksi</li>
 </ul>
 </div>
 </div>
@@ -1209,6 +1237,20 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 <li>Komento kirjoitetaan oikein ja isoilla kirjaimilla ei ole merkitystä</li>
 <li>Jos käytit <code>APPLOAD</code>ia, lataus on vain tälle istunnolle — lisää tiedosto Startup Suiteen pysyväksi</li>
 </ul>
+</div>
+</details>
+
+<details class="faq-item reveal">
+<summary>KLHYLLY antaa virheen "klhylly.dwg ei löydy" — mitä teen?</summary>
+<div class="faq-body">
+<p>KLHYLLY-komento INSERT:ää parametrisen dynamic blockin tiedostosta <code>klhylly.dwg</code>. Tiedoston pitää olla samassa kansiossa kuin <code>klhylly.lsp</code> tai AutoCAD:n Support Path:lla. Lataa molemmat samaan kansioon (esim. <code>C:\AutoCADLisp</code>) tai pura ZIP-paketti yhteen kansioon → komento löytää DWG:n automaattisesti.</p>
+</div>
+</details>
+
+<details class="faq-item reveal">
+<summary>Vanhan piirustuksen hyllyä ei voi muokata Properties-paletista — miksi?</summary>
+<div class="faq-body">
+<p>Aiemmilla versioilla piirretyt hyllyt ovat UNION:oituja 3D-soliditeetteja, eivät dynamic blockeja — niissä ei ole Pituus/Leveys-parametreja. Uudet KLHYLLY-komennot tuottavat parametrisia block-instansseja jotka voi muokata Properties-paletista ja stretch-gripeillä. Vanhat hyllyt jäävät paikalleen ja näkyvät identtisesti, mutta jos haluat parametrista muokattavuutta, piirrä hyllyt uusiksi uudella komennolla.</p>
 </div>
 </details>
 </div>

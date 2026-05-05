@@ -227,6 +227,72 @@ a {
   }
 }
 
+.changelog {
+  margin: 0 0 48px 0;
+  padding: 22px 24px;
+  background: rgba(2,6,23,0.55);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-left: 2px solid rgba(245,158,11,0.5);
+}
+
+.changelog h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f59e0b;
+  margin: 0 0 12px 0;
+}
+
+.changelog ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.changelog li {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 14px;
+  padding: 9px 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #cbd5f5;
+  border-top: 1px dashed rgba(255,255,255,0.06);
+}
+
+.changelog li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.changelog .when {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.changelog code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.92em;
+  color: #60a5fa;
+  background: rgba(96,165,250,0.07);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+@media (max-width: 520px) {
+  .changelog li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
 </style>
 </head>
 
@@ -258,6 +324,16 @@ Täältä voit ladata AutoCAD LISP -työkalut, jotka on suunniteltu nopeuttamaan
 kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 </p>
 
+<section class="changelog reveal">
+<h2>Viimeisimmät päivitykset</h2>
+<ul>
+<li><span class="when">5.5.2026</span><span>KLHYLLY ja KLHYLLYV tuottavat nyt <b>parametrisia dynamic blockeja</b> — pituus ja leveys (300/400/500) muokattavissa Properties-paletista, pituutta voi stretchata gripeillä. TIKAS:n rungit lisääntyvät automaattisesti 250 mm askeleella. Vaatii rinnalle uuden <code>klhylly.dwg</code>:n ZIP-paketista.</span></li>
+<li><span class="when">5.5.2026</span><span>POSITIO toimii suoraan ZIP-paketista — etsii <code>positio.dwg</code>:n samasta kansiosta automaattisesti. Atribuuttien teksti nostettu 250 mm:iin.</span></li>
+<li><span class="when">28.4.2026</span><span>KLHYLLY-työkalu lisätty: LEVY tai TIKAS, leveydet 300/400/500 mm.</span></li>
+<li><span class="when">23.4.2026</span><span>KAATO3D ja KLHYLLYV (vertikaalinen tikashylly) viilattu.</span></li>
+</ul>
+</section>
+
 <div class="block reveal">
 <h2>POSITIO</h2>
 <p>Automaattinen numerointityökalu, joka helpottaa merkintöjen tekemistä ja vähentää virheitä.</p>
@@ -275,14 +351,14 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 
 <div class="block reveal">
 <h2>KLHYLLY</h2>
-<p>Kylmälaitehylly-työkalu: LEVY tai TIKAS, leveys 300/400/500 mm. Piirtää 3D-hyllyn kahdella klikkauksella, auto-snap viereisten hyllyjen nurkkiin.</p>
+<p>Kylmälaitehylly-työkalu: LEVY tai TIKAS, leveys 300/400/500 mm. Piirtää 3D-hyllyn kahdella klikkauksella, auto-snap viereisten hyllyjen nurkkiin. Lopputulos on parametrinen dynamic block — pituus ja leveys muokattavissa Properties-paletista, pituutta voi stretchata gripeillä. Vaatii rinnalle <code>klhylly.dwg</code>-tiedoston (sisältyy ZIP-pakettiin).</p>
 </div>
 
 <div class="file primary reveal">
 <span class="file-badge zip">ZIP</span>
 <div class="file-meta">
 <h3>Kaikki työkalut</h3>
-<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>33.9 KB</span><span>4 LSP + positio.dwg</span><span>Päiv. 5.5.2026</span></div>
+<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>4 LSP + 2 DWG</span><span>Päiv. 5.5.2026</span></div>
 </div>
 <a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>
@@ -291,7 +367,7 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>POSITIO</h3>
-<div class="file-meta-line"><span>positio.lsp</span><span>4.85 KB</span><span>Päiv. 5.5.2026</span></div>
+<div class="file-meta-line"><span>positio.lsp</span><span>6.16 KB</span><span>Päiv. 5.5.2026</span></div>
 </div>
 <a class="file-action" href="files/positio.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
 </div>
@@ -318,9 +394,18 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <span class="file-badge">LSP</span>
 <div class="file-meta">
 <h3>KLHYLLY</h3>
-<div class="file-meta-line"><span>klhylly.lsp</span><span>25.1 KB</span><span>Päiv. 28.4.2026</span></div>
+<div class="file-meta-line"><span>klhylly.lsp</span><span>18.2 KB</span><span>Vaatii rinnalle klhylly.dwg</span><span>Päiv. 5.5.2026</span></div>
 </div>
 <a class="file-action" href="files/klhylly.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
+</div>
+
+<div class="file reveal">
+<span class="file-badge">DWG</span>
+<div class="file-meta">
+<h3>KLHYLLY block-kirjasto</h3>
+<div class="file-meta-line"><span>klhylly.dwg</span><span>klhylly.lsp:n riippuvuus</span></div>
+</div>
+<a class="file-action" href="files/klhylly.dwg" download>Lataa<span class="file-action-arrow">↓</span></a>
 </div>
 
 <div class="file reveal">

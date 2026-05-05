@@ -37,21 +37,33 @@
   )
 )
 
-(defun positio-find-block-file ( / cands self prefix)
+(defun positio-find-block-file ( / cands self prefix found p)
   (vl-load-com)
-  (setq cands '())
-  (if (setq self (positio-self-folder))
-    (setq cands (cons (strcat self "\\positio.dwg") cands)))
-  (setq prefix (getvar "DWGPREFIX"))
-  (setq cands (append cands
-    (list
-      (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\positio.dwg")
-      (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\positio.dwg")
-      "C:\\AutoCADLisp\\positio.dwg"
-      (if prefix (strcat prefix "positio.dwg")))))
-  (or
-    (findfile "positio.dwg")
-    (vl-some '(lambda (p) (if (and p (vl-file-systime p)) p)) cands)
+  ;; 1. Support Path
+  (setq found (findfile "positio.dwg"))
+  (if (and found (= (type found) 'STR))
+    found
+    (progn
+      (setq found nil)
+      ;; Rakenna kandidaattilista: self-folder, sitten yleiset paikat
+      (setq cands '())
+      (if (setq self (positio-self-folder))
+        (setq cands (list (strcat self "\\positio.dwg"))))
+      (setq prefix (getvar "DWGPREFIX"))
+      (setq cands (append cands
+        (list
+          (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\positio.dwg")
+          (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\positio.dwg")
+          "C:\\AutoCADLisp\\positio.dwg")))
+      (if (and prefix (> (strlen prefix) 0))
+        (setq cands (append cands (list (strcat prefix "positio.dwg")))))
+      ;; Iteroi listaa, palauta ensimmainen olemassaoleva
+      (foreach p cands
+        (if (and (not found)
+                 (= (type p) 'STR)
+                 (vl-file-systime p))
+          (setq found p)))
+      found)
   )
 )
 
@@ -69,20 +81,37 @@
   (princ)
 )
 
-(defun c:POSITIO ( / pt ent blockName blockPath firstTime
-                     savedAttreq savedAttdia savedCmddia savedFiledia savedExpert)
+;; Kavele insertin sub-entiteetit entnext:lla ja paivita ensimmaisen
+;; numero-attribuutin teksti. Tukee tilanteita joissa vla-API ei nae
+;; attribuutteja suoraan.
+(defun positio-update-attribs-via-entnext ( insEnt / ent ed)
+  (setq ent (entnext insEnt))
+  (while ent
+    (setq ed (entget ent))
+    (if (and (= (cdr (assoc 0 ed)) "ATTRIB")
+             (member (strcase (cdr (assoc 2 ed)))
+                     '("NUMERO" "NRO" "NUM" "POSITIO" "POS" "POSITION")))
+      (entmod (subst (cons 1 (itoa *numero*)) (assoc 1 ed) ed))
+    )
+    (setq ent (entnext ent))
+  )
+)
+
+(defun c:POSITIO ( / pt blockName blockPath firstTime
+                     savedAttreq savedAttdia savedCmddia savedFiledia savedExpert
+                     doc ms ins tag)
+  (vl-load-com)
   ;; Tallenna kayttajan sysvarit ja palauta lopussa
   (setq savedAttreq  (getvar "ATTREQ"))
   (setq savedAttdia  (getvar "ATTDIA"))
   (setq savedCmddia  (getvar "CMDDIA"))
   (setq savedFiledia (getvar "FILEDIA"))
   (setq savedExpert  (getvar "EXPERT"))
-  ;; Hiljenna kaikki INSERT-promptit + dialog-popupit
-  (setvar "ATTREQ"  0)   ; ei kysy attribuuttiarvoja
-  (setvar "ATTDIA"  0)   ; ei avaa attribuutti-dialogia
-  (setvar "CMDDIA"  0)   ; INSERT/OPEN command-line, ei dialog
-  (setvar "FILEDIA" 0)   ; tiedostodialog pois
-  (setvar "EXPERT"  5)   ; ohita "block already defined, redefine?" tms.
+  (setvar "ATTREQ"  0)
+  (setvar "ATTDIA"  0)
+  (setvar "CMDDIA"  0)
+  (setvar "FILEDIA" 0)
+  (setvar "EXPERT"  5)
 
   (setq blockName "POSITIO")
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
@@ -91,42 +120,42 @@
   (if (and firstTime (not blockPath))
     (progn
       (princ "\nVIRHE: positio.dwg ei loydy. Varmista etta positio.dwg on samassa kansiossa kuin positio.lsp.")
+      (setvar "ATTREQ"  savedAttreq)
+      (setvar "ATTDIA"  savedAttdia)
+      (setvar "CMDDIA"  savedCmddia)
+      (setvar "FILEDIA" savedFiledia)
+      (setvar "EXPERT"  savedExpert)
       (exit)
     )
   )
 
-  (while (setq pt (getpoint "\nValitse sijainti (ESC lopettaa): "))
+  ;; Lataa block-maaritelma kerran origin:iin ja poista valittomasti.
+  ;; Vasta tama kutsuu -INSERT-komentoa; varsinaiset insertit menevat
+  ;; vla-InsertBlock-API:n kautta joka ei prompttaa lainkaan.
+  (if firstTime
+    (progn
+      (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+      (if (entlast) (entdel (entlast)))
+    )
+  )
 
+  (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
+  (setq ms  (vla-get-ModelSpace doc))
+
+  (while (setq pt (getpoint "\nValitse sijainti (ESC lopettaa): "))
     (setq *numero* (1+ *numero*))
 
-    (if firstTime
-      (progn
-        (command "_.-INSERT" (strcat blockName "=" blockPath) pt 1 1 0)
-        (setq firstTime nil)
-      )
-      (command "_.-INSERT" blockName pt 1 1 0)
-    )
+    (setq ins (vla-InsertBlock ms (vlax-3d-point pt) blockName 1.0 1.0 1.0 0.0))
 
-    (setq ent (entlast))
-
-    (if ent
-      (progn
-        (setq ent (entnext ent))
-        (while ent
-          (if (= (cdr (assoc 0 (entget ent))) "ATTRIB")
-            (if (= (strcase (cdr (assoc 2 (entget ent)))) "NUMERO")
-              (entmod
-                (subst
-                  (cons 1 (itoa *numero*))
-                  (assoc 1 (entget ent))
-                  (entget ent)
-                )
-              )
-            )
-          )
-          (setq ent (entnext ent))
+    (if (= (vla-get-HasAttributes ins) :vlax-true)
+      (foreach att (vlax-invoke ins 'GetAttributes)
+        (setq tag (strcase (vla-get-TagString att)))
+        (if (member tag '("NUMERO" "NRO" "NUM" "POSITIO" "POS" "POSITION"))
+          (vla-put-TextString att (itoa *numero*))
         )
       )
+      ;; Ei suoria attribuutteja — kokeile entnext-fallbackia (nested-rakenteille)
+      (positio-update-attribs-via-entnext (vlax-vla-object->ename ins))
     )
 
     (princ (strcat "\nLisätty numero: " (itoa *numero*)))
