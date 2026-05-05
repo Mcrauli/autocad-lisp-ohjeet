@@ -176,21 +176,37 @@
   )
 )
 
-(defun klhylly-find-block-file ( / cands self prefix )
+(defun klhylly-find-block-file ( / cands self prefix found p )
   (vl-load-com)
-  (setq cands '())
-  (if (setq self (klhylly-self-folder))
-    (setq cands (cons (strcat self "\\klhylly.dwg") cands)))
-  (setq prefix (getvar "DWGPREFIX"))
-  (setq cands (append cands
-    (list
-      (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\klhylly.dwg")
-      (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\klhylly.dwg")
-      "C:\\AutoCADLisp\\klhylly.dwg"
-      (if prefix (strcat prefix "klhylly.dwg")))))
-  (or
-    (findfile "klhylly.dwg")
-    (vl-some '(lambda (p) (if (and p (vl-file-systime p)) p)) cands)
+  ;; 1. Support Path
+  (setq found (findfile "klhylly.dwg"))
+  (if (and found (= (type found) 'STR))
+    found
+    (progn
+      (setq found nil)
+      ;; Rakenna kandidaattilista: self-folder, sitten yleiset paikat
+      (setq cands '())
+      (if (setq self (klhylly-self-folder))
+        (if (= (type self) 'STR)
+          (setq cands (list (strcat self "\\klhylly.dwg")))))
+      (setq prefix (getvar "DWGPREFIX"))
+      (setq cands (append cands
+        (list
+          (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\klhylly.dwg")
+          (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\klhylly.dwg")
+          "C:\\AutoCADLisp\\klhylly.dwg")))
+      (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0))
+        (setq cands (append cands (list (strcat prefix "klhylly.dwg")))))
+      ;; Iteroi listaa, palauta ensimmainen olemassaoleva. Type-check
+      ;; varmistaa ettei T tai muu non-string vuoda lapi (aiheutti
+      ;; strcat-virheen "bad argument type: stringp T" kun kutsuja
+      ;; (strcat blockName "=" blockPath) yritti rakentaa INSERT-stringia).
+      (foreach p cands
+        (if (and (not found)
+                 (= (type p) 'STR)
+                 (vl-file-systime p))
+          (setq found p)))
+      found)
   )
 )
 
@@ -228,15 +244,13 @@
 ;; KLHYLLY (vaakaversio: LEVY tai TIKAS)
 ;; ============================================================
 
-(defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode oldFiledia oldCmddia oldExpert
+(defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode
                      tyyppi levyStr levy p1 p1snap p2 pituus ang perp
                      blockName blockPath layerName scaleY firstTime
-                     doc ms ins )
+                     doc ms ins
+                     savedFiledia savedCmddia savedExpert )
 
   (defun *error* ( msg )
-    (if oldExpert  (setvar "EXPERT"  oldExpert))
-    (if oldCmddia  (setvar "CMDDIA"  oldCmddia))
-    (if oldFiledia (setvar "FILEDIA" oldFiledia))
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
     (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
     (if oldClayer  (setvar "CLAYER"  oldClayer))
@@ -247,19 +261,11 @@
 
   (vl-load-com)
 
-  ;; Tallenna sysvarit; FILEDIA/CMDDIA/EXPERT vaadittavia jotta -INSERT
-  ;; ei avaa file dialogia kun blokki ladataan klhylly.dwg:sta ensikerralla.
   (setq oldClayer  (getvar "CLAYER"))
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldOsmode  (getvar "OSMODE"))
-  (setq oldFiledia (getvar "FILEDIA"))
-  (setq oldCmddia  (getvar "CMDDIA"))
-  (setq oldExpert  (getvar "EXPERT"))
 
   (setvar "CMDECHO" 0)
-  (setvar "FILEDIA" 0)
-  (setvar "CMDDIA"  0)
-  (setvar "EXPERT"  5)
 
   ;; 1) Tyyppi
   (initget "LEVY TIKAS")
@@ -281,7 +287,7 @@
   (if (null levyStr) (setq levyStr "300"))
   (setq levy (atof levyStr))
 
-  ;; 3) Block-maaritys: ensikerralla lataa klhylly.dwg:sta
+  ;; 3) Block-maaritys: ensikerralla lookup klhylly.dwg:n polku
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
   (if firstTime
     (progn
@@ -290,10 +296,8 @@
         (progn
           (princ "\nVIRHE: klhylly.dwg ei loydy. Varmista etta klhylly.dwg on samassa")
           (princ "\nkansiossa kuin klhylly.lsp.")
-          (setvar "EXPERT"  oldExpert)
-          (setvar "CMDDIA"  oldCmddia)
-          (setvar "FILEDIA" oldFiledia)
           (setvar "CMDECHO" oldCmdecho)
+          (setvar "CLAYER"  oldClayer)
           (exit)
         )
       )
@@ -332,17 +336,29 @@
   (klhylly-ensure-layer layerName 175)
 
   ;; 8) Lataa block-maaritys ensikerralla -INSERT:lla origin:iin ja poista
-  ;;    valittomasti — varsinainen sijoitus tehdaan vla-InsertBlock-API:lla
-  ;;    joka ei prompttaa lainkaan (positio.lsp:n pattern).
+  ;;    valittomasti. FILEDIA/CMDDIA/EXPERT vaihdetaan vain talle kapealle
+  ;;    blokille jotta -INSERT ei avaa file dialogia, ja palautetaan heti
+  ;;    perään. vl-catch-all-apply takaa palautuksen vaikka -INSERT epaonnistuisi.
   (if firstTime
     (progn
-      (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
-      (if (entlast) (entdel (entlast)))
+      (setq savedFiledia (getvar "FILEDIA"))
+      (setq savedCmddia  (getvar "CMDDIA"))
+      (setq savedExpert  (getvar "EXPERT"))
+      (setvar "FILEDIA" 0)
+      (setvar "CMDDIA"  0)
+      (setvar "EXPERT"  5)
+      (vl-catch-all-apply
+        '(lambda ()
+           (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+           (if (entlast) (entdel (entlast)))))
+      (setvar "FILEDIA" savedFiledia)
+      (setvar "CMDDIA"  savedCmddia)
+      (setvar "EXPERT"  savedExpert)
     )
   )
 
   ;; 9) Sijoita instanssi vla-InsertBlock:lla — rotation radiaaneina,
-  ;;    scaleY = -1.0 mirroria varten kun perp on CW.
+  ;;    scaleY = -1.0 mirroria varten kun perp on CW. Ei prompteja.
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
   (setq ms  (vla-get-ModelSpace doc))
   (setq ins (vla-InsertBlock ms (vlax-3d-point p1) blockName 1.0 scaleY 1.0 ang))
@@ -352,9 +368,6 @@
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
 
-  (setvar "EXPERT"  oldExpert)
-  (setvar "CMDDIA"  oldCmddia)
-  (setvar "FILEDIA" oldFiledia)
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
@@ -372,17 +385,14 @@
 ;; joten Properties-paletti ja stretch toimivat samoin kuin vaakaversiossa.
 
 (defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldOsmode
-                     oldFiledia oldCmddia oldExpert
                      blockName blockPath layerName firstTime
                      levyStr levy modeKw lenInput
                      p1 p2 p3 length
                      Lraw Lmag L Wraw dotLW Wperp Wmag W D
-                     mat doc ms ins )
+                     mat doc ms ins
+                     savedFiledia savedCmddia savedExpert )
 
   (defun *error* ( msg )
-    (if oldExpert  (setvar "EXPERT"  oldExpert))
-    (if oldCmddia  (setvar "CMDDIA"  oldCmddia))
-    (if oldFiledia (setvar "FILEDIA" oldFiledia))
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
     (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
     (if oldClayer  (setvar "CLAYER"  oldClayer))
@@ -396,14 +406,8 @@
   (setq oldClayer  (getvar "CLAYER"))
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldOsmode  (getvar "OSMODE"))
-  (setq oldFiledia (getvar "FILEDIA"))
-  (setq oldCmddia  (getvar "CMDDIA"))
-  (setq oldExpert  (getvar "EXPERT"))
 
   (setvar "CMDECHO" 0)
-  (setvar "FILEDIA" 0)
-  (setvar "CMDDIA"  0)
-  (setvar "EXPERT"  5)
 
   (setq blockName "KLHYLLY-TIKAS")
   (setq layerName "KYL-TIKASHYLLY")
@@ -489,12 +493,23 @@
   ;; 5) Layer luonti
   (klhylly-ensure-layer layerName 175)
 
-  ;; 6) Lataa block-maaritys ensikerralla -INSERT:lla, sijoita ja poista —
-  ;;    varsinainen instanssi tehdaan vla-InsertBlock:lla joka ei prompttaa.
+  ;; 6) Lataa block-maaritys ensikerralla -INSERT:lla origin:iin ja poista
+  ;;    valittomasti. FILEDIA/CMDDIA/EXPERT vain talle kapealle blokille.
   (if firstTime
     (progn
-      (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
-      (if (entlast) (entdel (entlast)))
+      (setq savedFiledia (getvar "FILEDIA"))
+      (setq savedCmddia  (getvar "CMDDIA"))
+      (setq savedExpert  (getvar "EXPERT"))
+      (setvar "FILEDIA" 0)
+      (setvar "CMDDIA"  0)
+      (setvar "EXPERT"  5)
+      (vl-catch-all-apply
+        '(lambda ()
+           (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+           (if (entlast) (entdel (entlast)))))
+      (setvar "FILEDIA" savedFiledia)
+      (setvar "CMDDIA"  savedCmddia)
+      (setvar "EXPERT"  savedExpert)
     )
   )
 
@@ -520,9 +535,6 @@
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" length)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
 
-  (setvar "EXPERT"  oldExpert)
-  (setvar "CMDDIA"  oldCmddia)
-  (setvar "FILEDIA" oldFiledia)
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
