@@ -2,8 +2,7 @@
 ;;;
 ;;; INTERNAL TOOL — sisaltaa block-geometrian luonnin klhylly.dwg:lle.
 ;;; Ei kuulu ZIP-pakettiin (`make-bundle.ps1` ottaa vain files/-kansion).
-;;; Aja kerran tyhjassa DWG:ssa kun klhylly.dwg-block-kirjastoa rakennetaan
-;;; tai ladataan uudestaan (esim. mittoja muutetaan).
+;;; Aja kerran tyhjassa DWG:ssa kun klhylly.dwg-block-kirjastoa rakennetaan.
 ;;;
 ;;; Edellytys: UNITS = mm, tyhja DWG (ei olemassa olevia KLHYLLY-LEVY tai
 ;;; KLHYLLY-TIKAS block-maarityksia).
@@ -12,42 +11,52 @@
 ;;; Aja:   KLHYLLY-BUILD-BLOCKS
 ;;;
 ;;; Tuottaa kaksi block-maaritysta:
-;;;   KLHYLLY-LEVY:  5 erillista BOX-soliditeettia (pohja, 2 seinaa, 2 lippaa)
-;;;                  + suljettu LWPOLYLINE-outline + DASH-hatch
-;;;   KLHYLLY-TIKAS: 2 rail-BOX-soliditeettia + 1 rung-BOX (master)
+;;;   KLHYLLY-LEVY:  5 LWPOLYLINE-rectanglea joilla thickness
+;;;                  (peltipohja + 2 seinaa + 2 lippaa) + outline + DASH-hatch
+;;;   KLHYLLY-TIKAS: 2 rail-polylinea + 1 rung-polyline (master)
 ;;;
-;;; Geometria on TASMALLEEN samaa mitoitusta kuin nykyinen klhylly.lsp:n
-;;; UNION-pohjainen tuotos (peltipaksuus 1.25, lippa 9, kisko 15x60, jne.).
-;;;
-;;; HUOMIO: BLOCK ei sisalla parametreja eika actioneita — niiden lisays
-;;; tehdaan BEDIT:lla erikseen. Katso tools/KLHYLLY-BEDIT-OHJEET.md.
+;;; KRIITTINEN MUUTOS (vs. v1): geometria on 2D-LWPOLYLINEja joissa thickness
+;;; (extrudointi Z-suuntaan), EI 3D-soliditeetteja. Syy: dynamic blockin
+;;; stretch-action toimii LWPOLYLINEille luotettavasti, mutta 3D-soliditeetit
+;;; eivat stretchaudu vaikka olisivat axiomaattisia primitiivi-BOXeja.
+;;; Visuaalisesti polyline+thickness rendaa kuten ohut 3D-laatikko (4 pystyseinaa,
+;;; ei ylakkaa/alakkaa-pintaa) — sheet-metal-hyllyssa peltipaksuus 1.25 mm
+;;; tekee top/bottom-pinnat kaytannossa nakymattomiksi.
 ;;;
 ;;; Block-kontentti layerille "0" (BYBLOCK) jotta block-instanssin layer
 ;;; (KYL-LEVYHYLLY tai KYL-TIKASHYLLY) periytyy alaspain.
 
 (vl-load-com)
 
-;; AddBox: keskipiste + dimensiot. Tassa wrapperi ottaa 6 koordinaattia
-;; (xmin/ymin/zmin/xmax/ymax/zmax) jotta mitoitus on luettavampi.
-(defun klhylly-build-box ( msp xmin ymin zmin xmax ymax zmax / cx cy cz dx dy dz )
-  (setq dx (- xmax xmin))
-  (setq dy (- ymax ymin))
-  (setq dz (- zmax zmin))
-  (setq cx (/ (+ xmin xmax) 2.0))
-  (setq cy (/ (+ ymin ymax) 2.0))
-  (setq cz (/ (+ zmin zmax) 2.0))
-  (vla-AddBox msp (vlax-3d-point (list cx cy cz)) dx dy dz)
+;; LWPOLYLINE-rectangle joilla elevation (Z-sijainti) + thickness (Z-extrudointi).
+;; Suljettu (closed = 70 . 1). Layer = "0" -> BYBLOCK behavior.
+(defun klhylly-build-poly-thick ( xmin ymin xmax ymax elevation thickness / )
+  (entmake
+    (list
+      (cons 0 "LWPOLYLINE")
+      (cons 100 "AcDbEntity")
+      (cons 8 "0")
+      (cons 100 "AcDbPolyline")
+      (cons 90 4)
+      (cons 70 1)              ; closed
+      (cons 38 elevation)      ; Z-sijainti
+      (cons 39 thickness)      ; Z-extrudointi (vertikaaliset seinat)
+      (cons 10 (list xmin ymin))
+      (cons 10 (list xmax ymin))
+      (cons 10 (list xmax ymax))
+      (cons 10 (list xmin ymax))
+    )
+  )
+  (entlast)
 )
 
 (defun c:KLHYLLY-BUILD-BLOCKS ( / *error*
-                                  oldClayer oldCmdecho oldHpassoc oldDelobj
-                                  doc msp
+                                  oldClayer oldCmdecho oldHpassoc
                                   sFloor sLWall sRWall sLLip sRLip poly hatch
                                   rail1 rail2 rung
-                                  ss e )
+                                  ss )
 
   (defun *error* ( msg )
-    (if oldDelobj  (setvar "DELOBJ"  oldDelobj))
     (if oldHpassoc (setvar "HPASSOC" oldHpassoc))
     (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
     (if oldClayer  (setvar "CLAYER"  oldClayer))
@@ -56,7 +65,6 @@
     (princ)
   )
 
-  ;; Pre-check: alaa korvaa olemassa olevia maarityksia hiljaa
   (if (or (tblsearch "BLOCK" "KLHYLLY-LEVY")
           (tblsearch "BLOCK" "KLHYLLY-TIKAS"))
     (progn
@@ -66,32 +74,46 @@
     )
   )
 
-  (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
-  (setq msp (vla-get-ModelSpace doc))
-
   (setq oldClayer  (getvar "CLAYER"))
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldHpassoc (getvar "HPASSOC"))
-  (setq oldDelobj  (getvar "DELOBJ"))
 
   (setvar "CMDECHO" 0)
   (setvar "HPASSOC" 1)
-  (setvar "DELOBJ"  1)
   (setvar "CLAYER"  "0")
 
   ;; ============================================================
-  ;; KLHYLLY-LEVY
+  ;; KLHYLLY-LEVY — 5 LWPOLYLINE-rectangle thickness:lla + 3DFACE pohjalle
   ;; ============================================================
-  ;; 5 erillista peltiseinama-BOXia. EI UNION:eja — dynamic blockin
-  ;; stretch-action vaatii akseliyhdensuuntaisia primitiivi-BOXeja.
-  (setq sFloor (klhylly-build-box msp 0.0    0.0    0.0    1000.0 500.0  1.25 ))
-  (setq sLWall (klhylly-build-box msp 0.0    0.0    0.0    1000.0 1.25   60.0 ))
-  (setq sRWall (klhylly-build-box msp 0.0    498.75 0.0    1000.0 500.0  60.0 ))
-  (setq sLLip  (klhylly-build-box msp 0.0    1.25   58.75  1000.0 10.25  60.0 ))
-  (setq sRLip  (klhylly-build-box msp 0.0    489.75 58.75  1000.0 498.75 60.0 ))
+  ;; Pohja: 0..1000 X, 0..500 Y, Z=0..1.25
+  (setq sFloor (klhylly-build-poly-thick 0.0    0.0    1000.0 500.0  0.0    1.25))
+  ;; Vasen seina: 0..1000 X, 0..1.25 Y, Z=0..60
+  (setq sLWall (klhylly-build-poly-thick 0.0    0.0    1000.0 1.25   0.0    60.0))
+  ;; Oikea seina: 0..1000 X, 498.75..500 Y, Z=0..60
+  (setq sRWall (klhylly-build-poly-thick 0.0    498.75 1000.0 500.0  0.0    60.0))
+  ;; Vasen lippa: 0..1000 X, 1.25..10.25 Y, Z=58.75..60
+  (setq sLLip  (klhylly-build-poly-thick 0.0    1.25   1000.0 10.25  58.75  1.25))
+  ;; Oikea lippa: 0..1000 X, 489.75..498.75 Y, Z=58.75..60
+  (setq sRLip  (klhylly-build-poly-thick 0.0    489.75 1000.0 498.75 58.75  1.25))
 
-  ;; Suljettu LWPOLYLINE-outline z=0 — toimii hatchin assosiaatio-frame:na
-  ;; ja stretch-actionin yksi target-entiteetti.
+  ;; 3DFACE pohjan ylapinnaksi z=1.25 — Realistic-tilassa floor renderoituu
+  ;; tayttena pintana. Polyline+thickness yksinaan luo vain 4 pystyseinama,
+  ;; ei ylakanta — Realistic-naytossa lattian lapi nakisi muuten.
+  (entmake
+    (list
+      (cons 0 "3DFACE")
+      (cons 100 "AcDbEntity")
+      (cons 8 "0")
+      (cons 100 "AcDbFace")
+      (cons 10 (list 0.0    0.0    1.25))
+      (cons 11 (list 1000.0 0.0    1.25))
+      (cons 12 (list 1000.0 500.0 1.25))
+      (cons 13 (list 0.0    500.0 1.25))
+    )
+  )
+  (setq sFloorTop (entlast))
+
+  ;; Outline (z=0, ei thickness) — hatch:n associative-frame
   (entmake
     (list
       (cons 0 "LWPOLYLINE")
@@ -99,8 +121,8 @@
       (cons 8 "0")
       (cons 100 "AcDbPolyline")
       (cons 90 4)
-      (cons 70 1)              ; closed flag
-      (cons 38 0.0)            ; elevation
+      (cons 70 1)
+      (cons 38 0.0)
       (cons 10 (list 0.0    0.0))
       (cons 10 (list 1000.0 0.0))
       (cons 10 (list 1000.0 500.0))
@@ -109,45 +131,74 @@
   )
   (setq poly (entlast))
 
-  ;; DASH-hatch outline:n sisalle, scale 40, angle 45, associative
   (command "_.-HATCH" "_P" "DASH" 40 45 "_S" poly "" "")
   (setq hatch (entlast))
 
-  ;; Block-maaritys: select 7 entiteettia (5 BOX + 1 LWPOLYLINE + 1 HATCH)
   (setq ss (ssadd))
-  (setq ss (ssadd (vlax-vla-object->ename sFloor) ss))
-  (setq ss (ssadd (vlax-vla-object->ename sLWall) ss))
-  (setq ss (ssadd (vlax-vla-object->ename sRWall) ss))
-  (setq ss (ssadd (vlax-vla-object->ename sLLip)  ss))
-  (setq ss (ssadd (vlax-vla-object->ename sRLip)  ss))
-  (setq ss (ssadd poly  ss))
-  (setq ss (ssadd hatch ss))
+  (setq ss (ssadd sFloor    ss))
+  (setq ss (ssadd sLWall    ss))
+  (setq ss (ssadd sRWall    ss))
+  (setq ss (ssadd sLLip     ss))
+  (setq ss (ssadd sRLip     ss))
+  (setq ss (ssadd sFloorTop ss))
+  (setq ss (ssadd poly      ss))
+  (setq ss (ssadd hatch     ss))
   (command "_.-BLOCK" "KLHYLLY-LEVY" "0,0,0" ss "")
 
   ;; ============================================================
-  ;; KLHYLLY-TIKAS
+  ;; KLHYLLY-TIKAS — 2 rail + 1 rung (master) + 3DFACEt ylakansiksi
   ;; ============================================================
-  ;; 2 kiskoa + 1 master-rung. Array-action arrayttaa rungin BEDIT:ssa.
-  (setq rail1 (klhylly-build-box msp 0.0    0.0   0.0   1000.0 15.0  60.0))
-  (setq rail2 (klhylly-build-box msp 0.0    485.0 0.0   1000.0 500.0 60.0))
-  (setq rung  (klhylly-build-box msp 242.5  15.0  10.0  257.5  485.0 25.0))
+  ;; Rail1: 0..1000 X, 0..15 Y, Z=0..60
+  (setq rail1 (klhylly-build-poly-thick 0.0    0.0    1000.0 15.0   0.0    60.0))
+  ;; Rail2: 0..1000 X, 485..500 Y, Z=0..60
+  (setq rail2 (klhylly-build-poly-thick 0.0    485.0  1000.0 500.0  0.0    60.0))
+  ;; Rung-master: 242.5..257.5 X, 15..485 Y, Z=10..25
+  (setq rung  (klhylly-build-poly-thick 242.5  15.0   257.5  485.0  10.0   15.0))
+
+  ;; 3DFACEt ylakansiksi — Realistic-tilassa rails ja rung renderoituvat
+  ;; tayttena pintana ylhaalta katsoen (polyline+thickness yksinaan luo
+  ;; vain 4 pystyseinama, ilman ylakanta nakisi lapi).
+  (entmake (list (cons 0 "3DFACE") (cons 100 "AcDbEntity") (cons 8 "0")
+                 (cons 100 "AcDbFace")
+                 (cons 10 (list 0.0    0.0   60.0))
+                 (cons 11 (list 1000.0 0.0   60.0))
+                 (cons 12 (list 1000.0 15.0  60.0))
+                 (cons 13 (list 0.0    15.0  60.0))))
+  (setq rail1Top (entlast))
+
+  (entmake (list (cons 0 "3DFACE") (cons 100 "AcDbEntity") (cons 8 "0")
+                 (cons 100 "AcDbFace")
+                 (cons 10 (list 0.0    485.0 60.0))
+                 (cons 11 (list 1000.0 485.0 60.0))
+                 (cons 12 (list 1000.0 500.0 60.0))
+                 (cons 13 (list 0.0    500.0 60.0))))
+  (setq rail2Top (entlast))
+
+  (entmake (list (cons 0 "3DFACE") (cons 100 "AcDbEntity") (cons 8 "0")
+                 (cons 100 "AcDbFace")
+                 (cons 10 (list 242.5  15.0  25.0))
+                 (cons 11 (list 257.5  15.0  25.0))
+                 (cons 12 (list 257.5  485.0 25.0))
+                 (cons 13 (list 242.5  485.0 25.0))))
+  (setq rungTop (entlast))
 
   (setq ss (ssadd))
-  (setq ss (ssadd (vlax-vla-object->ename rail1) ss))
-  (setq ss (ssadd (vlax-vla-object->ename rail2) ss))
-  (setq ss (ssadd (vlax-vla-object->ename rung)  ss))
+  (setq ss (ssadd rail1    ss))
+  (setq ss (ssadd rail2    ss))
+  (setq ss (ssadd rung     ss))
+  (setq ss (ssadd rail1Top ss))
+  (setq ss (ssadd rail2Top ss))
+  (setq ss (ssadd rungTop  ss))
   (command "_.-BLOCK" "KLHYLLY-TIKAS" "0,0,0" ss "")
 
-  ;; Palauta sysvarit
-  (setvar "DELOBJ"  oldDelobj)
   (setvar "HPASSOC" oldHpassoc)
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
 
   (princ "\nLisatty 2 block-maaritysta: KLHYLLY-LEVY, KLHYLLY-TIKAS")
-  (princ "\nSeuraavaksi: avaa BEDIT kummallekin ja lisaa parametrit + actionit")
-  (princ "\nohjeen mukaan (tools/KLHYLLY-BEDIT-OHJEET.md). Tallenna lopuksi")
-  (princ "\nfiles/klhylly.dwg.")
+  (princ "\nGeometria on LWPOLYLINEja joilla thickness — stretchaa luotettavasti.")
+  (princ "\nSeuraavaksi: BEDIT + parametrit + actionit ohjeen mukaan,")
+  (princ "\nlopuksi tallenna files/klhylly.dwg.")
   (princ)
 )
 

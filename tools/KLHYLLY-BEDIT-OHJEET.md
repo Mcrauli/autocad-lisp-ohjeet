@@ -3,6 +3,14 @@
 Step-by-step ohjeet `files/klhylly.dwg`-block-kirjaston rakentamiseen.
 Tehdään **kerran**, kun block-määrityksiä luodaan tai mitoituksia muutetaan.
 
+> **Versio v2 — 5.5.2026:** geometria on **2D-LWPOLYLINEja joilla thickness**
+> (eli vertikaalinen extrudointi Z-suuntaan), EI 3D-soliditeetteja. Syy:
+> dynamic blockin stretch-action toimii LWPOLYLINEille luotettavasti, mutta
+> 3D-soliditeetit eivät stretchaudu vaikka olisivat akseliyhdensuuntaisia
+> primitiivi-BOXeja. Visuaalisesti polyline+thickness rendaa kuten ohut
+> 3D-laatikko (4 pystyseinämää, ei ylä-/alapintaa) — peltihyllyssä paksuus
+> 1.25 mm tekee top/bottom-pinnat käytännössä näkymättömiksi.
+
 ---
 
 ## Vaihe 0 — Valmistelut
@@ -27,7 +35,7 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 ## Vaihe 2 — KLHYLLY-LEVY: parametrit
 
 1. Komentorivillä: `BEDIT` ↵ → valitse listalta `KLHYLLY-LEVY` → OK.
-   Block Editor avautuu, näet 5 BOX-soliditeettia + outline-polyline + hatch.
+   Block Editor avautuu, näet **5 LWPOLYLINEa** (joilla thickness Z-suunnassa) + **1 3DFACE** (pohjan yläkansi z=1.25) + outline-polyline + hatch = **8 entiteettiä yhteensä**.
 2. **Lisää Pituus-parametri:**
    - Block Authoring Palettes → Parameters-välilehti → vedä **Linear**
      parametri canvasille
@@ -35,10 +43,11 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
    - Specify endpoint: kirjoita `1000,0,0` ↵
    - Specify label location: kirjoita `500,-50,0` ↵ (sijoittuu alle, ei haittaa)
    - **Klikkaa Linear-parametriä** valituksi. Avaa Properties-paletti
-     (Ctrl+1) → muokkaa:
+     (Ctrl+1) → muokkaa Value Set / Property Labels -osion alta:
      - **Distance name:** `Pituus`
      - **Default Distance:** `1000`
-     - **Distance type:** `Distance` *(Value Set: None — continuous)*
+     - **Value Set** *(tai "Dist value set")* **= `None`** (continuous,
+       mikä tahansa arvo sallittu)
      - **Number of Grips:** `1`
 3. **Lisää Leveys-parametri:**
    - Vedä toinen **Linear** Parameters-paletista canvasille
@@ -47,8 +56,10 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
    - Specify label location: `-50,250,0` ↵
    - Klikkaa parametriä → Properties-paletissa:
      - **Distance name:** `Leveys`
-     - **Distance type:** `List` *(EI Distance — vaihda dropdownista)*
-     - **Dist value list:** klikkaa kohtaa "..." nappi → ikkunaan kirjoita
+     - **Value Set** *(tai "Dist value set")* **= `List`** (pakottaa
+       arvon tiettyihin vaihtoehtoihin — vaihda dropdownista; vaihtoehdot
+       ovat None / Increment / List)
+     - **Dist value list:** klikkaa kohtaa → "..." nappi → ikkunaan kirjoita
        `300`, `400`, `500` (yksi per rivi) → OK
      - **Default Distance:** `500`
      - **Number of Grips:** `1`
@@ -68,8 +79,9 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 4. *"Specify first corner of stretch frame:"* — kirjoita `950,-50` ↵
 5. *"Specify opposite corner of stretch frame:"* — kirjoita `1100,600` ↵
 6. *"Select objects:"* — vedä **valintaikkuna** (window, ei crossing)
-   tai klikkaa yksitellen kaikki **7 entiteettiä**:
-   - 5 BOXia (pohja, vasen seinä, oikea seinä, vasen lippa, oikea lippa)
+   tai klikkaa yksitellen kaikki **8 entiteettiä**:
+   - 5 LWPOLYLINEia (pohja, vasen seinä, oikea seinä, vasen lippa, oikea lippa)
+   - **3DFACE** (pohjan yläkansi z=1.25:llä)
    - LWPOLYLINE-outline
    - DASH-hatch
    - ↵ kun kaikki valittu
@@ -88,9 +100,10 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
    (Y=500-pää)
 4. *"Specify first corner:"* — `-50,480` ↵
 5. *"Specify opposite corner:"* — `1050,550` ↵
-6. *"Select objects:"* — valitse **4 entiteettiä**:
-   - oikea seinä BOX (sRWall)
-   - oikea lippa BOX (sRLip)
+6. *"Select objects:"* — valitse **5 entiteettiä**:
+   - oikea seinä LWPOLYLINE (sRWall)
+   - oikea lippa LWPOLYLINE (sRLip)
+   - **3DFACE** (pohjan yläkansi — sen Y=500-reuna venyy)
    - LWPOLYLINE-outline
    - DASH-hatch
    - ↵
@@ -110,13 +123,15 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 ## Vaihe 6 — KLHYLLY-TIKAS: parametrit
 
 1. `BEDIT` ↵ → `KLHYLLY-TIKAS` → OK.
-   Näet 2 rail-BOXia + 1 rung-BOXin (master, X=242.5–257.5).
+   Näet **2 rail-LWPOLYLINEia** + **1 rung-LWPOLYLINE** (master, X=242.5–257.5)
+   + **3 3DFACEa** (rail1-Top z=60, rail2-Top z=60, rung-Top z=25) =
+   **6 entiteettiä yhteensä**.
 2. **Pituus-parametri** (sama kuin LEVY:ssä):
    - Linear: start `0,0,0` → end `1000,0,0` → label `500,-50,0`
-   - Distance name `Pituus`, Default 1000, Distance type Distance, Grips 1
+   - Distance name `Pituus`, Default 1000, Value Set = None, Grips 1
 3. **Leveys-parametri** (sama kuin LEVY:ssä):
    - Linear: start `0,0,0` → end `0,500,0` → label `-50,250,0`
-   - Distance name `Leveys`, Distance type List `300/400/500`,
+   - Distance name `Leveys`, Value Set = List `300/400/500`,
      Default 500, Grips 1
 
 ---
@@ -127,9 +142,12 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 2. Select parameter: **Pituus**
 3. Parameter point: **Pituus oikea päätygrippi** (X=1000)
 4. First corner: `950,-50` ↵, Opposite: `1100,550` ↵
-5. Select objects: **vain rail1 + rail2** (kaksi BOXia, EI rung-master) → ↵
+5. Select objects: **rail1 + rail2 + rail1-Top 3DFACE + rail2-Top 3DFACE**
+   (4 entiteettiä, **EI** rung-masteria eikä rung-Top:ia) → ↵
 
-> Kiskot pitenevät stretchin myötä; rungin lisäys/vähennys hoitaa Array.
+> Kiskot ja niiden ylakannet pitenevät stretchin myötä; rungin (+ rung-Top:n)
+> lisäys/vähennys hoitaa Array. Rail1-Top on z=60:llä, rail2-Top samoin —
+> niiden X=1000-reunat venyvät kun frame on `(950,-50)→(1100,550)`.
 
 ---
 
@@ -137,7 +155,8 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 
 1. Vedä **Array** action canvasille
 2. Select parameter: **Pituus**
-3. Select objects: **vain rung-master BOX** (X=242.5–257.5) → ↵
+3. Select objects: **rung-master LWPOLYLINE + rung-Top 3DFACE** (2 entiteettiä,
+   molemmat keskellä X=242.5..257.5) → ↵
 4. *"Enter the distance between columns (|||):"* — kirjoita `250` ↵
 
 > Kun käyttäjä venyttää Pituus-grippiä esim. 1000 → 2500, master-rung
@@ -152,12 +171,15 @@ Oikealle reunalle ilmestyy paletti, jossa on välilehdet **Parameters**,
 2. Select parameter: **Leveys**
 3. Parameter point: **Leveys yläpäätygrippi** (Y=500)
 4. First corner: `-50,480` ↵, Opposite: `1050,550` ↵
-5. Select objects: **rail2 + rung-master** → ↵
-   - rail2 koko BOX siirtyy +Y (siellä X-suunnassa pitkä)
-   - rung-master:n yläpää venyy Y-suunnassa
+5. Select objects: **rail2 + rung-master + rail2-Top 3DFACE + rung-Top 3DFACE**
+   (4 entiteettiä) → ↵
+   - rail2 (+ rail2-Top) koko LWPOLYLINE siirtyy +Y
+   - rung-master (+ rung-Top) -korkean Y=485-reuna venyy Y-suunnassa,
+     Y=15-reuna pysyy paikallaan (frame ei kata)
 
 > HUOMIO: array-kopioidut rungit periytyvät master:lta — kun Leveys-action
-> stretchaa master:n, kaikki array-kopiot stretchaantuvat samaan tahtiin.
+> stretchaa master:n, kaikki array-kopiot (sekä LWPOLYLINE että 3DFACE)
+> stretchaantuvat samaan tahtiin.
 
 ---
 

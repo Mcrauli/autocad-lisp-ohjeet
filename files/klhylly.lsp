@@ -33,47 +33,17 @@
 ;; LAYER + SNAP HELPERIT
 ;; ============================================================
 
-;; Varmistaa etta layer on olemassa true color -varilla (RGB).
-(defun klhylly-ensure-layer ( layerName r g b
-                              / acadObj doc layers layer col classIds cid result )
+;; Varmistaa etta layer on olemassa annetulla AutoCAD color index:lla.
+;; Jos layer on jo olemassa, ei kosketa sen asetuksiin (kayttajan custom-vari sailyy).
+(defun klhylly-ensure-layer ( layerName colorIndex
+                              / acadObj doc layers layer )
   (if (null (tblsearch "LAYER" layerName))
     (progn
       (setq acadObj (vlax-get-acad-object))
       (setq doc (vla-get-ActiveDocument acadObj))
       (setq layers (vla-get-Layers doc))
       (setq layer (vla-Add layers layerName))
-      (setq classIds '("AutoCAD.AcCmColor.25"
-                       "AutoCAD.AcCmColor.24"
-                       "AutoCAD.AcCmColor.23"
-                       "AutoCAD.AcCmColor.22"
-                       "AutoCAD.AcCmColor.21"
-                       "AutoCAD.AcCmColor.20"
-                       "AutoCAD.AcCmColor.19"
-                       "AutoCAD.AcCmColor.18"
-                       "AutoCAD.AcCmColor.17"
-                       "AutoCAD.AcCmColor.16"
-                       "AutoCAD.AcCmColor"))
-      (setq col nil)
-      (foreach cid classIds
-        (if (null col)
-          (progn
-            (setq result
-              (vl-catch-all-apply
-                'vla-GetInterfaceObject
-                (list acadObj cid)))
-            (if (not (vl-catch-all-error-p result))
-              (setq col result))
-          )
-        )
-      )
-      (if col
-        (progn
-          (vla-SetRGB col r g b)
-          (vla-put-TrueColor layer col)
-          (vlax-release-object col)
-        )
-        (vla-put-Color layer 5)
-      )
+      (vla-put-Color layer colorIndex)
     )
   )
   layerName
@@ -224,6 +194,20 @@
   )
 )
 
+;; Diagnostic command — printtaa mita klhylly-find-block-file palauttaa.
+;; Aja "KLHDEBUG" komentoriviltä jos KLHYLLY/KLHYLLYV ei loyda DWG:ta.
+(defun c:KLHDEBUG ( / s b )
+  (princ (strcat "\nDWGPREFIX = " (vl-princ-to-string (getvar "DWGPREFIX"))))
+  (princ (strcat "\nUSERPROFILE = " (vl-princ-to-string (getenv "USERPROFILE"))))
+  (princ (strcat "\nfindfile klhylly.lsp = " (vl-princ-to-string (findfile "klhylly.lsp"))))
+  (princ (strcat "\nfindfile klhylly.dwg = " (vl-princ-to-string (findfile "klhylly.dwg"))))
+  (setq s (klhylly-self-folder))
+  (princ (strcat "\nklhylly-self-folder = " (vl-princ-to-string s)))
+  (setq b (klhylly-find-block-file))
+  (princ (strcat "\nklhylly-find-block-file = " (vl-princ-to-string b)))
+  (princ)
+)
+
 ;; ============================================================
 ;; DYNAMIC BLOCK PROPERTY -SETTERI
 ;; ============================================================
@@ -328,7 +312,7 @@
   )
 
   ;; 7) Layer luonti tarvittaessa
-  (klhylly-ensure-layer layerName 76 76 153)
+  (klhylly-ensure-layer layerName 175)
 
   ;; 8) INSERT
   ;;    Argumentti-jarjestys: insertion / X-scale / Y-scale / rotation(deg)
@@ -466,7 +450,7 @@
             (- (* (car L)   (cadr W))  (* (cadr L)  (car W)))))
 
   ;; 5) Layer luonti
-  (klhylly-ensure-layer layerName 76 76 153)
+  (klhylly-ensure-layer layerName 175)
 
   ;; 6) INSERT WCS-origoon, rotation 0, scale 1
   (if firstTime

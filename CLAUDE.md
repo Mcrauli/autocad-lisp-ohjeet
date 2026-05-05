@@ -297,15 +297,22 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
       positio.lsp:llä (`klhylly-self-folder` + `klhylly-find-block-file`,
       kopioitu positio.lsp:stä `klhylly-`-prefiksillä).
     - **Block-kirjaston rakentaminen:** `tools/build-klhylly-blocks.lsp`
-      luo geometrian (5 BOXia + outline-polyline + DASH-hatch LEVY:lle;
-      2 rail-BOXia + 1 rung-BOX TIKAS:lle, kaikki layerilla 0/BYBLOCK).
-      Manuaalinen BEDIT-vaihe lisää parametrit ja actionit step-by-step
-      ohjeen `tools/KLHYLLY-BEDIT-OHJEET.md` mukaan. Helper ei sisälly
-      ZIP-pakettiin — `make-bundle.ps1` ottaa vain `files/`:n.
-    - **Block-rajoitukset:** EI UNION:eja block-määritysten sisällä
-      (stretch-action vaatii akseliyhdensuuntaisia primitiivi-BOX-soliditeetteja).
-      "Yks klikki valitsee" -ominaisuus säilyy block-instanssin kautta
-      (yksi entiteetti vaikka sisällä on monta solidia).
+      luo geometrian (5 LWPOLYLINEa thickness:lla + outline-polyline +
+      DASH-hatch LEVY:lle; 2 rail-LWPOLYLINEa + 1 rung-LWPOLYLINE TIKAS:lle,
+      kaikki layerilla 0/BYBLOCK). Manuaalinen BEDIT-vaihe lisää parametrit
+      ja actionit step-by-step ohjeen `tools/KLHYLLY-BEDIT-OHJEET.md` mukaan.
+      Helper ei sisälly ZIP-pakettiin — `make-bundle.ps1` ottaa vain `files/`:n.
+    - **Geometria-valinta — KRIITTINEN:** block-määrityksessä geometria on
+      **2D-LWPOLYLINEja joilla thickness** (Z-extrudointi vertikaalisesti),
+      EI 3D-soliditeetteja. Syy: AutoCAD:n dynamic blockin stretch-action
+      EI stretchaa 3D-soliditeetteja luotettavasti vaikka olisivat
+      akseliyhdensuuntaisia primitiivi-BOXeja (testissa 5.5.2026: hatch +
+      outline venyivät, mutta 5 BOX-soliditeettia jäivät paikalleen oikealla).
+      Polyline+thickness rendaa visuaalisesti kuten ohut 3D-laatikko
+      (4 pystyseinämää, ei ylä-/alapintaa) — peltihyllyssä thickness 1.25 mm
+      tekee top/bottom näkymättömiksi. "Yks klikki valitsee" -ominaisuus
+      säilyy block-instanssin kautta (yksi entiteetti vaikka sisällä on
+      monta polylinea).
     - **dxf2ifc-yhteensovitus:** `~/dxf2ifc/src/dxf2ifc/core/preprocessing.py`
       Phase 2 INSERT-räjäytys-filteri laajennettu `KLHYLLY-*`:llä
       (`*yrystin*,*ahdutin*,*pressori*,KLHYLLY-*`) jotta klhylly-blockien
