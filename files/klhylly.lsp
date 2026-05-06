@@ -215,23 +215,6 @@
   )
 )
 
-;; Diagnostic command — printtaa mita locator palauttaa.
-;; Aja "KLHDEBUG" komentoriviltä jos KLHYLLY/KLHYLLYV ei loyda DWG:ta.
-(defun c:KLHDEBUG ( / s lvy tks )
-  (princ (strcat "\nDWGPREFIX = " (vl-princ-to-string (getvar "DWGPREFIX"))))
-  (princ (strcat "\nUSERPROFILE = " (vl-princ-to-string (getenv "USERPROFILE"))))
-  (princ (strcat "\nfindfile klhylly.lsp = " (vl-princ-to-string (findfile "klhylly.lsp"))))
-  (princ (strcat "\nfindfile klhylly-levy.dwg = " (vl-princ-to-string (findfile "klhylly-levy.dwg"))))
-  (princ (strcat "\nfindfile klhylly-tikas.dwg = " (vl-princ-to-string (findfile "klhylly-tikas.dwg"))))
-  (setq s (klhylly-self-folder))
-  (princ (strcat "\nklhylly-self-folder = " (vl-princ-to-string s)))
-  (setq lvy (klhylly-find-block-file "klhylly-levy.dwg"))
-  (princ (strcat "\nklhylly-find-block-file LEVY = " (vl-princ-to-string lvy)))
-  (setq tks (klhylly-find-block-file "klhylly-tikas.dwg"))
-  (princ (strcat "\nklhylly-find-block-file TIKAS = " (vl-princ-to-string tks)))
-  (princ)
-)
-
 ;; ============================================================
 ;; DYNAMIC BLOCK PROPERTY -SETTERI
 ;; ============================================================
