@@ -101,17 +101,12 @@
                      savedAttreq savedAttdia savedCmddia savedFiledia savedExpert
                      doc ms ins tag)
   (vl-load-com)
-  ;; Tallenna kayttajan sysvarit ja palauta lopussa
+  ;; ATTREQ/ATTDIA pidetaan koko komennon ajan koska vla-InsertBlock + entmod
+  ;; tarvitsevat hiljaisen attribuutti-promptin ettei dialog avaudu.
   (setq savedAttreq  (getvar "ATTREQ"))
   (setq savedAttdia  (getvar "ATTDIA"))
-  (setq savedCmddia  (getvar "CMDDIA"))
-  (setq savedFiledia (getvar "FILEDIA"))
-  (setq savedExpert  (getvar "EXPERT"))
-  (setvar "ATTREQ"  0)
-  (setvar "ATTDIA"  0)
-  (setvar "CMDDIA"  0)
-  (setvar "FILEDIA" 0)
-  (setvar "EXPERT"  5)
+  (setvar "ATTREQ" 0)
+  (setvar "ATTDIA" 0)
 
   (setq blockName "POSITIO")
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
@@ -120,22 +115,33 @@
   (if (and firstTime (not blockPath))
     (progn
       (princ "\nVIRHE: positio.dwg ei loydy. Varmista etta positio.dwg on samassa kansiossa kuin positio.lsp.")
-      (setvar "ATTREQ"  savedAttreq)
-      (setvar "ATTDIA"  savedAttdia)
-      (setvar "CMDDIA"  savedCmddia)
-      (setvar "FILEDIA" savedFiledia)
-      (setvar "EXPERT"  savedExpert)
+      (setvar "ATTREQ" savedAttreq)
+      (setvar "ATTDIA" savedAttdia)
       (exit)
     )
   )
 
   ;; Lataa block-maaritelma kerran origin:iin ja poista valittomasti.
-  ;; Vasta tama kutsuu -INSERT-komentoa; varsinaiset insertit menevat
-  ;; vla-InsertBlock-API:n kautta joka ei prompttaa lainkaan.
+  ;; FILEDIA/CMDDIA/EXPERT vaihdetaan vain talle kapealle blokille jotta
+  ;; -INSERT ei avaa file dialogia, ja palautetaan heti perään.
+  ;; vl-catch-all-apply takaa palautuksen vaikka -INSERT epaonnistuisi —
+  ;; muuten FILEDIA jaisi 0 ja kayttajan SAVE/OPEN-dialogit eivat
+  ;; aukaisi ennen kuin manuaalisesti FILEDIA 1.
   (if firstTime
     (progn
-      (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
-      (if (entlast) (entdel (entlast)))
+      (setq savedCmddia  (getvar "CMDDIA"))
+      (setq savedFiledia (getvar "FILEDIA"))
+      (setq savedExpert  (getvar "EXPERT"))
+      (setvar "CMDDIA"  0)
+      (setvar "FILEDIA" 0)
+      (setvar "EXPERT"  5)
+      (vl-catch-all-apply
+        '(lambda ()
+           (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+           (if (entlast) (entdel (entlast)))))
+      (setvar "CMDDIA"  savedCmddia)
+      (setvar "FILEDIA" savedFiledia)
+      (setvar "EXPERT"  savedExpert)
     )
   )
 
@@ -161,11 +167,9 @@
     (princ (strcat "\nLisätty numero: " (itoa *numero*)))
   )
 
-  ;; Palauta kayttajan sysvarit
-  (setvar "ATTREQ"  savedAttreq)
-  (setvar "ATTDIA"  savedAttdia)
-  (setvar "CMDDIA"  savedCmddia)
-  (setvar "FILEDIA" savedFiledia)
-  (setvar "EXPERT"  savedExpert)
+  ;; Palauta kayttajan sysvarit (FILEDIA/CMDDIA/EXPERT palautettiin jo
+  ;; firstTime-blockin paatteeksi vl-catch-all-apply:n jalkeen)
+  (setvar "ATTREQ" savedAttreq)
+  (setvar "ATTDIA" savedAttdia)
   (princ)
 )
