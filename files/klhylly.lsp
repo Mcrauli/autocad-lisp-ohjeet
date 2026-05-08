@@ -15,8 +15,7 @@
 ;;; klhylly-tikas.dwg loydetaan automaattisesti samasta kansiosta.)
 ;;;
 ;;; Komennot:
-;;;   KLHYLLY    -> LEVY/TIKAS -> 300/400/500 -> pick midpoint -> pick end
-;;;                 (kursori = hyllyn keskipiste, end = puolet pituutta)
+;;;   KLHYLLY    -> LEVY/TIKAS -> 300/400/500 -> pick start -> pick end
 ;;;   KLHYLLYV   -> 300/400/500 -> alaosa -> ylaosa -> leveyden suunta
 ;;;   HYLLYKORKO -> valitse hyllyt -> kohdekorko z mm
 ;;;
@@ -237,9 +236,8 @@
 ;; ============================================================
 
 (defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode
-                     tyyppi levyStr levy pmid pmidsnap pend halfLen
-                     pituus ang p1 perp scaleY
-                     blockName dwgName blockPath layerName firstTime
+                     tyyppi levyStr levy p1 p1snap p2 pituus ang perp
+                     blockName dwgName blockPath layerName scaleY firstTime
                      doc ms ins
                      savedFiledia savedCmddia savedExpert )
 
@@ -299,34 +297,26 @@
     )
   )
 
-  ;; 4) Keskipiste — kursori = hyllyn keskipiste, snap-logiikka
-  ;;    samalla pattern:lla kuin aiempi p1.
+  ;; 4) Aloituspiste — kaksi-tasoinen snap
   (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
-  (setq pmid (getpoint "\nPick midpoint: "))
+  (setq p1 (getpoint "\nPick start point: "))
   (setvar "OSMODE" oldOsmode)
-  (if (null pmid) (exit))
-  (setq pmid (list (car pmid) (cadr pmid) 0.0))
-  (setq pmidsnap (klhylly-snap-corner pmid))
-  (if pmidsnap (setq pmid pmidsnap))
+  (if (null p1) (exit))
+  (setq p1 (list (car p1) (cadr p1) 0.0))
+  (setq p1snap (klhylly-snap-corner p1))
+  (if p1snap (setq p1 p1snap))
 
-  ;; 5) Paatepiste = puolet pituutta keskipisteesta
+  ;; 5) Loppupiste
   (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
-  (setq pend (getpoint pmid "\nPick end (= half length): "))
+  (setq p2 (getpoint p1 "\nPick length end point: "))
   (setvar "OSMODE" oldOsmode)
-  (if (null pend) (exit))
-  (setq pend (list (car pend) (cadr pend) 0.0))
-  (setq halfLen (distance pmid pend))
-  (if (<= halfLen 0.0) (exit))
-  (setq pituus (* 2.0 halfLen))
-  (setq ang (angle pmid pend))
+  (if (null p2) (exit))
+  (setq p2 (list (car p2) (cadr p2) 0.0))
+  (setq pituus (distance p1 p2))
+  (if (<= pituus 0.0) (exit))
+  (setq ang (angle p1 p2))
 
-  ;; 6) Block:n insertion piste p1 = pmid - halfLen * suunta.
-  ;;    Block-maaritys olettaa origon vasemmalla paassa, joten
-  ;;    siirretaan "puolet pituudesta" taakse jotta keskipiste osuu
-  ;;    pmid:hen.
-  (setq p1 (polar pmid (+ ang pi) halfLen))
-
-  ;; 7) Auto-perp + scaleY (CW = peilaa Y -> width kasvaa toiselle puolelle)
+  ;; 6) Auto-perp + scaleY (CW = peilaa Y -> width kasvaa toiselle puolelle)
   (setq perp (klhylly-auto-perp p1 ang))
   (setq scaleY
     (if (equal perp (+ ang (/ pi 2.0)) 0.0001)
@@ -335,10 +325,10 @@
     )
   )
 
-  ;; 8) Layer luonti tarvittaessa
+  ;; 7) Layer luonti tarvittaessa
   (klhylly-ensure-layer layerName 175)
 
-  ;; 9) Lataa block-maaritys ensikerralla -INSERT:lla origin:iin ja poista
+  ;; 8) Lataa block-maaritys ensikerralla -INSERT:lla origin:iin ja poista
   ;;    valittomasti. FILEDIA/CMDDIA/EXPERT vaihdetaan vain talle kapealle
   ;;    blokille jotta -INSERT ei avaa file dialogia, ja palautetaan heti
   ;;    perään. vl-catch-all-apply takaa palautuksen vaikka -INSERT epaonnistuisi.
@@ -360,14 +350,13 @@
     )
   )
 
-  ;; 10) Sijoita instanssi vla-InsertBlock:lla — block:n alkupaa p1:hen,
-  ;;     keskipiste osuu pmid:hen koska p1 = pmid - halfLen * suunta.
-  ;;     scaleY = -1.0 mirroria varten kun perp on CW.
+  ;; 9) Sijoita instanssi vla-InsertBlock:lla — rotation radiaaneina,
+  ;;    scaleY = -1.0 mirroria varten kun perp on CW. Ei prompteja.
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
   (setq ms  (vla-get-ModelSpace doc))
   (setq ins (vla-InsertBlock ms (vlax-3d-point p1) blockName 1.0 scaleY 1.0 ang))
 
-  ;; 11) Aseta layer + dynaamiset properties
+  ;; 10) Aseta layer + dynaamiset properties
   (vla-put-Layer ins layerName)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
