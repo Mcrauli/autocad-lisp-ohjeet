@@ -16,6 +16,8 @@
 ;;;
 ;;; Komennot:
 ;;;   KLHYLLY    -> LEVY/TIKAS -> 300/400/500 -> pick start -> pick end
+;;;   KLHYLLYK   -> LEVY/TIKAS -> 300/400/500 -> pick midpoint -> pick end
+;;;                 (keskelta-syotto: kursori = hyllyn keskipiste)
 ;;;   KLHYLLYV   -> 300/400/500 -> alaosa -> ylaosa -> leveyden suunta
 ;;;   HYLLYKORKO -> valitse hyllyt -> kohdekorko z mm
 ;;;
@@ -591,6 +593,160 @@
   (princ)
 )
 
-(princ "\nKLHYLLY + KLHYLLYV + HYLLYKORKO ladattu.")
+;; ============================================================
+;; KLHYLLYK (vaakaversio: aloitus keskipisteesta)
+;; ============================================================
+;; Sama logiikka kuin c:KLHYLLY mutta kayttaja syottaa keskipisteen +
+;; paatepisteen (puolet pituutta). LISP laskee oikean p1:n ja INSERT:aa
+;; block:n alkupaasta — ei tarvitse koskea block-maaritykseen.
+;;
+;; Workflow:
+;;   1. Pick midpoint            (cursor = hyllyn keskipiste)
+;;   2. Pick end (= half length) (etaisyys keskipisteesta paahan)
+;;   3. Pituus = 2 * etaisyys, suunta = ang(pmid -> pend)
+;;
+;; Jarkevampi kun hylly on tarkoitus keskittaa esim. ovi-aukon
+;; keskelle tai laitteen kohdalle, eika nurkka ole tunnettu.
+
+(defun c:KLHYLLYK ( / *error* oldClayer oldCmdecho oldOsmode
+                      tyyppi levyStr levy pmid pmidsnap pend halfLen
+                      pituus ang p1 perp scaleY
+                      blockName dwgName blockPath layerName firstTime
+                      doc ms ins
+                      savedFiledia savedCmddia savedExpert )
+
+  (defun *error* ( msg )
+    (if oldOsmode  (setvar "OSMODE"  oldOsmode))
+    (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
+    (if oldClayer  (setvar "CLAYER"  oldClayer))
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
+      (princ (strcat "\nVirhe: " msg)))
+    (princ)
+  )
+
+  (vl-load-com)
+
+  (setq oldClayer  (getvar "CLAYER"))
+  (setq oldCmdecho (getvar "CMDECHO"))
+  (setq oldOsmode  (getvar "OSMODE"))
+
+  (setvar "CMDECHO" 0)
+
+  ;; 1) Tyyppi
+  (initget "LEVY TIKAS")
+  (setq tyyppi (getkword "\nSelect type [LEVY/TIKAS] <LEVY>: "))
+  (if (null tyyppi) (setq tyyppi "LEVY"))
+
+  (cond
+    ((= tyyppi "TIKAS")
+      (setq blockName "KLHYLLY-TIKAS")
+      (setq dwgName   "klhylly-tikas.dwg")
+      (setq layerName "KYL-TIKASHYLLY"))
+    (t
+      (setq blockName "KLHYLLY-LEVY")
+      (setq dwgName   "klhylly-levy.dwg")
+      (setq layerName "KYL-LEVYHYLLY"))
+  )
+
+  ;; 2) Leveys
+  (initget "300 400 500")
+  (setq levyStr (getkword "\nSelect plate [300/400/500] <300>: "))
+  (if (null levyStr) (setq levyStr "300"))
+  (setq levy (atof levyStr))
+
+  ;; 3) Block-maaritys
+  (setq firstTime (not (tblsearch "BLOCK" blockName)))
+  (if firstTime
+    (progn
+      (setq blockPath (klhylly-find-block-file dwgName))
+      (if (null blockPath)
+        (progn
+          (princ (strcat "\nVIRHE: " dwgName " ei loydy. Varmista etta tiedosto on samassa"))
+          (princ "\nkansiossa kuin klhylly.lsp.")
+          (setvar "CMDECHO" oldCmdecho)
+          (setvar "CLAYER"  oldClayer)
+          (exit)
+        )
+      )
+    )
+  )
+
+  ;; 4) Keskipiste — sama snap-logiikka kuin c:KLHYLLY:n p1
+  (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
+  (setq pmid (getpoint "\nPick midpoint: "))
+  (setvar "OSMODE" oldOsmode)
+  (if (null pmid) (exit))
+  (setq pmid (list (car pmid) (cadr pmid) 0.0))
+  (setq pmidsnap (klhylly-snap-corner pmid))
+  (if pmidsnap (setq pmid pmidsnap))
+
+  ;; 5) Paatepiste = puolet pituutta keskipisteesta
+  (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
+  (setq pend (getpoint pmid "\nPick end (= half length): "))
+  (setvar "OSMODE" oldOsmode)
+  (if (null pend) (exit))
+  (setq pend (list (car pend) (cadr pend) 0.0))
+  (setq halfLen (distance pmid pend))
+  (if (<= halfLen 0.0) (exit))
+  (setq pituus (* 2.0 halfLen))
+  (setq ang (angle pmid pend))
+
+  ;; 6) Laske block:n insertion piste p1 = pmid + halfLen * (-suunta).
+  ;;    Eli vasen pää, jossa block-määrityksen origo on.
+  (setq p1 (polar pmid (+ ang pi) halfLen))
+
+  ;; 7) Auto-perp + scaleY (CW = peilaa Y -> width kasvaa toiselle puolelle)
+  (setq perp (klhylly-auto-perp p1 ang))
+  (setq scaleY
+    (if (equal perp (+ ang (/ pi 2.0)) 0.0001)
+      1.0
+      -1.0
+    )
+  )
+
+  ;; 8) Layer luonti tarvittaessa
+  (klhylly-ensure-layer layerName 175)
+
+  ;; 9) Lataa block-maaritys ensikerralla — sama -INSERT-temppu kuin
+  ;;    c:KLHYLLY:ssa, FILEDIA/CMDDIA/EXPERT vaihdetaan vain talle
+  ;;    kapealle blokille jotta -INSERT ei avaa file dialogia.
+  (if firstTime
+    (progn
+      (setq savedFiledia (getvar "FILEDIA"))
+      (setq savedCmddia  (getvar "CMDDIA"))
+      (setq savedExpert  (getvar "EXPERT"))
+      (setvar "FILEDIA" 0)
+      (setvar "CMDDIA"  0)
+      (setvar "EXPERT"  5)
+      (vl-catch-all-apply
+        '(lambda ()
+           (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+           (if (entlast) (entdel (entlast)))))
+      (setvar "FILEDIA" savedFiledia)
+      (setvar "CMDDIA"  savedCmddia)
+      (setvar "EXPERT"  savedExpert)
+    )
+  )
+
+  ;; 10) Sijoita instanssi vla-InsertBlock:lla — block:n alkupaa p1:hen,
+  ;;     keskipiste osuu pmid:hen koska p1 = pmid - halfLen * suunta.
+  (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
+  (setq ms  (vla-get-ModelSpace doc))
+  (setq ins (vla-InsertBlock ms (vlax-3d-point p1) blockName 1.0 scaleY 1.0 ang))
+
+  ;; 11) Aseta layer + dynaamiset properties
+  (vla-put-Layer ins layerName)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
+
+  (setvar "OSMODE"  oldOsmode)
+  (setvar "CMDECHO" oldCmdecho)
+  (setvar "CLAYER"  oldClayer)
+
+  (princ "\nKLHYLLYK valmis. Properties-paletista voi vaihtaa Leveys/Pituus.")
+  (princ)
+)
+
+(princ "\nKLHYLLY + KLHYLLYK + KLHYLLYV + HYLLYKORKO ladattu.")
 (princ "\nProperties-paletista voi vaihtaa Leveys/Pituus, gripeilla stretchata.")
 (princ)
