@@ -7,7 +7,8 @@ if (Test-Path $out) { Remove-Item -LiteralPath $out -Force }
 $items = Get-ChildItem -LiteralPath 'files' -File | Where-Object {
   $_.Name -ne 'suunnittelutyokalut.zip' -and
   $_.Extension -ne '.bak' -and
-  $_.Name -notmatch '^klhylly-tikaspp\.'
+  $_.Name -notmatch '^klhylly-tikaspp\.' -and
+  $_.Name -notmatch '^vputki-322\.'
 }
 Compress-Archive -Path $items.FullName -DestinationPath $out -CompressionLevel Optimal
 $z = Get-Item $out

@@ -1,0 +1,9 @@
+# AutoCAD-automaattiset varmuuskopiot
+*.bak
+
+# Käyttäjäkohtaiset asetukset
+UsersLauriRekola.claudesettings.json
+
+# Virheelliset/keskeneräiset tallennukset
+files/vputki-322.dwg
+files/klhylly-tikaspp.dwg

@@ -15,7 +15,7 @@
 ;;; klhylly-tikas.dwg loydetaan automaattisesti samasta kansiosta.)
 ;;;
 ;;; Komennot:
-;;;   KLHYLLY    -> LEVY/TIKAS -> 300/400/500 -> pick start -> pick end
+;;;   KLHYLLY    -> LEVY/TIKAS -> 300/400/500 -> V=vasen / K=keski -> pisteet
 ;;;   KLHYLLYV   -> 300/400/500 -> alaosa -> ylaosa -> leveyden suunta
 ;;;   HYLLYKORKO -> valitse hyllyt -> kohdekorko z mm
 ;;;
@@ -24,12 +24,18 @@
 ;;; on layerilla 0 (BYBLOCK), joten instanssin layer periytyy alaspain
 ;;; ja IFC-vienti (dxf2ifc) tunnistaa hyllytyypin.
 ;;;
-;;; Aloituspisteen snap-logiikka: OSMODE-pakotus ENDP+INT + ssget-fallback
-;;; lahimpaan KYL-*HYLLY-nurkkaan <= 80 mm paahan. Toimii sekä uusille
-;;; block-instansseille (INSERT) etta vanhoille UNION-3DSOLIDeille.
-;;; Auto-perp valitsee leveyssuunnan: jos p1:n toisella puolella on jo
-;;; KYL-*HYLLY ja toisella ei, uusi hylly levenee samalle puolelle ->
-;;; puhtaat L-mutkat. CW-puolella INSERT kayttaa scaleY=-1 (peilaus).
+;;; KLHYLLY-syotto kaksi vaihtoehtoa:
+;;;   V (vasen paa) = pick start (p1) -> pick end (p2). Pituus = distance(p1,p2).
+;;;   K (keski)     = pick midpoint (pmid) -> pick end (pend = puolet pituutta).
+;;;                   Pituus = 2 x distance(pmid, pend), p1 lasketaan vasemmalle.
+;;; Edellinen valinta muistetaan session ajan (klhylly-last-startmode).
+;;; Kursori on aina hyllyn LEVEYDEN keskella - INSERT-pistetta siirretaan
+;;; Leveys/2 perp:n vastakkaiseen suuntaan jotta block:n alareuna menee
+;;; Leveys/2 kursorin alapuolelle ja ylareuna Leveys/2 ylapuolelle.
+;;; Snap-corner-fallback (<= 80 mm KYL-*HYLLY-nurkkaan) on V-modessa
+;;; molemmille pisteille; K-modessa vain pend:lle, koska pmid:ta ei saa
+;;; vetya viereisen hyllyn nurkkaan. Auto-perp valitsee leveyssuunnan -
+;;; V-modessa testaten p1:sta, K-modessa pmid:sta. CW-puolella scaleY=-1.
 
 (vl-load-com)
 
@@ -236,7 +242,9 @@
 ;; ============================================================
 
 (defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode
-                     tyyppi levyStr levy p1 p1snap p2 pituus ang perp
+                     tyyppi levyStr levy startMode
+                     p1 p1snap p2 pmid pend pendsnap halfLen
+                     pituus ang perp insertPt
                      blockName dwgName blockPath layerName scaleY firstTime
                      doc ms ins
                      savedFiledia savedCmddia savedExpert )
@@ -280,6 +288,16 @@
   (if (null levyStr) (setq levyStr "300"))
   (setq levy (atof levyStr))
 
+  ;; 2b) Aloituspisteen sijainti — V = hyllyn vasen paa, K = hyllyn keski.
+  ;;     Edellinen valinta muistetaan session ajan globaalissa
+  ;;     klhylly-last-startmode -muuttujassa.
+  (if (null klhylly-last-startmode) (setq klhylly-last-startmode "V"))
+  (initget "V K")
+  (setq startMode (getkword (strcat "\nAloituspiste [V=vasen paa / K=keski] <"
+                                     klhylly-last-startmode ">: ")))
+  (if (null startMode) (setq startMode klhylly-last-startmode))
+  (setq klhylly-last-startmode startMode)
+
   ;; 3) Block-maaritys: ensikerralla lookup vastaavan DWG:n polku
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
   (if firstTime
@@ -297,27 +315,56 @@
     )
   )
 
-  ;; 4) Aloituspiste — kaksi-tasoinen snap
-  (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
-  (setq p1 (getpoint "\nPick start point: "))
-  (setvar "OSMODE" oldOsmode)
-  (if (null p1) (exit))
-  (setq p1 (list (car p1) (cadr p1) 0.0))
-  (setq p1snap (klhylly-snap-corner p1))
-  (if p1snap (setq p1 p1snap))
+  ;; 4) Pisteet — V (vasen paa) tai K (keski) -mode mukaan.
+  ;;    Molemmissa lopputulos: p1 = hyllyn vasen paa, pituus, ang, perp.
+  (cond
+    ;; --- K-mode: pick midpoint -> pick end (puolet pituudesta) ---
+    ((= startMode "K")
+      ;; Keskipiste — EI snap-corner, jotta klikkaus keskelle ei vedy
+      ;; viereisen hyllyn nurkkaan (hylly leviaa molempiin suuntiin pmid:sta).
+      (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
+      (setq pmid (getpoint "\nPick midpoint: "))
+      (setvar "OSMODE" oldOsmode)
+      (if (null pmid) (exit))
+      (setq pmid (list (car pmid) (cadr pmid) 0.0))
 
-  ;; 5) Loppupiste
-  (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
-  (setq p2 (getpoint p1 "\nPick length end point: "))
-  (setvar "OSMODE" oldOsmode)
-  (if (null p2) (exit))
-  (setq p2 (list (car p2) (cadr p2) 0.0))
-  (setq pituus (distance p1 p2))
-  (if (<= pituus 0.0) (exit))
-  (setq ang (angle p1 p2))
+      ;; Paatepiste — snap-corner sallittu (L-mutkaa varten).
+      (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
+      (setq pend (getpoint pmid "\nPick end (= half length): "))
+      (setvar "OSMODE" oldOsmode)
+      (if (null pend) (exit))
+      (setq pend (list (car pend) (cadr pend) 0.0))
+      (setq pendsnap (klhylly-snap-corner pend))
+      (if pendsnap (setq pend pendsnap))
 
-  ;; 6) Auto-perp + scaleY (CW = peilaa Y -> width kasvaa toiselle puolelle)
-  (setq perp (klhylly-auto-perp p1 ang))
+      (setq halfLen (distance pmid pend))
+      (if (<= halfLen 0.0) (exit))
+      (setq pituus (* 2.0 halfLen))
+      (setq ang    (angle pmid pend))
+      (setq p1     (polar pmid (+ ang pi) halfLen))
+      ;; Auto-perp pmid:hen — viereinen hylly osuu yleensa koko pituudelle.
+      (setq perp   (klhylly-auto-perp pmid ang)))
+    ;; --- V-mode (oletus): pick start -> pick end ---
+    (t
+      (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
+      (setq p1 (getpoint "\nPick start point: "))
+      (setvar "OSMODE" oldOsmode)
+      (if (null p1) (exit))
+      (setq p1 (list (car p1) (cadr p1) 0.0))
+      (setq p1snap (klhylly-snap-corner p1))
+      (if p1snap (setq p1 p1snap))
+
+      (setvar "OSMODE" (logior (logand oldOsmode 16383) 33))
+      (setq p2 (getpoint p1 "\nPick length end point: "))
+      (setvar "OSMODE" oldOsmode)
+      (if (null p2) (exit))
+      (setq p2 (list (car p2) (cadr p2) 0.0))
+      (setq pituus (distance p1 p2))
+      (if (<= pituus 0.0) (exit))
+      (setq ang  (angle p1 p2))
+      (setq perp (klhylly-auto-perp p1 ang))))
+
+  ;; 5) scaleY (CW = peilaa Y -> width kasvaa toiselle puolelle)
   (setq scaleY
     (if (equal perp (+ ang (/ pi 2.0)) 0.0001)
       1.0
@@ -350,11 +397,18 @@
     )
   )
 
-  ;; 9) Sijoita instanssi vla-InsertBlock:lla — rotation radiaaneina,
-  ;;    scaleY = -1.0 mirroria varten kun perp on CW. Ei prompteja.
+  ;; 9) INSERT-piste = p1 siirrettyna Leveys/2 perp:n vastakkaiseen suuntaan
+  ;;    jotta block:n natiivi alareuna asettuu Leveys/2 kursorin alapuolelle
+  ;;    ja ylareuna Leveys/2 ylapuolelle -> kursori on hyllyn Y-keskella.
+  ;;    Toimii kummallakin scaleY-arvolla koska +Y_local maailmassa = perp
+  ;;    (scaleY=-1 peilaa block:n paikallisen Y-akselin perp:in suuntaan).
+  (setq insertPt (polar p1 (+ perp pi) (* 0.5 levy)))
+
+  ;; 10) Sijoita instanssi vla-InsertBlock:lla — rotation radiaaneina,
+  ;;     scaleY = -1.0 mirroria varten kun perp on CW. Ei prompteja.
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
   (setq ms  (vla-get-ModelSpace doc))
-  (setq ins (vla-InsertBlock ms (vlax-3d-point p1) blockName 1.0 scaleY 1.0 ang))
+  (setq ins (vla-InsertBlock ms (vlax-3d-point insertPt) blockName 1.0 scaleY 1.0 ang))
 
   ;; 10) Aseta layer + dynaamiset properties
   (vla-put-Layer ins layerName)
