@@ -1,9 +1,9 @@
 ;;; HOYRYSTIN.LSP - Hoyrystimien insertointikomennot
 ;;;
-;;; Pikakomennot per puhallinmaara:
-;;;   HOYR1 -> 1-puhaltimen hoyrystin (hoyrystin-1-puh.dwg)
-;;;   HOYR2 -> 2-puhaltimen hoyrystin (hoyrystin-2-puh.dwg)
-;;;   HOYR3 -> 3-puhaltimen hoyrystin (hoyrystin-3-puh.dwg)
+;;; Pikakomennot per puhallinmaara (lyhyet ja pitkat aliakset):
+;;;   HY1 / HOYR1 -> 1-puhaltimen hoyrystin (hoyrystin-1-puh.dwg)
+;;;   HY2 / HOYR2 -> 2-puhaltimen hoyrystin (hoyrystin-2-puh.dwg)
+;;;   HY3 / HOYR3 -> 3-puhaltimen hoyrystin (hoyrystin-3-puh.dwg)
 ;;;
 ;;; Layer: KYL-HOYRYSTIMET (ACI 30, oranssi — erottuu sinisistä putkista).
 ;;; dxf2ifc:n preprocessing.py kayttaa wildcardia *yrystin* matchaamaan
@@ -16,6 +16,10 @@
 ;;;   hoyrystin-1-puh.dwg / hoyrystin-2-puh.dwg / hoyrystin-3-puh.dwg
 
 (vl-load-com)
+
+;; Globaali kansio-cache: kayttajan valitsema kansio muistetaan istunnon
+;; ajaksi jos locator ei ole loytanyt DWG:ta automaattisesti.
+(if (not (boundp '*hoyr-cached-folder*)) (setq *hoyr-cached-folder* nil))
 
 ;; ============================================================
 ;; LAYER-HELPER
@@ -66,7 +70,7 @@
   )
 )
 
-(defun hoyr-find-block-file ( dwgName / cands self prefix found p )
+(defun hoyr-find-block-file ( dwgName / cands self prefix found p picked )
   (vl-load-com)
   (setq found (findfile dwgName))
   (if (and found (= (type found) 'STR))
@@ -74,9 +78,15 @@
     (progn
       (setq found nil)
       (setq cands '())
+      ;; Aiemmin muistettu kansio
+      (if (and *hoyr-cached-folder*
+               (= (type *hoyr-cached-folder*) 'STR))
+        (setq cands (list (strcat *hoyr-cached-folder* "\\" dwgName))))
+      ;; Self-folder via APPLOAD-registry
       (if (setq self (hoyr-self-folder))
         (if (= (type self) 'STR)
-          (setq cands (list (strcat self "\\" dwgName)))))
+          (setq cands (append cands (list (strcat self "\\" dwgName))))))
+      ;; Yleiset asennuspaikat
       (setq prefix (getvar "DWGPREFIX"))
       (setq cands (append cands
         (list
@@ -85,11 +95,25 @@
           (strcat "C:\\AutoCADLisp\\" dwgName))))
       (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0))
         (setq cands (append cands (list (strcat prefix dwgName)))))
+      ;; Etsi ensimmainen olemassaoleva
       (foreach p cands
         (if (and (not found)
                  (= (type p) 'STR)
                  (vl-file-systime p))
           (setq found p)))
+      ;; Jos ei loydy mistaan -> kysy kayttajalta file-dialogilla
+      (if (null found)
+        (progn
+          (princ (strcat "\n" dwgName " ei loydy. Valitse kansio file-dialogilla."))
+          (setq picked (getfiled
+                        (strcat "Etsi " dwgName)
+                        dwgName "dwg" 0))
+          (if (and picked (= (type picked) 'STR))
+            (progn
+              (setq found picked)
+              ;; Muista kansio jatkossa
+              (setq *hoyr-cached-folder* (vl-filename-directory picked))
+              (princ (strcat "\nHoyrystin-kansio muistettu: " *hoyr-cached-folder*))))))
       found)
   )
 )
@@ -158,9 +182,15 @@
 ;; KAYTTAJAN KOMENNOT
 ;; ============================================================
 
+;; Lyhyet pikakomennot
+(defun c:HY1 ( / ) (hoyr-insert 1))
+(defun c:HY2 ( / ) (hoyr-insert 2))
+(defun c:HY3 ( / ) (hoyr-insert 3))
+
+;; Pidemmat aliakset (taaksepain yhteensopivuus)
 (defun c:HOYR1 ( / ) (hoyr-insert 1))
 (defun c:HOYR2 ( / ) (hoyr-insert 2))
 (defun c:HOYR3 ( / ) (hoyr-insert 3))
 
-(princ "\nHOYRYSTIN ladattu. Komennot: HOYR1, HOYR2, HOYR3.")
+(princ "\nHOYRYSTIN ladattu. Komennot: HY1, HY2, HY3 (tai HOYR1/2/3).")
 (princ)
