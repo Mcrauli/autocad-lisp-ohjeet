@@ -1,9 +1,9 @@
 ;;; HOYRYSTIN.LSP - Hoyrystimien insertointikomennot
 ;;;
 ;;; Pikakomennot per puhallinmaara (lyhyet ja pitkat aliakset):
-;;;   HY1 / HOYR1 -> 1-puhaltimen hoyrystin (hoyrystin-1-puh.dwg)
-;;;   HY2 / HOYR2 -> 2-puhaltimen hoyrystin (hoyrystin-2-puh.dwg)
-;;;   HY3 / HOYR3 -> 3-puhaltimen hoyrystin (hoyrystin-3-puh.dwg)
+;;;   HY1 / HOYR1 -> 1-puhaltimen hoyrystin (hoyrystin-1.dwg)
+;;;   HY2 / HOYR2 -> 2-puhaltimen hoyrystin (hoyrystin-2.dwg)
+;;;   HY3 / HOYR3 -> 3-puhaltimen hoyrystin (hoyrystin-3.dwg)
 ;;;
 ;;; Layer: KYL-HOYRYSTIMET (ACI 30, oranssi — erottuu sinisistä putkista).
 ;;; dxf2ifc:n preprocessing.py kayttaa wildcardia *yrystin* matchaamaan
@@ -13,7 +13,7 @@
 ;;; live-preview rotaatio kuin natiivissa INSERT:ssa.
 ;;;
 ;;; Block-DWG-tiedostot files/-kansiossa:
-;;;   hoyrystin-1-puh.dwg / hoyrystin-2-puh.dwg / hoyrystin-3-puh.dwg
+;;;   hoyrystin-1.dwg / hoyrystin-2.dwg / hoyrystin-3.dwg
 
 (vl-load-com)
 
@@ -186,7 +186,7 @@
   (hoyr-ensure-layer "KYL-HOYRYSTIMET" 30)   ; oranssi
 
   (setq blockName (strcat "HOYRYSTIN-" (itoa puh) "PUH"))
-  (setq dwgName   (strcat "hoyrystin-" (itoa puh) "-puh.dwg"))
+  (setq dwgName   (strcat "hoyrystin-" (itoa puh) ".dwg"))
 
   (setq ok (hoyr-ensure-block blockName dwgName))
   (if (null ok) (exit))
