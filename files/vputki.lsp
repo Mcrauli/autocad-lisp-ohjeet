@@ -277,5 +277,277 @@
   (setq sizeNum (atoi size))
   (vputki-pipe-command sizeNum))
 
-(princ "\nVPUTKI ladattu. Komennot: VP32, VP50, VP75 (tai VPUTKI).")
+
+;; ============================================================
+;; CONTINUOUS-TILA (uusi PLINE-tyylinen UX, v0.2)
+;; ============================================================
+;;
+;; Komento VP: pick-pick-pick-jatkuva piirto. Tyokalu paattelee
+;; automaattisesti suunnan vaihdosta tarvittavan fittingin (45° / 88.5°)
+;; ja insertoi sen kulmapisteeseen.
+;;
+;; Key 'T' kesken piirron aktivoi T-haaran alikomennon.
+;; Key 'U' peruu viimeisen insertion.
+;; Enter lopettaa silmukan.
+
+;; ----- Saadettavat asetukset -----------------------------------------
+;;
+;; Jos fittingin natiivi-orientaatio DWG:ssa eroaa odotetusta (input-
+;; portti -X-suunnassa, output 45° / -88.5°), saada *vputki-rot-offset-X*
+;; -globaaleja. Yksikko = asteita.
+
+(if (not (boundp '*vputki-rot-offset-45*))  (setq *vputki-rot-offset-45*  0.0))
+(if (not (boundp '*vputki-rot-offset-885*)) (setq *vputki-rot-offset-885* 0.0))
+(if (not (boundp '*vputki-rot-offset-t*))   (setq *vputki-rot-offset-t*   0.0))
+
+;; Salli fittingin Y-peilaus (sy=-1) kun kaannos on CW. Jos nil, CW-
+;; kaannos jaa suoraksi varoituksen kera.
+(if (not (boundp '*vputki-allow-fitting-mirror*))
+    (setq *vputki-allow-fitting-mirror* T))
+
+;; Kulmaluokituksen toleranssit (asteita).
+(if (not (boundp '*vputki-tol-straight*)) (setq *vputki-tol-straight* 5.0))
+(if (not (boundp '*vputki-tol-45*))       (setq *vputki-tol-45*       8.0))
+(if (not (boundp '*vputki-tol-885*))      (setq *vputki-tol-885*      8.0))
+
+;; ----- Geometria-apufunktiot -----------------------------------------
+
+(defun vputki-rad->deg (rad) (* (/ rad pi) 180.0))
+
+(defun vputki-angle-deg (p1 p2 / dx dy)
+  ;; Kulma p1->p2 asteina; AutoCAD atan palauttaa (-pi, pi]
+  (setq dx (- (car p2) (car p1)))
+  (setq dy (- (cadr p2) (cadr p1)))
+  (vputki-rad->deg (atan dy dx)))
+
+(defun vputki-dist-2d (p1 p2 / dx dy)
+  (setq dx (- (car p2) (car p1)))
+  (setq dy (- (cadr p2) (cadr p1)))
+  (sqrt (+ (* dx dx) (* dy dy))))
+
+(defun vputki-norm-deg (d)
+  ;; Normalisoi vali (-180, 180]
+  (while (>  d  180.0) (setq d (- d 360.0)))
+  (while (<= d -180.0) (setq d (+ d 360.0)))
+  d)
+
+(defun vputki-turn-deg (dir-in dir-out)
+  ;; Etumerkkinen kaannosaste: positiivinen = CCW, negatiivinen = CW.
+  (vputki-norm-deg (- dir-out dir-in)))
+
+(defun vputki-classify-turn (turn-deg / abs-deg)
+  ;; turn-deg -> 'straight | '45 | '885 | 'unknown
+  (setq abs-deg (abs turn-deg))
+  (cond
+    ((< abs-deg *vputki-tol-straight*)           'straight)
+    ((< (abs (- abs-deg 45.0)) *vputki-tol-45*)  '45)
+    ((< (abs (- abs-deg 88.5)) *vputki-tol-885*) '885)
+    ((< (abs (- abs-deg 90.0)) *vputki-tol-885*) '885)
+    (T 'unknown)))
+
+;; ----- Pre-load: kaikki 4 blokkia kerralla --------------------------
+
+(defun vputki-preload-set (D / sz ok)
+  (setq sz (itoa D))
+  (setq ok T)
+  (if (not (vputki-ensure-block (strcat "VPUTKI-" sz)
+                                 (strcat "vputki-" sz ".dwg")))     (setq ok nil))
+  (if (not (vputki-ensure-block (strcat "VPUTKI-" sz "-45")
+                                 (strcat "vputki-" sz "-45.dwg")))  (setq ok nil))
+  (if (not (vputki-ensure-block (strcat "VPUTKI-" sz "-885")
+                                 (strcat "vputki-" sz "-885.dwg"))) (setq ok nil))
+  (if (not (vputki-ensure-block (strcat "VPUTKI-" sz "-T")
+                                 (strcat "vputki-" sz "-t.dwg")))   (setq ok nil))
+  ok)
+
+;; ----- Suora putki dynaamisella Pituus-parametrilla -----------------
+
+(defun vputki-cont-insert-straight (D layerName p1 p2 / blockName len ang ref)
+  (setq len (vputki-dist-2d p1 p2))
+  (if (< len 1.0)
+    (progn (princ "\nVAROITUS: putki liian lyhyt (< 1 mm), ohitetaan.")
+           nil)
+    (progn
+      (setq blockName (strcat "VPUTKI-" (itoa D)))
+      (setq ang (vputki-angle-deg p1 p2))
+      (setvar "CLAYER" layerName)
+      (command "_.-INSERT" blockName p1 1 1 ang)
+      (setq ref (entlast))
+      (vputki-set-dyn-prop ref "Pituus" len)
+      ref)))
+
+;; ----- Kulmafitting kulmapisteeseen p_corner ------------------------
+;;
+;; Oletettu natiivi-orientaatio: input-portti origosta -X-suunnassa
+;; (= portti facing 180°), output 45° (45-fitting) tai 88.5° (88.5-
+;; fitting), molemmat CCW-bend. Jos kaannos on CW, peilataan sy=-1.
+;;
+;; rot-base = dir_in (sisaantulosuunta asteissa, p_prev_prev -> p_corner)
+;; turn-sign = +1 (CCW) tai -1 (CW)
+
+(defun vputki-cont-insert-corner (D kind p_corner rot-base turn-sign /
+                                   blockName offset rot sy ref)
+  (setq offset
+    (cond ((eq kind '45)  *vputki-rot-offset-45*)
+          ((eq kind '885) *vputki-rot-offset-885*)
+          (T              0.0)))
+  (setq blockName
+    (cond ((eq kind '45)  (strcat "VPUTKI-" (itoa D) "-45"))
+          ((eq kind '885) (strcat "VPUTKI-" (itoa D) "-885"))
+          (T nil)))
+  (cond
+    ((null blockName)
+      (princ "\nVIRHE: tuntematon fitting-tyyppi.")
+      nil)
+    ((and (< turn-sign 0) (not *vputki-allow-fitting-mirror*))
+      (princ "\nVAROITUS: CW-kaannos vaatii peilauksen, *vputki-allow-fitting-mirror* on nil -- ohitetaan fitting.")
+      nil)
+    (T
+      (setq rot (+ rot-base offset))
+      (setq sy (if (< turn-sign 0) -1 1))
+      (command "_.-INSERT" blockName p_corner 1 sy rot)
+      (setq ref (entlast))
+      ref)))
+
+;; ----- T-haaran insert + haaraputki ---------------------------------
+;;
+;; Oletus: T-haaran natiivi-orientaatio = paarunko X-akselin suuntaan,
+;; haarapaippa +Y-suuntaan. rot-base = paarungon suunta.
+
+(defun vputki-cont-insert-t (D layerName p_t p_branch /
+                              blockName rot-main rot sy ref pipe)
+  (setq blockName (strcat "VPUTKI-" (itoa D) "-T"))
+  (setvar "CLAYER" layerName)
+  ;; rot-main = paarungon suunta = (haaran suunta) - 90° (oletus haara +Y)
+  (setq rot-main (- (vputki-angle-deg p_t p_branch) 90.0))
+  (setq rot (+ rot-main *vputki-rot-offset-t*))
+  (setq sy 1)
+  (command "_.-INSERT" blockName p_t 1 sy rot)
+  (setq ref (entlast))
+  (setq pipe (vputki-cont-insert-straight D layerName p_t p_branch))
+  (list ref pipe))
+
+;; ----- Undo-helpper -------------------------------------------------
+
+(defun vputki-pop-entities (ent-list / e)
+  (foreach e ent-list
+    (if (and e (entget e)) (entdel e))))
+
+;; ----- Paakomento c:VP ----------------------------------------------
+
+(defun c:VP ( / *error* oldClayer oldCmdecho oldOsmode
+                D sizeStr layerName aci
+                undo-stack done p_prev p_prev_dir p_cur new-dir
+                turn cls sign frame-ents
+                tp tb result )
+
+  (defun *error* ( msg )
+    (if oldOsmode  (setvar "OSMODE"  oldOsmode))
+    (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
+    (if oldClayer  (setvar "CLAYER"  oldClayer))
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
+      (princ (strcat "\nVirhe: " msg)))
+    (princ))
+
+  (setq oldClayer  (getvar "CLAYER"))
+  (setq oldCmdecho (getvar "CMDECHO"))
+  (setq oldOsmode  (getvar "OSMODE"))
+
+  ;; Halkaisija
+  (initget "32 50 75")
+  (setq sizeStr (getkword "\nViemariputken koko [32/50/75] <50>: "))
+  (if (null sizeStr) (setq sizeStr "50"))
+  (setq D (atoi sizeStr))
+
+  ;; Layer + pre-load blokit
+  (setq layerName (strcat "KYL-VIEMARI-" (itoa D)))
+  (setq aci (vputki-aci-for-size D))
+  (vputki-ensure-layer layerName aci)
+  (if (not (vputki-preload-set D))
+    (progn
+      (princ "\nVIRHE: kaikkia vputki-blokkeja ei loytynyt.")
+      (princ "\nTarkista etta vputki-<koko>-{45,885,t}.dwg ovat samassa")
+      (princ "\nkansiossa kuin vputki.lsp.")
+      (exit)))
+
+  (setvar "CMDECHO" 0)
+
+  ;; Aloituspiste
+  (setq p_prev (getpoint "\nAloituspiste: "))
+  (if (null p_prev) (exit))
+  (setq p_prev_dir nil)
+  (setq undo-stack '())
+  (setq done nil)
+
+  ;; Continuous-loop
+  (while (not done)
+    (initget "T U")
+    (setq p_cur (getpoint p_prev
+                  "\nSeuraava piste tai [T/Undo] <Enter=lopeta>: "))
+    (cond
+      ;; --- Enter -> lopeta ---
+      ((null p_cur) (setq done T))
+
+      ;; --- Keyword "U" -> undo ---
+      ((and (= (type p_cur) 'STR) (= p_cur "U"))
+        (if undo-stack
+          (progn
+            (vputki-pop-entities (cadr (car undo-stack)))
+            (setq p_prev     (nth 2 (car undo-stack)))
+            (setq p_prev_dir (nth 3 (car undo-stack)))
+            (setq undo-stack (cdr undo-stack))
+            (princ "\nUndo: viimeinen lisays peruttu."))
+          (princ "\nEi mitaan peruutettavaa.")))
+
+      ;; --- Keyword "T" -> T-haara ---
+      ((and (= (type p_cur) 'STR) (= p_cur "T"))
+        (setq tp (getpoint "\nT-haaran liitospiste olemassaolevaan: "))
+        (if tp
+          (progn
+            (setq tb (getpoint tp "\nT-haaran loppupiste: "))
+            (if tb
+              (progn
+                (setq result (vputki-cont-insert-t D layerName tp tb))
+                (setq undo-stack
+                  (cons (list 'T result p_prev p_prev_dir) undo-stack))
+                (setq p_prev tb)
+                (setq p_prev_dir (vputki-angle-deg tp tb))
+                (princ "\nT-haara lisatty."))))))
+
+      ;; --- Piste -> suora + ehka fitting ---
+      ((= (type p_cur) 'LIST)
+        (setq new-dir (vputki-angle-deg p_prev p_cur))
+        (setq frame-ents '())
+        (if p_prev_dir
+          (progn
+            (setq turn (vputki-turn-deg p_prev_dir new-dir))
+            (setq cls (vputki-classify-turn turn))
+            (setq sign (if (< turn 0) -1 1))
+            (cond
+              ((eq cls 'straight) nil)
+              ((or (eq cls '45) (eq cls '885))
+                (setq result (vputki-cont-insert-corner
+                               D cls p_prev p_prev_dir sign))
+                (if result (setq frame-ents (cons result frame-ents))))
+              ((eq cls 'unknown)
+                (princ (strcat "\nVAROITUS: " (rtos turn 2 1)
+                               " kaannos -- ei vastaavaa fittingia, "
+                               "jatan suoraksi."))))))
+        (setq result (vputki-cont-insert-straight D layerName p_prev p_cur))
+        (if result (setq frame-ents (cons result frame-ents)))
+        (if frame-ents
+          (setq undo-stack
+            (cons (list 'SEG frame-ents p_prev p_prev_dir) undo-stack)))
+        (setq p_prev p_cur)
+        (setq p_prev_dir new-dir))
+
+      (T (princ "\n? Tuntematon syote."))))
+
+  (setvar "OSMODE"  oldOsmode)
+  (setvar "CMDECHO" oldCmdecho)
+  (setvar "CLAYER"  oldClayer)
+  (princ (strcat "\nVP valmis: " (itoa (length undo-stack)) " lisaysta."))
+  (princ))
+
+(princ "\nVPUTKI ladattu. Komennot: VP (continuous), VP32, VP50, VP75, VPUTKI.")
 (princ)

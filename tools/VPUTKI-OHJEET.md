@@ -158,15 +158,32 @@ DN75: OD = 75 mm, R = 37.5 mm. Stretch-frame Y/Z ±50 mm kattaa.
 2. **Yhteistesti puhtaassa DWG:ssä:**
    - Avaa uusi tyhjä DWG
    - APPLOAD `vputki.lsp` (`files/`-kansiosta)
-   - **Pikakomennot per koko:** `VP32` / `VP50` / `VP75`
+   - **Continuous-tila (v0.2): `VP`** — PLINE-tyylinen jatkuva piirto
+     - Kysyy halkaisijan kerran (32/50/75), sitten klikkaa pisteitä
+       peräkkäin
+     - Työkalu päättelee automaattisesti kulmasta tarvittavan fittingin:
+       suora (< 5°), 45°-fitting (40..50°), 88.5°-fitting (85..92°)
+     - Kesken piirron: `T` = T-haara (kysyy 2 pistettä), `U` = undo
+       (peruu viimeisen lisäyksen), `Enter` = lopeta
+     - CW-käännös peilataan automaattisesti (sy=-1); voi pakottaa pois
+       päältä: `(setq *vputki-allow-fitting-mirror* nil)`
+   - **Pikakomennot per koko (vanhat):** `VP32` / `VP50` / `VP75`
      - Kysyy mallin: `SUORA` / `45` / `88.5` / `T`
      - SUORA → klikkaa 2 pistettä → dynamic-block-putki venyy gripeillä
      - 45/88.5/T → klikkaa lisäyspiste + rotaatio → fitting paikoillaan
-   - Pitkä komento `VPUTKI` kysyy halkaisijan ensin (tai voi käyttää
+   - **Pitkä komento `VPUTKI`** kysyy halkaisijan ensin (tai voi käyttää
      pikakomentoa)
    - SUORA-mallin instanssia klikatessa: 2 stretch-grippiä molemmissa
      päissä; vedä grippejä → sylinteri venyy/lyhenee kummasta tahansa
      päästä
+
+   **Continuous-tilan rotaatio-säätö:** jos fittingit eivät asetu
+   oikein (esim. 45°-fitting kääntyy väärään suuntaan), avaa
+   `vputki-50-45.dwg` AutoCADissä `INSERT 0,0,0 1 1 0` -komennolla ja
+   tarkista natiivi-orientaatio. Säädä `*vputki-rot-offset-45*`
+   / `*vputki-rot-offset-885*` / `*vputki-rot-offset-t*` -globaaleja
+   (asteita) vputki.lsp:n alussa olevassa "Saadettavat asetukset"
+   -lohkossa.
 
    **Käyttämät DWG-tiedostot files/-kansiossa:**
    - `vputki-32.dwg` / `vputki-50.dwg` / `vputki-75.dwg` (suorat)
