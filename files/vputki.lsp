@@ -134,6 +134,16 @@
       (vla-put-Value p (vlax-make-variant value vlax-vbDouble))))
   (princ))
 
+(defun vputki-norm-path ( p / out )
+  ;; Poista tuplabakslashit (esim. "C:\\foo\\\\bar" -> "C:\\foo\\bar").
+  ;; Korjaa sen tilanteen, jossa kansio sattuu paattymaan "\\" jolloin
+  ;; strcat folder "\\" name tuottaa kahden bakslashin sekvenssin
+  ;; -- INSERT-komento hylkaa polun "Invalid file name".
+  (setq out p)
+  (while (vl-string-search "\\\\" out)
+    (setq out (vl-string-subst "\\" "\\\\" out)))
+  out)
+
 ;; ============================================================
 ;; BLOCK-DEFINITION LOADER
 ;; ============================================================
@@ -150,6 +160,7 @@
           (princ "\nkuin vputki.lsp tai $USERPROFILE\\suunnittelutyokalut\\.")
           nil)
         (progn
+          (setq dwgPath (vputki-norm-path dwgPath))
           (command "_.-INSERT" (strcat blockName "=" dwgPath))
           (command)
           T))))
