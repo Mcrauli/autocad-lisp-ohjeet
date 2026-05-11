@@ -327,6 +327,7 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <section class="changelog reveal">
 <h2>Viimeisimmät päivitykset</h2>
 <ul>
+<li><span class="when">11.5.2026</span><span><b>Komennot lyhennetty: <code>KLHYLLY</code> → <code>KLH</code>, <code>KLHYLLYV</code> → <code>KLHV</code>, <code>HYLLYKORKO</code> → <code>KORKO</code>.</b> Uusi <code>KORKO</code> toimii kaikille INSERT-blokeille (hyllyt, höyrystimet, koneikot, kompressorit) ja vanhoille UNION-3DSOLIDeille. Referenssipiste vaihtui INSERT-blokin insertion pointiksi (AutoCAD-yhdenmukainen), muille bbox-min Z fallback.</span></li>
 <li><span class="when">6.5.2026</span><span><b>KLHYLLY parametriseksi dynamic blockiksi.</b> Pituus muokattavissa Properties-paletista tai gripeillä molemmista päistä, leveys (300/400/500) dropdownista. TIKAS:n rungit lisääntyvät automaattisesti 250 mm askeleella. Block-kirjastot omissa DWG-tiedostoissaan: <code>klhylly-levy.dwg</code> + <code>klhylly-tikas.dwg</code>. POSITIO + KLHYLLY:n FILEDIA-vuoto korjattu — SAVE/OPEN-dialogit toimivat normaalisti komentojen jälkeen.</span></li>
 <li><span class="when">5.5.2026</span><span>POSITIO toimii suoraan ZIP-paketista — etsii <code>positio.dwg</code>:n samasta kansiosta automaattisesti. Atribuuttien teksti nostettu 250 mm:iin.</span></li>
 <li><span class="when">28.4.2026</span><span>KLHYLLY-työkalu lisätty: LEVY tai TIKAS, leveydet 300/400/500 mm.</span></li>
@@ -350,8 +351,8 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 </div>
 
 <div class="block reveal">
-<h2>KLHYLLY</h2>
-<p>Kylmälaitehylly-työkalu: LEVY tai TIKAS, leveys 300/400/500 mm. Piirtää 3D-hyllyn kahdella klikkauksella, auto-snap viereisten hyllyjen nurkkiin. Lopputulos on parametrinen dynamic block — pituus ja leveys muokattavissa Properties-paletista, pituutta voi stretchata gripeillä molemmista päistä. Vaatii rinnalle <code>klhylly-levy.dwg</code> ja <code>klhylly-tikas.dwg</code> -tiedostot (sisältyvät ZIP-pakettiin).</p>
+<h2>Kylmälaitehylly (KLH / KLHV)</h2>
+<p>Komennot <code>KLH</code> (vaakahylly) ja <code>KLHV</code> (pystysuoraan tai 3D-orientaatioon ripustuva TIKAS) piirtävät kylmälaitehyllyn parametrisena dynamic blockina: LEVY tai TIKAS, leveys 300/400/500 mm. Auto-snap viereisten hyllyjen nurkkiin. Pituus + leveys muokattavissa Properties-paletista ja stretch-gripeillä molemmista päistä. Komento <code>KORKO</code> siirtää valitut hyllyt/laitteet halutulle z-korolle. Vaatii rinnalle <code>klhylly-levy.dwg</code> ja <code>klhylly-tikas.dwg</code> (sisältyvät ZIP-pakettiin).</p>
 </div>
 
 <div class="file primary reveal">
@@ -393,8 +394,8 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <div class="file reveal">
 <span class="file-badge">LSP</span>
 <div class="file-meta">
-<h3>KLHYLLY</h3>
-<div class="file-meta-line"><span>klhylly.lsp</span><span>22.2 KB</span><span>Vaatii rinnalle klhylly-levy.dwg + klhylly-tikas.dwg</span><span>Päiv. 11.5.2026</span></div>
+<h3>Kylmälaitehylly</h3>
+<div class="file-meta-line"><span>klhylly.lsp</span><span>22.2 KB</span><span>Komennot: KLH / KLHV / KORKO. Vaatii rinnalle klhylly-levy.dwg + klhylly-tikas.dwg</span><span>Päiv. 11.5.2026</span></div>
 </div>
 <a class="file-action" href="files/klhylly.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
 </div>
