@@ -510,9 +510,8 @@
                 (setq result (vputki-cont-insert-t D layerName tp tb))
                 (setq undo-stack
                   (cons (list 'T result p_prev p_prev_dir) undo-stack))
-                (setq p_prev tb)
-                (setq p_prev_dir (vputki-angle-deg tp tb))
-                (princ "\nT-haara lisatty."))))))
+                ;; Paaputki jatkuu p_prev:sta -- T-haara on stub
+                (princ "\nT-haara lisatty. Paaputki jatkuu edellisesta pisteesta."))))))
 
       ;; --- Piste -> suora + ehka fitting ---
       ((= (type p_cur) 'LIST)
