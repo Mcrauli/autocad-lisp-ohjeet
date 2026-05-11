@@ -325,6 +325,8 @@
 
 (defun vputki-rad->deg (rad) (* (/ rad pi) 180.0))
 
+(defun vputki-deg->rad (deg) (* (/ deg 180.0) pi))
+
 (defun vputki-angle-deg (p1 p2 / dx dy)
   ;; Kulma p1->p2 asteina; AutoCAD atan palauttaa (-pi, pi]
   (setq dx (- (car p2) (car p1)))
@@ -448,13 +450,54 @@
   (foreach e ent-list
     (if (and e (entget e)) (entdel e))))
 
+
+;; ----- Cardinal direction shortcut (V/O/Y/A) ------------------------
+;;
+;; V=Vasen=-X=180°, O=Oikea=+X=0°, Y=Ylos=+Y=90°, A=Alas=-Y=270°.
+;; Kayttaja painaa kirjainta, antaa pituuden, ja tyokalu paattelee
+;; tarvitseeko kayntoa fittingia ja luo suoran sinne suuntaan.
+
+(defun vputki-cont-cardinal-dir (key)
+  (cond ((= key "V") 180.0)
+        ((= key "O")   0.0)
+        ((= key "Y")  90.0)
+        ((= key "A") 270.0)
+        (T nil)))
+
+(defun vputki-cont-do-cardinal ( D layerName p_prev p_prev_dir target_dir length /
+                                  frame-ents turn cls sign end_pt result rad )
+  (setq frame-ents '())
+  (if p_prev_dir
+    (progn
+      (setq turn (vputki-turn-deg p_prev_dir target_dir))
+      (setq cls (vputki-classify-turn turn))
+      (setq sign (if (< turn 0) -1 1))
+      (cond
+        ((eq cls 'straight) nil)
+        ((or (eq cls '45) (eq cls '885))
+          (setq result (vputki-cont-insert-corner D cls p_prev p_prev_dir sign))
+          (if result (setq frame-ents (cons result frame-ents))))
+        ((eq cls 'unknown)
+          (princ (strcat "
+VAROITUS: " (rtos turn 2 1)
+                         " kaannos -- ei vastaavaa fittingia, jatan suoraksi."))))))
+  (setq rad (vputki-deg->rad target_dir))
+  (setq end_pt
+    (list (+ (car p_prev)  (* length (cos rad)))
+          (+ (cadr p_prev) (* length (sin rad)))
+          (if (caddr p_prev) (caddr p_prev) 0.0)))
+  (setq result (vputki-cont-insert-straight D layerName p_prev end_pt))
+  (if result (setq frame-ents (cons result frame-ents)))
+  (list end_pt target_dir frame-ents))
+
 ;; ----- Paakomento c:VP ----------------------------------------------
 
 (defun c:VP ( / *error* oldClayer oldCmdecho oldOsmode
                 D sizeStr layerName aci
                 undo-stack done p_prev p_prev_dir p_cur new-dir
                 turn cls sign frame-ents
-                tp tb result )
+                tp tb result
+                target-dir len-default len-input )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -496,7 +539,7 @@
 
   ;; Continuous-loop
   (while (not done)
-    (initget "T U")
+    (initget "T U V O Y A")
     (setq p_cur (getpoint p_prev
                   "\nSeuraava piste tai [T/Undo] <Enter=lopeta>: "))
     (cond
@@ -527,6 +570,26 @@
                   (cons (list 'T result p_prev p_prev_dir) undo-stack))
                 ;; Paaputki jatkuu p_prev:sta -- T-haara on stub
                 (princ "\nT-haara lisatty. Paaputki jatkuu edellisesta pisteesta."))))))
+
+      ;; --- Keywords V/O/Y/A -> cardinal direction + pituus ---
+      ((and (= (type p_cur) 'STR)
+            (or (= p_cur "V") (= p_cur "O") (= p_cur "Y") (= p_cur "A")))
+        (setq target-dir (vputki-cont-cardinal-dir p_cur))
+        (setq len-default
+          (if (boundp '*vputki-last-length*) *vputki-last-length* 500.0))
+        (initget 6)
+        (setq len-input
+          (getreal (strcat "
+Pituus <" (rtos len-default 2 0) ">: ")))
+        (if (null len-input) (setq len-input len-default))
+        (setq *vputki-last-length* len-input)
+        (setq result (vputki-cont-do-cardinal
+                       D layerName p_prev p_prev_dir target-dir len-input))
+        (if (caddr result)
+          (setq undo-stack
+            (cons (list 'CARD (caddr result) p_prev p_prev_dir) undo-stack)))
+        (setq p_prev     (car  result))
+        (setq p_prev_dir (cadr result)))
 
       ;; --- Piste -> suora + ehka fitting ---
       ((= (type p_cur) 'LIST)
