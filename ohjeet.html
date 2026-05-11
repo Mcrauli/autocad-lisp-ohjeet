@@ -1330,11 +1330,23 @@ liitäntäkohtaa.
 
 <div class="block reveal">
 <h2>Komennot</h2>
+<p><b>Continuous-tila (PLINE-tyylinen):</b></p>
+<ul>
+<li><code>VP</code> — kysyy koon ja aloituspisteen, jatkaa sitten pick-pick-pick. Suunnan vaihdot tunnistetaan automaattisesti ja oikea fitting (45° tai 88,5°) lisätään kulmapisteeseen.</li>
+</ul>
+<p>Kesken piirron toimivat kirjainkomennot:</p>
+<ul>
+<li><code>V</code> / <code>O</code> / <code>Y</code> / <code>A</code> — vasen / oikea / ylös / alas. Painat kirjaimen, annat pituuden, ja työkalu piirtää suoran sinne suuntaan (ja tarvittaessa lisää käännöksen fittingin). Edellinen pituus muistetaan sessiokohtaisesti.</li>
+<li><code>T</code> — T-haara: klikkaa liitospiste pääputkeen + haaran loppupiste. Pääputki jatkuu edellisestä pisteestä.</li>
+<li><code>U</code> — Undo: peruu viimeisen pätkän tai fittingin.</li>
+<li><kbd>Enter</kbd> — lopettaa silmukan.</li>
+</ul>
+<p><b>Yhden pätkän tila (yksi insert kerrallaan):</b></p>
 <ul>
 <li><code>VP32</code>, <code>VP50</code>, <code>VP75</code> — pikakomennot per koko</li>
 <li><code>VPUTKI</code> — kysyy halkaisijan ensin</li>
 </ul>
-<p>Jokainen pikakomento kysyy seuraavaksi mallin:</p>
+<p>Yhden pätkän tilassa kysytään seuraavaksi malli:</p>
 <ul>
 <li><code>SUORA</code> — kaksi klikkausta, putken pituus pisteiden välimatkasta</li>
 <li><code>45</code> — 45° kulma, yksi klikkaus paikalle + rotaatio</li>
