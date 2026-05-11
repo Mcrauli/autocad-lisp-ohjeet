@@ -15,17 +15,16 @@
 ;;; klhylly-tikas.dwg loydetaan automaattisesti samasta kansiosta.)
 ;;;
 ;;; Komennot:
-;;;   KLHYLLY    -> LEVY/TIKAS -> 300/400/500 -> V=vasen / K=keski -> pisteet
-;;;   KLH        -> alias KLHYLLY:lle (lyhyempi syotto)
-;;;   KLHYLLYV   -> 300/400/500 -> alaosa -> ylaosa -> leveyden suunta
-;;;   HYLLYKORKO -> valitse hyllyt -> kohdekorko z mm
+;;;   KLH   -> LEVY/TIKAS -> 300/400/500 -> V=vasen / K=keski -> pisteet
+;;;   KLHV  -> 300/400/500 -> alaosa -> ylaosa -> leveyden suunta (pysty-TIKAS)
+;;;   KORKO      -> valitse kohteet -> kohdekorko z mm
 ;;;
 ;;; Layerit luodaan automaattisesti: KYL-LEVYHYLLY ja KYL-TIKASHYLLY,
 ;;; molemmat true-color RGB(76,76,153). Block-maaritysten sisalla geometria
 ;;; on layerilla 0 (BYBLOCK), joten instanssin layer periytyy alaspain
 ;;; ja IFC-vienti (dxf2ifc) tunnistaa hyllytyypin.
 ;;;
-;;; KLHYLLY-syotto: pick start (p1) -> pick end (p2). Pituus = distance(p1,p2).
+;;; KLH-syotto: pick start (p1) -> pick end (p2). Pituus = distance(p1,p2).
 ;;; Aloituspisteen sijainti hyllyssa valitaan V/K-promptilla:
 ;;;   V (vasen paa) = kursori on hyllyn vasemmassa ALAKULMASSA. INSERT = p1.
 ;;;                   Alkuperainen TIKAS-pick-start-kaytos.
@@ -240,7 +239,7 @@
 )
 
 ;; ============================================================
-;; KLHYLLY (vaakaversio: LEVY tai TIKAS)
+;; KLH (vaakaversio: LEVY tai TIKAS)
 ;; ============================================================
 
 (defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode
@@ -568,15 +567,37 @@
 )
 
 ;; ============================================================
-;; HYLLYKORKO - siirtaa valitut kohteet absoluuttiselle Z-korolle
+;; KORKO - siirtaa valitut kohteet absoluuttiselle Z-korolle
 ;; ============================================================
-;; Toimii sekä uusille block-instansseille etta vanhoille UNION-3DSOLIDeille
-;; (MOVE-pohjainen). Lukee valinnan alimman bbox-Z:n ja laskee siirtyman
-;; niin etta matalin alareuna osuu annettuun Z:aan.
+;; Toimii kaikille entiteeteille: INSERT-blokit (hyllyt, hoyrystimet,
+;; koneikot, kompressorit) ja vanhat UNION-3DSOLIDit (MOVE-pohjainen).
+;;
+;; Referenssi-Z per entiteetti:
+;;   INSERT  -> insertion pointin Z (sama kuin AutoCAD Properties nayttaa)
+;;   muut    -> vla-GetBoundingBox bbox-min Z (3DSOLID/REGION/POLYLINE)
+;;
+;; Useita kohteita kerralla: alin referenssi-Z siirtyy annettuun
+;; kohdekorkoon, muut shiftaavat saman delta:n verran -> suhteelliset
+;; Z-erot sailyvat.
 
-(defun c:HYLLYKORKO ( / ss i ent obj minArr maxArr res mn curZ targetZ delta )
+(defun klhylly-ref-z ( ent / d obj minArr maxArr res )
+  ;; Palauta entiteetin referenssi-Z (INSERT -> group 10 Z,
+  ;; muut -> vla-GetBoundingBox alareuna). nil jos ei saatavilla.
+  (setq d (entget ent))
+  (if (eq (cdr (assoc 0 d)) "INSERT")
+    (caddr (cdr (assoc 10 d)))
+    (progn
+      (setq obj (vlax-ename->vla-object ent))
+      (setq minArr nil maxArr nil)
+      (setq res
+        (vl-catch-all-apply 'vla-GetBoundingBox (list obj 'minArr 'maxArr)))
+      (if (and (not (vl-catch-all-error-p res)) minArr)
+        (nth 2 (vlax-safearray->list minArr))
+        nil))))
 
-  (prompt "\nValitse hyllyt: ")
+(defun c:KORKO ( / ss i ent refZ curZ targetZ delta )
+
+  (prompt "\nValitse kohteet: ")
   (setq ss (ssget))
 
   (if (null ss)
@@ -588,23 +609,16 @@
       (setq i 0 curZ nil)
       (while (< i (sslength ss))
         (setq ent (ssname ss i))
-        (setq obj (vlax-ename->vla-object ent))
-        (setq minArr nil maxArr nil)
-        (setq res
-          (vl-catch-all-apply 'vla-GetBoundingBox (list obj 'minArr 'maxArr)))
-        (if (and (not (vl-catch-all-error-p res)) minArr)
-          (progn
-            (setq mn (vlax-safearray->list minArr))
-            (if (or (null curZ) (< (nth 2 mn) curZ))
-              (setq curZ (nth 2 mn)))
-          )
-        )
+        (setq refZ (klhylly-ref-z ent))
+        (if refZ
+          (if (or (null curZ) (< refZ curZ))
+            (setq curZ refZ)))
         (setq i (1+ i))
       )
       (if (null curZ) (setq curZ 0.0))
 
-      (princ (strcat "\nNykyinen Z (alareuna): " (rtos curZ 2 1) " mm"))
-      (setq targetZ (getreal "\nKohdekorko (absoluuttinen Z mm): "))
+      (princ (strcat "\nNykyinen Z (alin): " (rtos curZ 2 1) " mm"))
+      (setq targetZ (getreal "\nKohdekorko (Z mm): "))
 
       (if (null targetZ)
         (princ "\nKeskeytetty.")
@@ -621,6 +635,6 @@
   (princ)
 )
 
-(princ "\nKLHYLLY (alias KLH) + KLHYLLYV + HYLLYKORKO ladattu.")
+(princ "\nKLHYLLY (alias KLH) + KLHYLLYV + KORKO ladattu.")
 (princ "\nProperties-paletista voi vaihtaa Leveys/Pituus, gripeilla stretchata.")
 (princ)

@@ -1196,7 +1196,7 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 <ul>
 <li><code>KLHYLLY</code> — piirtää hyllyn z=0:lle (vaakasuora, LEVY tai TIKAS)</li>
 <li><code>KLHYLLYV</code> — piirtää TIKAS-hyllyn pystyyn tai vapaaseen 3D-suuntaan</li>
-<li><code>HYLLYKORKO</code> — siirtää valitut hyllyt kerralla halutulle z-korolle</li>
+<li><code>KORKO</code> — siirtää valitut kohteet (hyllyt, höyrystimet, koneikot, mikä tahansa) halutulle z-korolle</li>
 </ul>
 </div>
 
@@ -1257,15 +1257,15 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 </div>
 
 <div class="block reveal">
-<h3>Z-korko jälkikäteen (<code>HYLLYKORKO</code>):</h3>
-<p>Z-korko on yleensä suunnittelussa viimeisenä selviävä asia ja se voi muuttua monta kertaa. Piirrä siis hyllyt rauhassa oletuksena z=0:lle, aseta korot lopuksi:</p>
+<h3>Z-korko jälkikäteen (<code>KORKO</code>):</h3>
+<p>Z-korko on yleensä suunnittelussa viimeisenä selviävä asia ja se voi muuttua monta kertaa. Piirrä rauhassa oletuksena z=0:lle, aseta korot lopuksi. Komento toimii kaikille INSERT-blokeille (hyllyt, höyrystimet, koneikot, kompressorit) ja vanhoille UNION-3DSOLIDeille.</p>
 <ol>
-<li>Valitse yhden tason hyllyt (window-select tai klikki per hylly)</li>
-<li>Kirjoita <code>HYLLYKORKO</code></li>
+<li>Valitse yhden tason kohteet (window-select tai klikki per kohde)</li>
+<li>Kirjoita <code>KORKO</code></li>
 <li>Komento näyttää valinnan nykyisen alimman Z:n</li>
-<li>Anna kohdekorko absoluuttisena Z:nä (mm) → hyllyt siirtyvät yhdellä kerralla</li>
+<li>Anna kohdekorko absoluuttisena Z:nä (mm) → kohteet siirtyvät yhdellä kerralla</li>
 </ol>
-<p>Toimii sekä LEVY-ryhmille että TIKAS-3D-solideille, ja oikeastaan millä tahansa muullakin valinnalla — laskee siirtymän bounding-boxin alareunan ja kohdekorkeuden välille.</p>
+<p>Referenssipiste: INSERT-blokille insertion point Z (sama kuin AutoCAD Properties näyttää), muille (3DSOLID/REGION/POLYLINE) bbox-min Z. Useita kohteita: alin referenssi-Z siirtyy kohdekorkoon, muut shiftaavat saman delta:n verran — suhteelliset Z-erot säilyvät.</p>
 </div>
 
 <div class="block reveal">
