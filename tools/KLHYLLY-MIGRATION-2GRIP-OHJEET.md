@@ -218,7 +218,7 @@ parametreja, tee TIKAS uudestaan tyhjään DWG:hen:
    - `KLHYLLY` → LEVY → 500 → kaksi pistettä → 4 grippiä toimii
    - `KLHYLLY` → TIKAS → 500 → kaksi pistettä → 4 grippiä toimii
    - `KLHYLLYV` → 500 → kolme pistettä → vino tikashylly
-   - `HYLLYKORKO` → valitse → kohdekorko → toimii
+   - `KORKO` → valitse → kohdekorko → toimii
 
 3. **Kerro minulle** kun kaikki toimii → rebuildaan
    `files/suunnittelutyokalut.zip` ja committoidaan + pushataan.

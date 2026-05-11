@@ -242,7 +242,7 @@
 ;; KLH (vaakaversio: LEVY tai TIKAS)
 ;; ============================================================
 
-(defun c:KLHYLLY ( / *error* oldClayer oldCmdecho oldOsmode
+(defun c:KLH ( / *error* oldClayer oldCmdecho oldOsmode
                      tyyppi levyStr levy startMode
                      p1 p1snap p2 pituus ang perp insertPt
                      blockName dwgName blockPath layerName scaleY firstTime
@@ -391,22 +391,19 @@
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
 
-  (princ "\nKLHYLLY valmis. Properties-paletista voi vaihtaa Leveys/Pituus.")
+  (princ "\nKLH valmis. Properties-paletista voi vaihtaa Leveys/Pituus.")
   (princ)
 )
 
-;; Lyhyt alias
-(defun c:KLH () (c:KLHYLLY))
-
 ;; ============================================================
-;; KLHYLLYV (TIKAS-hylly vapaaseen 3D-suuntaan)
+;; KLHV (TIKAS-hylly vapaaseen 3D-suuntaan)
 ;; ============================================================
 ;; Sama dynamic block KLHYLLY-TIKAS kuin vaakaversiossa. INSERT WCS-origoon,
 ;; sitten vla-TransformBy 4x4-matriisilla haluttuun 3D-orientaatioon.
 ;; Pituus/Leveys-parametrit toimivat instanssin paikallisessa avaruudessa,
 ;; joten Properties-paletti ja stretch toimivat samoin kuin vaakaversiossa.
 
-(defun c:KLHYLLYV ( / *error* oldClayer oldCmdecho oldOsmode
+(defun c:KLHV ( / *error* oldClayer oldCmdecho oldOsmode
                      blockName dwgName blockPath layerName firstTime
                      levyStr levy modeKw lenInput
                      p1 p2 p3 length
@@ -562,7 +559,7 @@
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
 
-  (princ "\nKLHYLLYV valmis.")
+  (princ "\nKLHV valmis.")
   (princ)
 )
 
@@ -635,6 +632,6 @@
   (princ)
 )
 
-(princ "\nKLHYLLY (alias KLH) + KLHYLLYV + KORKO ladattu.")
+(princ "\nKLH + KLHV + KORKO ladattu.")
 (princ "\nProperties-paletista voi vaihtaa Leveys/Pituus, gripeilla stretchata.")
 (princ)

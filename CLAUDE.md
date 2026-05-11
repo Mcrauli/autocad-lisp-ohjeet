@@ -290,8 +290,10 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     TIKAS:lle Array-action joka arrayttaa rung-master:n 250 mm askeleella
     automaattisesti. KLHYLLYV käyttää samaa KLHYLLY-TIKAS-blockia ja
     soveltaa `vla-TransformBy` 4×4-matriisin haluttuun 3D-orientaatioon.
-    HYLLYKORKO säilyy ennallaan (toimii sekä uusille block-instansseille
-    että vanhoille UNION-soliditeeteille).
+    KORKO (ent. HYLLYKORKO) toimii edelleen samalla pohjaperiaatteella —
+    siirtää valitut kohteet MOVE-pohjaisesti annetulle Z:lle. Refaktoroitu
+    käyttämään INSERT-pisteen Z:tä referenssinä INSERT-entiteeteille
+    (AutoCAD-yhdenmukainen) ja bbox-min Z:tä muille (3DSOLID/REGION).
     - **Riippuvuus:** klhylly.lsp tarvitsee rinnalleen kaksi DWG:tä:
       `klhylly-levy.dwg` ja `klhylly-tikas.dwg`. Erilliset DWG:t per
       blocki välttää AutoCAD:n "Block X references itself" -virheet

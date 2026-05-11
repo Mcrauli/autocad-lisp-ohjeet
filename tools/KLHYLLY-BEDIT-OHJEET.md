@@ -219,7 +219,7 @@ Avaa **uusi tyhjä DWG**. APPLOAD `klhylly.lsp`. Aja:
 2. `KLHYLLY` → TIKAS → 400 → klikkaa kaksi pistettä → block-instanssi
    - Layer = KYL-TIKASHYLLY
 3. `KLHYLLYV` → 500 → kolme pistettä → vino tikashylly
-4. `HYLLYKORKO` → valitse hyllyt → 2400 → siirtyy oikealle korolle
+4. `KORKO` → valitse hyllyt → 2400 → siirtyy oikealle korolle
 
 Jos toimii, block-kirjastot ovat valmiit. Aja repon juuressa
 `make-bundle.ps1` PowerShellissä → `files/suunnittelutyokalut.zip`
