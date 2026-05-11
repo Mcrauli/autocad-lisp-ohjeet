@@ -763,7 +763,7 @@ code {
 <a href="lataukset.html">Lataukset</a>
 <a href="dxf2ifc.html">dxf2ifc</a>
 </nav>
-<span class="version">v1.4</span>
+<span class="version">v1.5</span>
 </div>
 
 <nav id="mobile-toc" class="mobile-toc" aria-hidden="true" aria-label="Ohjesivun sisällysluettelo">
@@ -776,6 +776,8 @@ code {
 <a href="#positio">Positio</a>
 <a href="#kaato">Kaato</a>
 <a href="#klhylly">Kylmälaitehylly</a>
+<a href="#viemariputki">Viemäriputki</a>
+<a href="#hoyrystin">Höyrystin</a>
 <span class="menu-group">Lisätietoa</span>
 <a href="#faq">Usein kysyttyä</a>
 </div>
@@ -792,6 +794,8 @@ code {
 <a href="#positio">Positio</a>
 <a href="#kaato">Kaato</a>
 <a href="#klhylly">Kylmälaitehylly</a>
+<a href="#viemariputki">Viemäriputki</a>
+<a href="#hoyrystin">Höyrystin</a>
 <span class="menu-group">Lisätietoa</span>
 <a href="#faq">Usein kysyttyä</a>
 </div>
@@ -1166,6 +1170,105 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 <li>Yhdellä klikkauksella valitaan koko hylly</li>
 <li>Layerit muodostuvat automaattisesti jos puuttuvat</li>
 <li>Pituus ja leveys muokattavissa jälkikäteen Properties-paletista ja stretch-gripeillä — ei tarvitse piirtää hyllyä uusiksi</li>
+</ul>
+</div>
+</div>
+
+<div class="section" id="viemariputki">
+<h2 class="category">Viemäriputki</h2>
+
+<div class="block reveal">
+<p>
+VPUTKI on viemäriputken (kondenssi/jätevesi) piirtotyökalu kolmella koolla:
+<b>DN32</b>, <b>DN50</b> ja <b>DN75</b>. Suora putki on parametrinen dynamic
+block joka venyy gripeistä molemmista päistä; kulmat (45°, 88,5°) ja
+T-haarat tulevat staattisina WBLOCKeina, joissa on snap-piste keskellä
+liitäntäkohtaa.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Komennot</h2>
+<ul>
+<li><code>VP32</code>, <code>VP50</code>, <code>VP75</code> — pikakomennot per koko</li>
+<li><code>VPUTKI</code> — kysyy halkaisijan ensin</li>
+</ul>
+<p>Jokainen pikakomento kysyy seuraavaksi mallin:</p>
+<ul>
+<li><code>SUORA</code> — kaksi klikkausta, putken pituus pisteiden välimatkasta</li>
+<li><code>45</code> — 45° kulma, yksi klikkaus paikalle + rotaatio</li>
+<li><code>885</code> — 88,5° kulma, kuten 45°</li>
+<li><code>T</code> — T-haara, kuten kulmat</li>
+</ul>
+</div>
+
+<div class="block reveal">
+<h2>Layerit</h2>
+<p>
+Putket luodaan automaattisesti omille layereille per koko (väri erottaa
+kokoja):
+</p>
+<ul>
+<li><code>KYL-VIEMARI-32</code> — vaalea sininen</li>
+<li><code>KYL-VIEMARI-50</code> — perussininen (yleisin koko)</li>
+<li><code>KYL-VIEMARI-75</code> — tumma sininen</li>
+</ul>
+<p>Layerit luodaan automaattisesti komennon ensimmäisellä kutsulla.</p>
+</div>
+
+<div class="block reveal">
+<h2>Miksi näin?</h2>
+<ul>
+<li>Suora dynamic block sisältää 1.8 mm seinämägeometrian — section-näkymässä näkyy oikea rengas-poikkileikkaus kuten oikea muoviputki</li>
+<li>32-segmenttinen 3DFACE-sylinteri näyttää sileän pyöreänä Conceptual/Realistic-visual-style:llä</li>
+<li>Pituutta voi venyttää molemmista päistä gripeillä — ei tarvitse poistaa ja piirtää uudestaan</li>
+<li>Fittings:llä on snap-pisteet liitäntäkohdissa — NODE-snap pinaa fittings:t oikein kiinni edelliseen putkenpäätyyn</li>
+<li>dxf2ifc-yhteensopiva: KYL-VIEMARI-32/50/75 -layerit mappautuvat <code>IfcPipeSegment</code>-elementteihin RAVA-luokituksin (T-LVI-04-01-001 + J-LVI-04-04 Viemäri-kondenssi)</li>
+</ul>
+</div>
+</div>
+
+<div class="section" id="hoyrystin">
+<h2 class="category">Höyrystin</h2>
+
+<div class="block reveal">
+<p>
+HOYRYSTIN on valmiina piirrettyjen höyrystin-blockien insertointi-
+työkalu kolmella mallilla: <b>1-puhaltimen</b>, <b>2-puhaltimen</b> ja
+<b>3-puhaltimen</b>. Block-DWG:t (<code>hoyrystin-1.dwg</code> jne.) ovat
+ZIP-paketissa, ja LSP löytää ne automaattisesti samasta kansiosta.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Komennot</h2>
+<ul>
+<li><code>HY1</code>, <code>HY2</code>, <code>HY3</code> — lyhyet pikakomennot per puhallinmäärä</li>
+<li><code>HOYR1</code>, <code>HOYR2</code>, <code>HOYR3</code> — pidemmät aliakset (sama toiminto)</li>
+</ul>
+<p>Komentokutsu:</p>
+<ol>
+<li>Klikkaa lisäyspiste — block seuraa hiirtä</li>
+<li>Pyöritä hiirellä rotaatio paikalleen (AutoCAD:n natiivi live-preview)</li>
+<li>Klikkaa hyväksy → höyrystin paikoillaan</li>
+</ol>
+</div>
+
+<div class="block reveal">
+<h2>Layer</h2>
+<p>
+Kaikki höyrystimet menevät yhdelle layerille: <code>KYL-HOYRYSTIMET</code>
+(oranssi — erottuu sinisistä putkista). Layer luodaan automaattisesti
+ensimmäisellä kutsulla.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Miksi näin?</h2>
+<ul>
+<li>Block-DWG:t ovat staattisia WBLOCK:eja — yhden klikkauksen INSERT, ei BEDIT-monimutkaisuuksia</li>
+<li>Layer-erottelu (KYL-HOYRYSTIMET vs sinerget putket) tekee laitteista visuaalisesti tunnistettavia plan-näkymässä</li>
+<li>dxf2ifc-yhteensopiva: KYL-HOYRYSTIMET → <code>IfcEvaporator</code> IFC-eksportissa (Talo2000 + RAVA-luokitus)</li>
 </ul>
 </div>
 </div>

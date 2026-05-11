@@ -115,6 +115,46 @@
     },
     {
       "@type": "SoftwareApplication",
+      "name": "Viemäriputki (VPUTKI)",
+      "description": "Drainage-putken piirtotyökalu kolmella koolla (DN32/50/75). VP32/VP50/VP75 piirtää suoran putken kahdella klikkauksella + 45°/88,5°/T-fittings yhdellä klikkauksella. Suora venyy molemmista päistä dynamic-block-gripeillä, 1.8 mm seinämä geometriana.",
+      "applicationCategory": "DesignApplication",
+      "applicationSubCategory": "AutoCAD LISP",
+      "operatingSystem": "Windows",
+      "softwareRequirements": "AutoCAD (full version, not AutoCAD LT)",
+      "softwareVersion": "1.0",
+      "inLanguage": "fi",
+      "author": { "@id": "https://mcrauli.github.io/autocad-lisp-ohjeet/#author" },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      },
+      "downloadUrl": "https://mcrauli.github.io/autocad-lisp-ohjeet/files/vputki.lsp",
+      "url": "https://mcrauli.github.io/autocad-lisp-ohjeet/ohjeet.html#viemariputki"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Höyrystin (HOYRYSTIN)",
+      "description": "Höyrystin-blockien insertointityökalu kolmella koolla (1/2/3-puhallinta). HY1/HY2/HY3 lisää valmiit höyrystin-blockit oikealle KYL-HOYRYSTIMET-layerille. Yksi klikkaus paikalle ja rotaatio AutoCAD:n natiivilla live-preview:llä.",
+      "applicationCategory": "DesignApplication",
+      "applicationSubCategory": "AutoCAD LISP",
+      "operatingSystem": "Windows",
+      "softwareRequirements": "AutoCAD (full version, not AutoCAD LT)",
+      "softwareVersion": "1.0",
+      "inLanguage": "fi",
+      "author": { "@id": "https://mcrauli.github.io/autocad-lisp-ohjeet/#author" },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      },
+      "downloadUrl": "https://mcrauli.github.io/autocad-lisp-ohjeet/files/hoyrystin.lsp",
+      "url": "https://mcrauli.github.io/autocad-lisp-ohjeet/ohjeet.html#hoyrystin"
+    },
+    {
+      "@type": "SoftwareApplication",
       "name": "dxf2ifc",
       "description": "AutoCAD DXF→IFC4-konvertteri kylmälaite- ja LVI-suunnitteluun. Talo2000 + RAVA-luokitus, 6 suomalaista PSettiä per IFC-tuote, POSITIO-blokin auto-linkitys, Solibri-yhteensopiva.",
       "applicationCategory": "DesignApplication",
@@ -547,7 +587,7 @@ p {
 <a href="lataukset.html">Lataukset</a>
 <a href="dxf2ifc.html">dxf2ifc</a>
 </nav>
-<span class="version">v1.4</span>
+<span class="version">v1.5</span>
 </div>
 
 <svg class="hero-backdrop" viewBox="0 0 1040 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -623,6 +663,20 @@ löytyvät mallista automaattisesti — ei manuaalista IFC-mappausta.
 <span class="feature-card-badge">HYLLY</span>
 <h3>Kylmälaitehylly</h3>
 <p>Piirtää LEVY- tai TIKAS-hyllyn valituilla mitoilla. Auto-snap viereisten hyllyjen nurkkiin ja automaattinen leveyssuunta.</p>
+<span class="feature-card-link">Katso ohjeet →</span>
+</a>
+
+<a class="feature-card reveal" href="ohjeet.html#viemariputki">
+<span class="feature-card-badge">VIEMÄRI</span>
+<h3>Viemäriputki</h3>
+<p>VP32/VP50/VP75 piirtää suoran putken kahdella klikkauksella + 45°/88,5°/T-fittings. Suora venyy molemmista päistä gripeillä.</p>
+<span class="feature-card-link">Katso ohjeet →</span>
+</a>
+
+<a class="feature-card reveal" href="ohjeet.html#hoyrystin">
+<span class="feature-card-badge">LAITE</span>
+<h3>Höyrystin</h3>
+<p>HY1/HY2/HY3 insertoi 1/2/3-puhaltimen höyrystin-blockit oikealle layerille. Yksi klikkaus paikalle + rotaatio live-preview:llä.</p>
 <span class="feature-card-link">Katso ohjeet →</span>
 </a>
 </section>
