@@ -293,6 +293,51 @@ a {
   }
 }
 
+.zip-contents {
+  margin-top: 16px;
+}
+
+.zip-contents h2 {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin: 0 0 14px 0;
+}
+
+.zip-contents ul {
+  margin: 0 0 14px 0;
+  padding-left: 22px;
+  color: #cbd5f5;
+  line-height: 1.65;
+}
+
+.zip-contents li {
+  margin: 4px 0;
+}
+
+.zip-contents li b {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.zip-contents code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.9em;
+  color: #60a5fa;
+  background: rgba(96,165,250,0.07);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.zip-contents > p {
+  margin: 0;
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.65;
+}
+
 </style>
 </head>
 
@@ -364,85 +409,17 @@ kylmälaite suunnittelua ja putkikaavioiden tekemistä.
 <a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>
 
-<div class="file reveal">
-<span class="file-badge">LSP</span>
-<div class="file-meta">
-<h3>POSITIO</h3>
-<div class="file-meta-line"><span>positio.lsp</span><span>6.30 KB</span><span>Päiv. 6.5.2026</span></div>
-</div>
-<a class="file-action" href="files/positio.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge">LSP</span>
-<div class="file-meta">
-<h3>KAATO3D</h3>
-<div class="file-meta-line"><span>kaato.lsp</span><span>1.29 KB</span><span>Päiv. 23.4.2026</span></div>
-</div>
-<a class="file-action" href="files/kaato.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge">LSP</span>
-<div class="file-meta">
-<h3>Putkityökalu</h3>
-<div class="file-meta-line"><span>putkityokalu.lsp</span><span>1.76 KB</span><span>Päiv. 22.4.2026</span></div>
-</div>
-<a class="file-action" href="files/putkityokalu.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge">LSP</span>
-<div class="file-meta">
-<h3>Kylmälaitehylly</h3>
-<div class="file-meta-line"><span>klhylly.lsp</span><span>22.2 KB</span><span>Komennot: KLH / KLHV / KORKO. Vaatii rinnalle klhylly-levy.dwg + klhylly-tikas.dwg</span><span>Päiv. 11.5.2026</span></div>
-</div>
-<a class="file-action" href="files/klhylly.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge">LSP</span>
-<div class="file-meta">
-<h3>VPUTKI</h3>
-<div class="file-meta-line"><span>vputki.lsp</span><span>9.51 KB</span><span>Viemäriputkityökalu — VP32/VP50/VP75 + suora/45/88.5/T -mallit. Vaatii rinnalle vputki-*.dwg-tiedostot.</span><span>Päiv. 11.5.2026</span></div>
-</div>
-<a class="file-action" href="files/vputki.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge">LSP</span>
-<div class="file-meta">
-<h3>HOYRYSTIN</h3>
-<div class="file-meta-line"><span>hoyrystin.lsp</span><span>8 KB</span><span>Höyrystimien insertointi — HY1/HY2/HY3 (1/2/3-puhaltimen mallit). Vaatii rinnalle hoyrystin-1/2/3.dwg-tiedostot.</span><span>Päiv. 11.5.2026</span></div>
-</div>
-<a class="file-action" href="files/hoyrystin.lsp" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge dwg">DWG</span>
-<div class="file-meta">
-<h3>KLHYLLY-LEVY block</h3>
-<div class="file-meta-line"><span>klhylly-levy.dwg</span><span>30 KB</span><span>klhylly.lsp:n riippuvuus</span></div>
-</div>
-<a class="file-action" href="files/klhylly-levy.dwg" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge dwg">DWG</span>
-<div class="file-meta">
-<h3>KLHYLLY-TIKAS block</h3>
-<div class="file-meta-line"><span>klhylly-tikas.dwg</span><span>30 KB</span><span>klhylly.lsp:n riippuvuus</span></div>
-</div>
-<a class="file-action" href="files/klhylly-tikas.dwg" download>Lataa<span class="file-action-arrow">↓</span></a>
-</div>
-
-<div class="file reveal">
-<span class="file-badge dwg">DWG</span>
-<div class="file-meta">
-<h3>POSITIO DWG</h3>
-<div class="file-meta-line"><span>positio.dwg</span><span>27.1 KB</span><span>Päiv. 5.5.2026</span></div>
-</div>
-<a class="file-action" href="files/positio.dwg" download>Lataa<span class="file-action-arrow">↓</span></a>
+<div class="block reveal zip-contents">
+<h2>Paketin sisältö</h2>
+<ul>
+<li><b>POSITIO</b> — automaattinen numerointi. <code>positio.lsp</code> + <code>positio.dwg</code>.</li>
+<li><b>KAATO3D</b> — 3D-kappaleen kallistus pivot-pisteestä. <code>kaato.lsp</code>.</li>
+<li><b>Putkityökalu</b> — LT/MT IMU + NESTE -putkien piirto valmiilla layereilla, väreillä ja etäisyyksillä. <code>putkityokalu.lsp</code>.</li>
+<li><b>Kylmälaitehylly</b> — komennot <code>KLH</code> (vaaka), <code>KLHV</code> (3D-tikashylly), <code>KORKO</code> (korko jälkikäteen). <code>klhylly.lsp</code> + <code>klhylly-levy.dwg</code> + <code>klhylly-tikas.dwg</code>.</li>
+<li><b>VPUTKI</b> — viemäriputket VP32 / VP50 / VP75, mallit suora + 45° + 88.5° + T. <code>vputki.lsp</code> + 12 DWG:tä.</li>
+<li><b>HOYRYSTIN</b> — höyrystimien insertointi HY1 / HY2 / HY3 (1 / 2 / 3 puhaltimen mallit). <code>hoyrystin.lsp</code> + 3 DWG:tä.</li>
+</ul>
+<p>Pura ZIP yhteen kansioon (esim. <code>C:\AutoCADLisp\</code>) ja <code>APPLOAD</code>:lla halutut LSP-tiedostot AutoCADiin. LSP:t etsivät DWG-riippuvuudet automaattisesti samasta kansiosta.</p>
 </div>
 
 <footer class="site-footer">
