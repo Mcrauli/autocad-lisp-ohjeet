@@ -560,6 +560,121 @@ li {
   95%, 100% { opacity: 0; }
 }
 
+/* VPUTKI demo — two points, pipe segment draws, stretch grips appear */
+.vputki-demo__p1 {
+  opacity: 0;
+  animation: vputki-p1-fade 6s ease-in-out infinite;
+}
+
+.vputki-demo__p2 {
+  opacity: 0;
+  animation: vputki-p2-fade 6s ease-in-out infinite;
+}
+
+.vputki-demo__shaft {
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  opacity: 0;
+  animation: vputki-shaft-draw 6s ease-in-out infinite;
+}
+
+.vputki-demo__wall {
+  opacity: 0;
+  animation: vputki-wall-fade 6s ease-in-out infinite;
+}
+
+.vputki-demo__grip {
+  opacity: 0;
+  animation: vputki-grip-fade 6s ease-in-out infinite;
+}
+
+.vputki-demo__grip--left { animation-delay: 0s; }
+.vputki-demo__grip--right { animation-delay: 0.15s; }
+
+.vputki-demo__label {
+  opacity: 0;
+  animation: vputki-label-fade 6s ease-in-out infinite;
+}
+
+@keyframes vputki-p1-fade {
+  0%, 3%    { opacity: 0; }
+  7%, 88%   { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes vputki-p2-fade {
+  0%, 13%   { opacity: 0; }
+  18%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes vputki-shaft-draw {
+  0%, 22%   { stroke-dashoffset: 320; opacity: 0; }
+  26%       { opacity: 1; }
+  44%       { stroke-dashoffset: 0; opacity: 1; }
+  88%       { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes vputki-wall-fade {
+  0%, 46%   { opacity: 0; }
+  52%, 88%  { opacity: 0.65; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes vputki-grip-fade {
+  0%, 56%   { opacity: 0; }
+  62%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes vputki-label-fade {
+  0%, 70%   { opacity: 0; }
+  75%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+/* HOYRYSTIN demo — body fades in, fans pop in sequence */
+.hoyr-demo__body {
+  opacity: 0;
+  animation: hoyr-body-fade 6s ease-in-out infinite;
+}
+
+.hoyr-demo__fan {
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: hoyr-fan-fade 6s ease-in-out infinite;
+}
+
+.hoyr-demo__fan--1 { animation-delay: 0.4s; }
+.hoyr-demo__fan--2 { animation-delay: 0.9s; }
+.hoyr-demo__fan--3 { animation-delay: 1.4s; }
+
+.hoyr-demo__label {
+  opacity: 0;
+  animation: hoyr-label-fade 6s ease-in-out infinite;
+}
+
+@keyframes hoyr-body-fade {
+  0%, 3%    { opacity: 0; }
+  9%, 88%   { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes hoyr-fan-fade {
+  0%, 5%    { opacity: 0; transform: scale(0.4); }
+  9%        { opacity: 1; transform: scale(1.15); }
+  13%, 88%  { opacity: 1; transform: scale(1); }
+  95%, 100% { opacity: 0; }
+}
+
+@keyframes hoyr-label-fade {
+  0%, 28%   { opacity: 0; }
+  33%, 88%  { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
 /* CODE */
 code {
   background: rgba(96,165,250,0.08);
@@ -1177,6 +1292,32 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 <div class="section" id="viemariputki">
 <h2 class="category">Viemäriputki</h2>
 
+<div class="pipe-demo-block">
+<div class="pipe-demo-caption">Command: VP50</div>
+<svg class="pipe-demo" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VP50-komento piirtää suoran viemäriputken kahdella klikkauksella, gripit ilmestyvät kummallekin päädylle">
+<defs>
+<pattern id="vputki-demo-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.06)" stroke-width="0.5"/>
+</pattern>
+</defs>
+<rect width="100%" height="100%" fill="url(#vputki-demo-grid)"/>
+
+<line class="vputki-demo__shaft" x1="80" y1="90" x2="480" y2="90" stroke="#60a5fa" stroke-width="20" stroke-linecap="butt" opacity="0.85"/>
+<line class="vputki-demo__wall" x1="80" y1="80" x2="480" y2="80" stroke="#3b82f6" stroke-width="1.5"/>
+<line class="vputki-demo__wall" x1="80" y1="100" x2="480" y2="100" stroke="#3b82f6" stroke-width="1.5"/>
+
+<circle class="vputki-demo__p1" cx="80" cy="90" r="5" fill="#f59e0b"/>
+<circle class="vputki-demo__p2" cx="480" cy="90" r="5" fill="#f59e0b"/>
+
+<rect class="vputki-demo__grip vputki-demo__grip--left" x="73" y="83" width="14" height="14" fill="rgba(96,165,250,0.35)" stroke="#60a5fa" stroke-width="1.4"/>
+<rect class="vputki-demo__grip vputki-demo__grip--right" x="473" y="83" width="14" height="14" fill="rgba(96,165,250,0.35)" stroke="#60a5fa" stroke-width="1.4"/>
+
+<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="500">
+<text class="vputki-demo__label" x="280" y="145" fill="#f59e0b" text-anchor="middle">DN50 · KYL-VIEMARI-50</text>
+</g>
+</svg>
+</div>
+
 <div class="block reveal">
 <p>
 VPUTKI on viemäriputken (kondenssi/jätevesi) piirtotyökalu kolmella koolla:
@@ -1230,6 +1371,42 @@ kokoja):
 
 <div class="section" id="hoyrystin">
 <h2 class="category">Höyrystin</h2>
+
+<div class="pipe-demo-block">
+<div class="pipe-demo-caption">Command: HY3</div>
+<svg class="pipe-demo" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HY3-komento insertoi 3-puhaltimen höyrystin-blockin">
+<defs>
+<pattern id="hoyr-demo-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.06)" stroke-width="0.5"/>
+</pattern>
+</defs>
+<rect width="100%" height="100%" fill="url(#hoyr-demo-grid)"/>
+
+<rect class="hoyr-demo__body" x="120" y="60" width="320" height="60" rx="3" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-width="1.6"/>
+
+<g class="hoyr-demo__fan hoyr-demo__fan--1">
+<circle cx="190" cy="90" r="20" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1.4"/>
+<path d="M 190 75 Q 195 90 190 105 M 175 90 Q 190 95 205 90 M 180 80 Q 195 88 200 100 M 200 80 Q 185 88 180 100" stroke="#60a5fa" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+<circle cx="190" cy="90" r="3" fill="#f59e0b"/>
+</g>
+
+<g class="hoyr-demo__fan hoyr-demo__fan--2">
+<circle cx="280" cy="90" r="20" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1.4"/>
+<path d="M 280 75 Q 285 90 280 105 M 265 90 Q 280 95 295 90 M 270 80 Q 285 88 290 100 M 290 80 Q 275 88 270 100" stroke="#60a5fa" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+<circle cx="280" cy="90" r="3" fill="#f59e0b"/>
+</g>
+
+<g class="hoyr-demo__fan hoyr-demo__fan--3">
+<circle cx="370" cy="90" r="20" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1.4"/>
+<path d="M 370 75 Q 375 90 370 105 M 355 90 Q 370 95 385 90 M 360 80 Q 375 88 380 100 M 380 80 Q 365 88 360 100" stroke="#60a5fa" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+<circle cx="370" cy="90" r="3" fill="#f59e0b"/>
+</g>
+
+<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="500">
+<text class="hoyr-demo__label" x="280" y="145" fill="#f59e0b" text-anchor="middle">3-puhaltimen · KYL-HOYRYSTIMET</text>
+</g>
+</svg>
+</div>
 
 <div class="block reveal">
 <p>
