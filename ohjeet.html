@@ -1363,7 +1363,7 @@ kokoja):
 <li>Suora dynamic block sisältää 1.8 mm seinämägeometrian — section-näkymässä näkyy oikea rengas-poikkileikkaus kuten oikea muoviputki</li>
 <li>32-segmenttinen 3DFACE-sylinteri näyttää sileän pyöreänä Conceptual/Realistic-visual-style:llä</li>
 <li>Pituutta voi venyttää molemmista päistä gripeillä — ei tarvitse poistaa ja piirtää uudestaan</li>
-<li>Fittings:llä on snap-pisteet liitäntäkohdissa — NODE-snap pinaa fittings:t oikein kiinni edelliseen putkenpäätyyn</li>
+<li>Yhteissä on snap-pisteet liitäntäkohdissa — NODE-snap kiinnittää yhteet oikeaan kohtaan edellisen putken päätyyn</li>
 <li>dxf2ifc-yhteensopiva: KYL-VIEMARI-32/50/75 -layerit mappautuvat <code>IfcPipeSegment</code>-elementteihin RAVA-luokituksin (T-LVI-04-01-001 + J-LVI-04-04 Viemäri-kondenssi)</li>
 </ul>
 </div>
@@ -1410,8 +1410,8 @@ kokoja):
 
 <div class="block reveal">
 <p>
-HOYRYSTIN on valmiina piirrettyjen höyrystin-blockien insertointi-
-työkalu kolmella mallilla: <b>1-puhaltimen</b>, <b>2-puhaltimen</b> ja
+HOYRYSTIN on valmiina piirrettyjen höyrystin-blockien
+insertointityökalu kolmella mallilla: <b>1-puhaltimen</b>, <b>2-puhaltimen</b> ja
 <b>3-puhaltimen</b>. Block-DWG:t (<code>hoyrystin-1.dwg</code> jne.) ovat
 ZIP-paketissa, ja LSP löytää ne automaattisesti samasta kansiosta.
 </p>
@@ -1443,8 +1443,8 @@ ensimmäisellä kutsulla.
 <div class="block reveal">
 <h2>Miksi näin?</h2>
 <ul>
-<li>Block-DWG:t ovat staattisia WBLOCK:eja — yhden klikkauksen INSERT, ei BEDIT-monimutkaisuuksia</li>
-<li>Layer-erottelu (KYL-HOYRYSTIMET vs sinerget putket) tekee laitteista visuaalisesti tunnistettavia plan-näkymässä</li>
+<li>Block-DWG:t ovat staattisia WBLOCKeja — yhden klikkauksen INSERT, ei BEDIT-monimutkaisuuksia</li>
+<li>Layer-erottelu (KYL-HOYRYSTIMET vs siniset putket) tekee laitteista visuaalisesti tunnistettavia plan-näkymässä</li>
 <li>dxf2ifc-yhteensopiva: KYL-HOYRYSTIMET → <code>IfcEvaporator</code> IFC-eksportissa (Talo2000 + RAVA-luokitus)</li>
 </ul>
 </div>
@@ -1530,7 +1530,7 @@ ensimmäisellä kutsulla.
 <details class="faq-item reveal">
 <summary>Vanhan piirustuksen hyllyä ei voi muokata Properties-paletista — miksi?</summary>
 <div class="faq-body">
-<p>Aiemmilla versioilla piirretyt hyllyt ovat UNION:oituja 3D-soliditeetteja, eivät dynamic blockeja — niissä ei ole Pituus/Leveys-parametreja. Uudet KLHYLLY-komennot tuottavat parametrisia block-instansseja jotka voi muokata Properties-paletista ja stretch-gripeillä. Vanhat hyllyt jäävät paikalleen ja näkyvät identtisesti, mutta jos haluat parametrista muokattavuutta, piirrä hyllyt uusiksi uudella komennolla.</p>
+<p>Aiemmilla versioilla piirretyt hyllyt ovat UNION:oituja 3D-soliditeetteja, eivät dynamic blockeja — niissä ei ole Pituus/Leveys-parametreja. Uudet KLH/KLHV-komennot tuottavat parametrisia block-instansseja jotka voi muokata Properties-paletista ja stretch-gripeillä. Vanhat hyllyt jäävät paikalleen ja näkyvät identtisesti, mutta jos haluat parametrista muokattavuutta, piirrä hyllyt uusiksi uudella komennolla.</p>
 </div>
 </details>
 </div>
