@@ -311,6 +311,12 @@
 (if (not (boundp '*vputki-rot-offset-885*)) (setq *vputki-rot-offset-885* 0.0))
 (if (not (boundp '*vputki-rot-offset-t*))   (setq *vputki-rot-offset-t*   0.0))
 
+;; Fittingin natiivi-kaannos: -1 = CW (output kaytrtaa kellon mukaisesti),
+;; +1 = CCW. Per 45-fittingin BEDIT-kuva: input west, output SE -> CW natiivi.
+;; Saata jos vaarin: (setq *vputki-native-turn-885* 1) jne.
+(if (not (boundp '*vputki-native-turn-45*))  (setq *vputki-native-turn-45*  -1))
+(if (not (boundp '*vputki-native-turn-885*)) (setq *vputki-native-turn-885* -1))
+
 ;; Salli fittingin Y-peilaus (sy=-1) kun kaannos on CW. Jos nil, CW-
 ;; kaannos jaa suoraksi varoituksen kera.
 (if (not (boundp '*vputki-allow-fitting-mirror*))
@@ -321,7 +327,7 @@
 ;; mukana fallbackina (nil), mutta vaatii oikeat *vputki-rot-offset-*-arvot.
 ;; Suositus: T jos alignment ei toimi auto-tilassa.
 (if (not (boundp '*vputki-fitting-interactive*))
-    (setq *vputki-fitting-interactive* T))
+    (setq *vputki-fitting-interactive* nil))
 
 ;; Kulmaluokituksen toleranssit (asteita).
 (if (not (boundp '*vputki-tol-straight*)) (setq *vputki-tol-straight* 5.0))
@@ -406,7 +412,7 @@
 ;; turn-sign = +1 (CCW) tai -1 (CW)
 
 (defun vputki-cont-insert-corner (D kind p_corner rot-base turn-sign /
-                                   blockName offset rot sy ref)
+                                   blockName offset rot sy ref native-sign)
   (setq offset
     (cond ((eq kind '45)  *vputki-rot-offset-45*)
           ((eq kind '885) *vputki-rot-offset-885*)
@@ -431,7 +437,12 @@
       nil)
     (T
       (setq rot (+ rot-base offset))
-      (setq sy (if (< turn-sign 0) -1 1))
+      ;; Mirror vain jos kayttajan kannosuunta poikkeaa natiivista.
+      (setq native-sign
+        (cond ((eq kind '45)  *vputki-native-turn-45*)
+              ((eq kind '885) *vputki-native-turn-885*)
+              (T -1)))
+      (setq sy (if (= turn-sign native-sign) 1 -1))
       ;; sy=-1 -> AutoCAD prompttaa Z-scalen kun Y on ei-uniformi.
       ;; Kaytetaan _XYZ-modea jotta Z=1 menee eksplisiittisesti.
       (if (= sy 1)
@@ -508,6 +519,30 @@ VAROITUS: " (rtos turn 2 1)
   (if result (setq frame-ents (cons result frame-ents)))
   (list end_pt target_dir frame-ents))
 
+;; ----- Pystyputki Z-suuntaan -----------------------------------------
+;;
+;; UCS-rotaatio +/-Y-akselin ympari muuttaa local +X = world +/-Z.
+;; Inserttoi sitten suora-block standalone-tilassa ja palauttaa UCS:n.
+
+(defun vputki-cont-insert-vertical ( D layerName p_prev dz /
+                                       blockName ref p_local ucs-angle )
+  (if (or (null dz) (< (abs dz) 1.0))
+    (progn (princ "\nVAROITUS: Z-muutos liian pieni.") nil)
+    (progn
+      (setq blockName (strcat "VPUTKI-" (itoa D)))
+      (setvar "CLAYER" layerName)
+      ;; +dz: paikallinen +X osoittaa world +Z -> UCS rotaatio -90 Y
+      ;; -dz: paikallinen +X osoittaa world -Z -> UCS rotaatio +90 Y
+      (setq ucs-angle (if (> dz 0) -90.0 90.0))
+      (command "_.UCS" "_W")
+      (command "_.UCS" "_Y" ucs-angle)
+      (setq p_local (trans p_prev 0 1))
+      (command "_.-INSERT" blockName p_local 1 1 0)
+      (setq ref (entlast))
+      (vputki-set-dyn-prop ref "Pituus" (abs dz))
+      (command "_.UCS" "_W")
+      ref)))
+
 ;; ----- Paakomento c:VP ----------------------------------------------
 
 (defun c:VP ( / *error* oldClayer oldCmdecho oldOsmode
@@ -515,7 +550,8 @@ VAROITUS: " (rtos turn 2 1)
                 undo-stack done p_prev p_prev_dir p_cur new-dir
                 turn cls sign frame-ents
                 tp tb result
-                target-dir len-default len-input )
+                target-dir len-default len-input
+                forced-fitting dz-default dz-input )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -553,13 +589,14 @@ VAROITUS: " (rtos turn 2 1)
   (if (null p_prev) (exit))
   (setq p_prev_dir nil)
   (setq undo-stack '())
+  (setq forced-fitting nil)
   (setq done nil)
 
   ;; Continuous-loop
   (while (not done)
-    (initget "T U V O Y A")
+    (initget "T U V O Y A Z S 4 9")
     (setq p_cur (getpoint p_prev
-                  "\nSeuraava piste tai [T/Undo] <Enter=lopeta>: "))
+                  "\nSeuraava piste tai [4/9/T/S/V/O/Y/A/Z/U] <Enter>: "))
     (cond
       ;; --- Enter -> lopeta ---
       ((null p_cur) (setq done T))
@@ -589,6 +626,40 @@ VAROITUS: " (rtos turn 2 1)
                 ;; Paaputki jatkuu p_prev:sta -- T-haara on stub
                 (princ "\nT-haara lisatty. Paaputki jatkuu edellisesta pisteesta."))))))
 
+      ;; --- Keyword 4 -> lukitse 45-fitting seuraavalle insertille ---
+      ((and (= (type p_cur) 'STR) (= p_cur "4"))
+        (setq forced-fitting '45)
+        (princ "\n>> Seuraava insert lukittu 45-fittingiin."))
+
+      ;; --- Keyword 9 -> lukitse 88.5-fitting seuraavalle insertille ---
+      ((and (= (type p_cur) 'STR) (= p_cur "9"))
+        (setq forced-fitting '885)
+        (princ "\n>> Seuraava insert lukittu 88.5-fittingiin."))
+
+      ;; --- Keyword S -> lukitse suora (ei fittingia) ---
+      ((and (= (type p_cur) 'STR) (= p_cur "S"))
+        (setq forced-fitting 'straight)
+        (princ "\n>> Seuraava insert ilman fittingia."))
+
+      ;; --- Keyword Z -> pystyputki Z-suuntaan ---
+      ((and (= (type p_cur) 'STR) (= p_cur "Z"))
+        (setq dz-default
+          (if (boundp '*vputki-last-dz*) *vputki-last-dz* -500.0))
+        (setq dz-input
+          (getreal (strcat "\nZ-muutos (+ylos / -alas) <"
+                            (rtos dz-default 2 0) ">: ")))
+        (if (null dz-input) (setq dz-input dz-default))
+        (setq *vputki-last-dz* dz-input)
+        (setq result (vputki-cont-insert-vertical D layerName p_prev dz-input))
+        (if result
+          (progn
+            (setq undo-stack
+              (cons (list 'VERT (list result) p_prev p_prev_dir) undo-stack))
+            (setq p_prev
+              (list (car p_prev) (cadr p_prev)
+                    (+ (if (caddr p_prev) (caddr p_prev) 0.0) dz-input)))
+            (setq p_prev_dir nil))))
+
       ;; --- Keywords V/O/Y/A -> cardinal direction + pituus ---
       ((and (= (type p_cur) 'STR)
             (or (= p_cur "V") (= p_cur "O") (= p_cur "Y") (= p_cur "A")))
@@ -616,8 +687,8 @@ Pituus <" (rtos len-default 2 0) ">: ")))
         (if p_prev_dir
           (progn
             (setq turn (vputki-turn-deg p_prev_dir new-dir))
-            (setq cls (vputki-classify-turn turn))
             (setq sign (if (< turn 0) -1 1))
+            (setq cls (if forced-fitting forced-fitting (vputki-classify-turn turn)))
             (cond
               ((eq cls 'straight) nil)
               ((or (eq cls '45) (eq cls '885))
@@ -634,7 +705,8 @@ Pituus <" (rtos len-default 2 0) ">: ")))
           (setq undo-stack
             (cons (list 'SEG frame-ents p_prev p_prev_dir) undo-stack)))
         (setq p_prev p_cur)
-        (setq p_prev_dir new-dir))
+        (setq p_prev_dir new-dir)
+        (setq forced-fitting nil))
 
       (T (princ "\n? Tuntematon syote."))))
 
