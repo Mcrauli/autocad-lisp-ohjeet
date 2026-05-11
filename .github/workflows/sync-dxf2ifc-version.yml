@@ -1,0 +1,111 @@
+name: Sync dxf2ifc version pin
+
+# Pollaa dxf2ifc-repon uusin release ja paivittaa dxf2ifc.html:ssa olevat
+# version-strings + download-linkit jos uudempi versio loytyy. Komitti tehdaan
+# github-actions[bot]-tunnuksella vain jos jotain todella muuttui.
+
+on:
+  schedule:
+    # Joka tunti (5 minuutin offset, jotta GH-rate-limit hetket eivat osu
+    # tasan tunnin kohdille jolloin moni cron menee)
+    - cron: '5 * * * *'
+  workflow_dispatch:
+  # Jos dxf2ifc-repon release.yml lahettaa repository_dispatch -eventin,
+  # kaynnistetaan sync heti releasen jalkeen ilman cron-odotusta.
+  repository_dispatch:
+    types: [dxf2ifc-release]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-dxf2ifc-version
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest dxf2ifc release (incl. pre-releases)
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # API palauttaa releases sorted by created_at desc -> [0] on uusin.
+          # Bearer token nostaa rate-limitin 60/h -> 1000/h.
+          set -euo pipefail
+          RESP=$(curl -fsSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Mcrauli/dxf2ifc/releases?per_page=1)
+          TAG=$(echo "$RESP" | jq -r '.[0].tag_name')
+          if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
+            echo "::error::No releases found on Mcrauli/dxf2ifc"
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          # 0.2.0-alpha14 -> 0.2.0a14 (Setup-installerin tiedostonimi)
+          COMPACT=$(echo "$VERSION" | sed -E 's/-alpha([0-9]+)/a\1/; s/-beta([0-9]+)/b\1/; s/-rc([0-9]+)/rc\1/')
+          echo "tag=$TAG"           >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"   >> "$GITHUB_OUTPUT"
+          echo "compact=$COMPACT"   >> "$GITHUB_OUTPUT"
+          echo "::notice::Latest release: $TAG (compact: $COMPACT)"
+
+      - name: Update dxf2ifc.html if version differs
+        id: update
+        env:
+          NEW_VERSION: ${{ steps.latest.outputs.version }}
+          NEW_COMPACT: ${{ steps.latest.outputs.compact }}
+        run: |
+          python3 - <<'PY'
+          import os, re, sys, pathlib
+
+          new_version = os.environ['NEW_VERSION']     # esim. "0.2.0-alpha14"
+          new_compact = os.environ['NEW_COMPACT']     # esim. "0.2.0a14"
+
+          html_path = pathlib.Path('dxf2ifc.html')
+          content   = html_path.read_text(encoding='utf-8')
+
+          # Etsi nykyinen pinnattu version JSON-LD softwareVersion-kentasta —
+          # se on ainoa paikka jossa version on ilman lisapaatoksia.
+          m = re.search(r'"softwareVersion":\s*"([^"]+)"', content)
+          if not m:
+              print("::error::softwareVersion not found in dxf2ifc.html", file=sys.stderr)
+              sys.exit(1)
+
+          old_version = m.group(1)
+          if old_version == new_version:
+              print(f"::notice::Already at {new_version}, no update needed.")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+                  out.write("changed=false\n")
+              sys.exit(0)
+
+          # Konvertoi vanha version compact-muotoon samalla saannolla
+          old_compact = re.sub(r'-alpha(\d+)', r'a\1', old_version)
+          old_compact = re.sub(r'-beta(\d+)',  r'b\1', old_compact)
+          old_compact = re.sub(r'-rc(\d+)',    r'rc\1', old_compact)
+
+          # str.replace on kirjaimellinen — ei regex-special-merkki-yllatuksia
+          # (pisteet, viivat).
+          new_content = content.replace(old_version, new_version)
+          new_content = new_content.replace(old_compact, new_compact)
+
+          html_path.write_text(new_content, encoding='utf-8')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write("changed=true\n")
+              out.write(f"old={old_version}\n")
+              out.write(f"new={new_version}\n")
+          print(f"::notice::Bumped {old_version} -> {new_version}")
+          PY
+
+      - name: Commit + push
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dxf2ifc.html
+          git commit -m "chore(dxf2ifc): auto-bump pin v${{ steps.update.outputs.old }} -> v${{ steps.update.outputs.new }}"
+          git push
