@@ -327,7 +327,7 @@
 ;; mukana fallbackina (nil), mutta vaatii oikeat *vputki-rot-offset-*-arvot.
 ;; Suositus: T jos alignment ei toimi auto-tilassa.
 (if (not (boundp '*vputki-fitting-interactive*))
-    (setq *vputki-fitting-interactive* nil))
+    (setq *vputki-fitting-interactive* T))
 
 ;; Kulmaluokituksen toleranssit (asteita).
 (if (not (boundp '*vputki-tol-straight*)) (setq *vputki-tol-straight* 5.0))
