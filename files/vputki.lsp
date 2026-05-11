@@ -416,7 +416,11 @@
     (T
       (setq rot (+ rot-base offset))
       (setq sy (if (< turn-sign 0) -1 1))
-      (command "_.-INSERT" blockName p_corner 1 sy rot)
+      ;; sy=-1 -> AutoCAD prompttaa Z-scalen kun Y on ei-uniformi.
+      ;; Kaytetaan _XYZ-modea jotta Z=1 menee eksplisiittisesti.
+      (if (= sy 1)
+        (command "_.-INSERT" blockName p_corner 1 1 rot)
+        (command "_.-INSERT" blockName p_corner "_XYZ" 1 sy 1 rot))
       (setq ref (entlast))
       ref)))
 
