@@ -70,7 +70,21 @@
   )
 )
 
-(defun hoyr-find-block-file ( dwgName / cands self prefix found p picked )
+;; Splittaa Support Path -merkkijono (ACADPREFIX) puolipisteella.
+(defun hoyr-split-support-paths ( s / result start i ch )
+  (setq result '() start 0 i 0)
+  (while (< i (strlen s))
+    (setq ch (substr s (1+ i) 1))
+    (if (= ch ";")
+      (progn
+        (setq result (cons (substr s (1+ start) (- i start)) result))
+        (setq start (1+ i))))
+    (setq i (1+ i)))
+  (setq result (cons (substr s (1+ start)) result))
+  (reverse result))
+
+(defun hoyr-find-block-file ( dwgName / cands self prefix found p picked
+                                       acadprefix paths )
   (vl-load-com)
   (setq found (findfile dwgName))
   (if (and found (= (type found) 'STR))
@@ -78,42 +92,53 @@
     (progn
       (setq found nil)
       (setq cands '())
-      ;; Aiemmin muistettu kansio
+      ;; 1. Aiemmin muistettu kansio
       (if (and *hoyr-cached-folder*
                (= (type *hoyr-cached-folder*) 'STR))
         (setq cands (list (strcat *hoyr-cached-folder* "\\" dwgName))))
-      ;; Self-folder via APPLOAD-registry
+      ;; 2. AutoCAD Support Paths (ACADPREFIX = ";"-separated lista)
+      (setq acadprefix (getvar "ACADPREFIX"))
+      (if (and acadprefix (= (type acadprefix) 'STR))
+        (foreach p (hoyr-split-support-paths acadprefix)
+          (if (> (strlen p) 0)
+            (setq cands (append cands
+                                (list (strcat p "\\" dwgName)))))))
+      ;; 3. Self-folder via APPLOAD-registry
       (if (setq self (hoyr-self-folder))
         (if (= (type self) 'STR)
           (setq cands (append cands (list (strcat self "\\" dwgName))))))
-      ;; Yleiset asennuspaikat
+      ;; 4. Current DWG-kansio
       (setq prefix (getvar "DWGPREFIX"))
+      (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0))
+        (setq cands (append cands (list (strcat prefix dwgName)))))
+      ;; 5. Yleiset asennuspaikat
       (setq cands (append cands
         (list
           (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\" dwgName)
           (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\" dwgName)
           (strcat "C:\\AutoCADLisp\\" dwgName))))
-      (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0))
-        (setq cands (append cands (list (strcat prefix dwgName)))))
       ;; Etsi ensimmainen olemassaoleva
       (foreach p cands
         (if (and (not found)
                  (= (type p) 'STR)
                  (vl-file-systime p))
           (setq found p)))
-      ;; Jos ei loydy mistaan -> kysy kayttajalta file-dialogilla
+      ;; Jos ei loydy mistaan -> tulosta yrityspolut + kysy file-dialogilla
       (if (null found)
         (progn
-          (princ (strcat "\n" dwgName " ei loydy. Valitse kansio file-dialogilla."))
+          (princ (strcat "\n" dwgName " ei loytynyt seuraavista paikoista:"))
+          (foreach p cands
+            (if (= (type p) 'STR) (princ (strcat "\n  " p))))
+          (princ "\nValitse kansio file-dialogilla.")
           (setq picked (getfiled
                         (strcat "Etsi " dwgName)
                         dwgName "dwg" 0))
           (if (and picked (= (type picked) 'STR))
             (progn
               (setq found picked)
-              ;; Muista kansio jatkossa
               (setq *hoyr-cached-folder* (vl-filename-directory picked))
-              (princ (strcat "\nHoyrystin-kansio muistettu: " *hoyr-cached-folder*))))))
+              (princ (strcat "\nHoyrystin-kansio muistettu: "
+                             *hoyr-cached-folder*))))))
       found)
   )
 )
