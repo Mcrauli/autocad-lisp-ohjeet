@@ -44,37 +44,50 @@
 )
 
 ;; ============================================================
+;; LSP-KANSION KAAPPAUS LOAD-AIKAAN
+;; ============================================================
+;;
+;; DWG:t ovat ZIP:ssa samassa kansiossa kuin LSP. Etsitaan LSP:n
+;; oma kansio findfilella, ja jos APPLOAD ei ole lisannyt sita Support
+;; Path:lle, lue viimeisin APPLOAD-kansio rekisterista.
+
+(if (not (boundp '*vputki-cached-folder*))
+    (setq *vputki-cached-folder* nil))
+
+(defun vputki-find-lsp-folder ( / regbase ver prod prof appkey val found ff )
+  (setq found nil)
+  (setq ff (findfile "vputki.lsp"))
+  (if (and ff (= (type ff) 'STR))
+    (setq found (vl-filename-directory ff))
+    (progn
+      (setq regbase "HKEY_CURRENT_USER\\SOFTWARE\\Autodesk\\AutoCAD")
+      (foreach ver (vl-registry-descendents regbase)
+        (foreach prod (vl-registry-descendents (strcat regbase "\\" ver))
+          (foreach prof (vl-registry-descendents
+                          (strcat regbase "\\" ver "\\" prod "\\Profiles"))
+            (setq appkey (strcat regbase "\\" ver "\\" prod
+                                 "\\Profiles\\" prof "\\Dialogs\\Appload"))
+            (setq val (vl-registry-read appkey "MainDialog"))
+            (if (and (null found) val (= (type val) 'STR)
+                     (vl-file-systime (strcat val "\\vputki.lsp")))
+              (setq found val)))))))
+  found)
+
+(setq *vputki-lsp-folder* (vputki-find-lsp-folder))
+
+;; ============================================================
 ;; BLOCK-DWG LOCATOR
 ;; ============================================================
+;;
+;; Hakujarjestys:
+;;   1. AutoCAD Support Path (findfile)
+;;   2. Aiemmin file-dialogilla valittu kansio (cached)
+;;   3. LSP:n oma kansio (load-time captured)
+;;   4. Current DWG-kansio (DWGPREFIX)
+;;   5. %USERPROFILE%\suunnittelutyokalut\ (yleinen ZIP-purkupaikka)
+;; Fallback: file-dialog, jonka valinta muistetaan istunnon ajaksi.
 
-(defun vputki-self-folder ( / found regbase target ver prod prof appkey val )
-  (vl-load-com)
-  (setq target "vputki.lsp")
-  (cond
-    ((setq found (findfile target))
-     (vl-filename-directory found))
-    (T
-     (setq found nil)
-     (setq regbase "HKEY_CURRENT_USER\\SOFTWARE\\Autodesk\\AutoCAD")
-     (foreach ver (vl-registry-descendents regbase)
-       (foreach prod (vl-registry-descendents (strcat regbase "\\" ver))
-         (foreach prof (vl-registry-descendents
-                         (strcat regbase "\\" ver "\\" prod "\\Profiles"))
-           (setq appkey (strcat regbase "\\" ver "\\" prod
-                                "\\Profiles\\" prof "\\Dialogs\\Appload"))
-           (if (and (not found)
-                    (setq val (vl-registry-read appkey "MainDialog"))
-                    (= (type val) 'STR)
-                    (findfile (strcat val "\\" target)))
-             (setq found val))
-         )
-       )
-     )
-     found)
-  )
-)
-
-(defun vputki-find-block-file ( dwgName / cands self prefix found p )
+(defun vputki-find-block-file ( dwgName / cands prefix found p picked )
   (vl-load-com)
   (setq found (findfile dwgName))
   (if (and found (= (type found) 'STR))
@@ -82,22 +95,29 @@
     (progn
       (setq found nil)
       (setq cands '())
-      (if (setq self (vputki-self-folder))
-        (if (= (type self) 'STR)
-          (setq cands (list (strcat self "\\" dwgName)))))
+      (if (and *vputki-cached-folder* (= (type *vputki-cached-folder*) 'STR))
+        (setq cands (list (strcat *vputki-cached-folder* "\\" dwgName))))
+      (if (and *vputki-lsp-folder* (= (type *vputki-lsp-folder*) 'STR))
+        (setq cands (append cands
+                            (list (strcat *vputki-lsp-folder* "\\" dwgName)))))
       (setq prefix (getvar "DWGPREFIX"))
-      (setq cands (append cands
-        (list
-          (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\" dwgName)
-          (strcat (getenv "USERPROFILE") "\\AutoCADLisp\\" dwgName)
-          (strcat "C:\\AutoCADLisp\\" dwgName))))
       (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0))
         (setq cands (append cands (list (strcat prefix dwgName)))))
+      (setq cands (append cands
+        (list (strcat (getenv "USERPROFILE")
+                      "\\suunnittelutyokalut\\" dwgName))))
       (foreach p cands
-        (if (and (not found)
-                 (= (type p) 'STR)
-                 (vl-file-systime p))
+        (if (and (not found) (= (type p) 'STR) (vl-file-systime p))
           (setq found p)))
+      (if (null found)
+        (progn
+          (princ (strcat "\n" dwgName " ei loytynyt — valitse kansio file-dialogilla."))
+          (setq picked (getfiled (strcat "Etsi " dwgName) dwgName "dwg" 0))
+          (if (and picked (= (type picked) 'STR))
+            (progn
+              (setq found picked)
+              (setq *vputki-cached-folder* (vl-filename-directory picked))
+              (princ "\nKansio muistettu istunnon ajaksi.")))))
       found)
   )
 )
