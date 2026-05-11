@@ -316,6 +316,13 @@
 (if (not (boundp '*vputki-allow-fitting-mirror*))
     (setq *vputki-allow-fitting-mirror* T))
 
+;; Interaktiivinen fitting-insert: kayttaja pyorittaa fittingin paikoilleen
+;; AutoCADin live-preview:lla, INSERT pause hoitaa rotaation. Auto-rotaatio
+;; mukana fallbackina (nil), mutta vaatii oikeat *vputki-rot-offset-*-arvot.
+;; Suositus: T jos alignment ei toimi auto-tilassa.
+(if (not (boundp '*vputki-fitting-interactive*))
+    (setq *vputki-fitting-interactive* T))
+
 ;; Kulmaluokituksen toleranssit (asteita).
 (if (not (boundp '*vputki-tol-straight*)) (setq *vputki-tol-straight* 5.0))
 (if (not (boundp '*vputki-tol-45*))       (setq *vputki-tol-45*       8.0))
@@ -412,6 +419,13 @@
     ((null blockName)
       (princ "\nVIRHE: tuntematon fitting-tyyppi.")
       nil)
+    (*vputki-fitting-interactive*
+      ;; Interaktiivinen: pause rotaatiolle, kayttaja pyorittaa visuaalisesti.
+      ;; ENDPOINT/NEAREST-snap auttaa kohdistamaan porttiin.
+      (princ "\nPyorita fitting paikoilleen ja paina Enter (snap auttaa).")
+      (command "_.-INSERT" blockName p_corner 1 1 pause)
+      (setq ref (entlast))
+      ref)
     ((and (< turn-sign 0) (not *vputki-allow-fitting-mirror*))
       (princ "\nVAROITUS: CW-kaannos vaatii peilauksen, *vputki-allow-fitting-mirror* on nil -- ohitetaan fitting.")
       nil)
@@ -439,7 +453,11 @@
   (setq rot-main (- (vputki-angle-deg p_t p_branch) 90.0))
   (setq rot (+ rot-main *vputki-rot-offset-t*))
   (setq sy 1)
-  (command "_.-INSERT" blockName p_t 1 sy rot)
+  (if *vputki-fitting-interactive*
+    (progn
+      (princ "\nPyorita T-fitting paikoilleen ja paina Enter.")
+      (command "_.-INSERT" blockName p_t 1 1 pause))
+    (command "_.-INSERT" blockName p_t 1 sy rot))
   (setq ref (entlast))
   (setq pipe (vputki-cont-insert-straight D layerName p_t p_branch))
   (list ref pipe))
