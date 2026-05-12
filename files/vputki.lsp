@@ -320,8 +320,8 @@
 ;; Position offset: missa fittingin INPUT-portti on default-orientaatiossa
 ;; suhteessa block-originiin (basepointiin). Jos basepoint on tarkalleen
 ;; input-portissa, jata (0.0 0.0). VP-MEASURE-komento laskee oikeat arvot.
-(if (not (boundp '*vputki-pos-offset-45*))  (setq *vputki-pos-offset-45*  '(0.0 0.0)))
-(if (not (boundp '*vputki-pos-offset-885*)) (setq *vputki-pos-offset-885* '(0.0 0.0)))
+(if (not (boundp '*vputki-pos-offset-45*))  (setq *vputki-pos-offset-45*  '(0.0 78.7)))
+(if (not (boundp '*vputki-pos-offset-885*)) (setq *vputki-pos-offset-885* '(0.0 106.5)))
 
 ;; Output port -position default-orientaatiossa (mitattu VP-MEASURE:lla
 ;; size 50:lle). Port-aware trim: seuraava putki alkaa fittingin output-
@@ -560,9 +560,12 @@
       (cond
         ((eq cls 'straight) nil)
         ((or (eq cls '45) (eq cls '885))
-          ;; Overlap-mode: ei port-paivitysta
           (setq result (vputki-cont-insert-corner D cls p_prev p_prev_dir sign))
-          (if result (setq frame-ents (cons result frame-ents))))
+          (if result
+            (progn
+              (setq frame-ents (cons result frame-ents))
+              (if *vputki-last-output-pos*
+                (setq p_prev *vputki-last-output-pos*)))))
         ((eq cls 'unknown)
           (princ (strcat "
 VAROITUS: " (rtos turn 2 1)
@@ -629,34 +632,36 @@ VAROITUS: " (rtos turn 2 1)
           (T '(0.0 0.0))))
   (setq top-drop    (abs (car  drop-output-pos)))
   (setq bottom-drop (abs (cadr drop-output-pos)))
-  ;; --- TOP elbow (overlap-mode Z-dropissa: pipet linjattuna corner:in lapi) ---
+  ;; --- TOP elbow (port-aware: pipe lahtee output-portista) ---
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" p_prev_dir)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq p_local (trans p_prev 0 1))
   (setq top-elbow (vputki-cont-insert-corner D kind p_local 0.0 -1))
   (if top-elbow (setq refs (cons top-elbow refs)))
-  ;; Vertikaalinen putki lahtee CORNER-pisteesta (overlap fitting-rungon kanssa)
-  (setq pipe-len (abs dz))
-  (command "_.-INSERT" blockName p_local 1 1 -90.0)
+  (setq top-output-ucs *vputki-last-output-pos*)
+  ;; pipe_len = abs(dz) - top-drop - bottom-drop
+  (setq pipe-len (- (abs dz) top-drop bottom-drop))
+  (if (< pipe-len 1.0) (setq pipe-len 1.0))
+  (command "_.-INSERT" blockName top-output-ucs 1 1 -90.0)
   (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
   (setq refs (cons (entlast) refs))
   (setq pipe-bottom-ucs
-    (list (car p_local)
-          (- (cadr p_local) pipe-len)
-          (if (caddr p_local) (caddr p_local) 0.0)))
+    (list (car top-output-ucs)
+          (- (cadr top-output-ucs) pipe-len)
+          (if (caddr top-output-ucs) (caddr top-output-ucs) 0.0)))
   (setq pipe-bottom-world (trans pipe-bottom-ucs 1 0))
-  ;; --- BOTTOM elbow (overlap-mode) ---
+  ;; --- BOTTOM elbow (port-aware) ---
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" next-dir)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq pipe-bottom-ucs2 (trans pipe-bottom-world 0 1))
   (setq bottom-elbow (vputki-cont-insert-corner D kind pipe-bottom-ucs2 -90.0 1))
   (if bottom-elbow (setq refs (cons bottom-elbow refs)))
+  (setq bottom-output-ucs *vputki-last-output-pos*)
+  (setq bottom-output-world (trans bottom-output-ucs 1 0))
   (command "_.UCS" "_W")
-  ;; Overlap-mode: bottom horiz pipe lahtee pipe-bottom-world:sta (= corner alapuolelta).
-  ;; Bottom elbow body on overlapissa pipe-paadyn kanssa, mutta pipe-keskilinjat linjaavat.
-  (list (reverse refs) pipe-bottom-world next-dir))
+  (list (reverse refs) bottom-output-world next-dir))
 
 ;; ----- Paakomento c:VP ----------------------------------------------
 
@@ -668,7 +673,9 @@ VAROITUS: " (rtos turn 2 1)
                 target-dir len-default len-input
                 forced-fitting dz-default dz-input
                 z-next-str z-next-dir z-kind-str z-kind-sym
-                corner-pt forced-len forced-rad )
+                corner-pt forced-len forced-rad
+                start-kind-str start-kind-sym start-next-str start-next-dir
+                start-p-local start-elbow )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -708,6 +715,34 @@ VAROITUS: " (rtos turn 2 1)
   (setq undo-stack '())
   (setq forced-fitting nil)
   (setq done nil)
+  ;; --- Aloita fittingilla? (esim. hoyrystimelta 90-elbow) ---
+  (initget "9 4 E")
+  (setq start-kind-str
+    (getkword "\nAloita fittingilla [9/4/E] <E>: "))
+  (if (null start-kind-str) (setq start-kind-str "E"))
+  (if (or (= start-kind-str "9") (= start-kind-str "4"))
+    (progn
+      (setq start-kind-sym (if (= start-kind-str "4") '45 '885))
+      (initget "V O Y A")
+      (setq start-next-str
+        (getkword "\nMihin suuntaan jatkuu [V/O/Y/A] <O>: "))
+      (if (null start-next-str) (setq start-next-str "O"))
+      (setq start-next-dir (vputki-cont-cardinal-dir start-next-str))
+      ;; Insert elbow at p_prev with input UP (+Z), output next-dir
+      (command "_.UCS" "_W")
+      (command "_.UCS" "_Z" start-next-dir)
+      (command "_.UCS" "_X" 90.0)
+      (setq start-p-local (trans p_prev 0 1))
+      (setq start-elbow
+        (vputki-cont-insert-corner D start-kind-sym start-p-local -90.0 1))
+      (command "_.UCS" "_W")
+      (if start-elbow
+        (progn
+          (setq undo-stack
+            (cons (list 'STARTELBOW (list start-elbow) p_prev nil) undo-stack))
+          (if *vputki-last-output-pos*
+            (setq p_prev (trans *vputki-last-output-pos* 1 0)))
+          (setq p_prev_dir start-next-dir)))))
 
   ;; Continuous-loop
   (while (not done)
@@ -780,7 +815,7 @@ VAROITUS: " (rtos turn 2 1)
           (T
             (initget "9 4")
             (setq z-kind-str
-              (getkword "\nMutkatyyppi [9=88.5/4=45] <9>: "))
+              (getkword "\nMutkatyyppi 88.5 vai 45 [9/4] <9>: "))
             (if (null z-kind-str) (setq z-kind-str "9"))
             (setq z-kind-sym
               (if (= z-kind-str "4") '45 '885))
@@ -831,16 +866,19 @@ Pituus <" (rtos len-default 2 0) ">: ")))
             (cond
               ((eq cls 'straight) nil)
               ((or (eq cls '45) (eq cls '885))
-                ;; Overlap-mode: pipe-keskilinjat linjattuna corner:in lapi
+                ;; Port-aware: pipe lahtee fittingin output-portista,
+                ;; ja suunta lukitaan output-axis:iin.
+                (setq corner-pt p_prev)
                 (setq result (vputki-cont-insert-corner
                                D cls p_prev p_prev_dir sign))
                 (if result
                   (progn
                     (setq frame-ents (cons result frame-ents))
-                    ;; Force pipen suunta output-axis:iin, lahto corner:ista (= p_prev)
+                    (if *vputki-last-output-pos*
+                      (setq p_prev *vputki-last-output-pos*))
                     (if *vputki-last-output-axis*
                       (progn
-                        (setq forced-len (vputki-dist-2d p_prev p_cur))
+                        (setq forced-len (vputki-dist-2d corner-pt p_cur))
                         (setq forced-rad
                           (vputki-deg->rad *vputki-last-output-axis*))
                         (setq p_cur
