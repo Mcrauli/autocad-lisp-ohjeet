@@ -569,37 +569,53 @@ VAROITUS: " (rtos turn 2 1)
 ;; UCS-rotaatio +/-Y-akselin ympari muuttaa local +X = world +/-Z.
 ;; Inserttoi sitten suora-block standalone-tilassa ja palauttaa UCS:n.
 
-(defun vputki-cont-insert-vertical ( D layerName p_prev p_prev_dir dz /
+(defun vputki-cont-insert-vertical ( D layerName p_prev p_prev_dir dz kind /
                                        blockName fitting-block p_local
-                                       fitting-ref pipe-ref refs )
+                                       fitting-ref pipe-ref refs
+                                       pipe-rot pipe-len rot-off )
   (if (or (null dz) (< (abs dz) 1.0))
     (progn (princ "\nVAROITUS: Z-muutos liian pieni.") nil)
     (progn
       (setq blockName (strcat "VPUTKI-" (itoa D)))
-      (setq fitting-block (strcat "VPUTKI-" (itoa D) "-885"))
       (setvar "CLAYER" layerName)
       (command "_.UCS" "_W")
       (setq refs '())
       (cond
-        ;; --- Horisontaalinen pipe edelta -> insertoi 88.5-elbow siirtymaan ---
-        (p_prev_dir
-          ;; UCS: X = p_prev_dir suunta, Y = world +/-Z (riippuen dz-merkista)
+        ;; --- Horisontaalinen pipe + 88.5-elbow (vertical) ---
+        ((and p_prev_dir (eq kind '885))
+          (setq fitting-block (strcat "VPUTKI-" (itoa D) "-885"))
+          (setq rot-off *vputki-rot-offset-885*)
+          (setq pipe-rot -90.0)
+          (setq pipe-len (abs dz))
           (command "_.UCS" "_Z" p_prev_dir)
           (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
           (setq p_local (trans p_prev 0 1))
-          ;; UCS:ssa: pipe tulee +X-suunnasta, taipuu -Y-suuntaan (= world +/-Z)
-          ;; Native CW match (turn = -90, native = -1, sy = 1), rot = 0 + rot-offset = -90
-          (command "_.-INSERT" fitting-block p_local 1 1
-                   (+ 0.0 *vputki-rot-offset-885*))
+          (command "_.-INSERT" fitting-block p_local 1 1 (+ 0.0 rot-off))
           (setq fitting-ref (entlast))
           (if fitting-ref (setq refs (cons fitting-ref refs)))
-          ;; Vertical pipe samassa UCS:ssa, lahtee samasta pisteesta -Y-suuntaan
-          ;; Suora-block default +X-suuntaan -> rot=-90 makaa UCS -Y
-          (command "_.-INSERT" blockName p_local 1 1 -90.0)
+          (command "_.-INSERT" blockName p_local 1 1 pipe-rot)
           (setq pipe-ref (entlast))
-          (vputki-set-dyn-prop pipe-ref "Pituus" (abs dz))
+          (vputki-set-dyn-prop pipe-ref "Pituus" pipe-len)
           (if pipe-ref (setq refs (cons pipe-ref refs))))
-        ;; --- Ei edellista suuntaa -> pelkka pystyputki ---
+        ;; --- Horisontaalinen pipe + 45-elbow (sloped down at 45°) ---
+        ((and p_prev_dir (eq kind '45))
+          (setq fitting-block (strcat "VPUTKI-" (itoa D) "-45"))
+          (setq rot-off *vputki-rot-offset-45*)
+          ;; Output axis 42.8° default -> rot -90° = -47.2° UCS-suuntaan
+          (setq pipe-rot -47.2)
+          ;; Pituus = dz / sin(47.2°) jotta saadaan vertikaalinen pudotus = abs(dz)
+          (setq pipe-len (/ (abs dz) (sin (vputki-deg->rad 47.2))))
+          (command "_.UCS" "_Z" p_prev_dir)
+          (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
+          (setq p_local (trans p_prev 0 1))
+          (command "_.-INSERT" fitting-block p_local 1 1 (+ 0.0 rot-off))
+          (setq fitting-ref (entlast))
+          (if fitting-ref (setq refs (cons fitting-ref refs)))
+          (command "_.-INSERT" blockName p_local 1 1 pipe-rot)
+          (setq pipe-ref (entlast))
+          (vputki-set-dyn-prop pipe-ref "Pituus" pipe-len)
+          (if pipe-ref (setq refs (cons pipe-ref refs))))
+        ;; --- Ei elbowta (kind nil, none, tai ei p_prev_dir:ia) ---
         (T
           (command "_.UCS" "_Y" (if (> dz 0) -90.0 90.0))
           (setq p_local (trans p_prev 0 1))
@@ -618,7 +634,8 @@ VAROITUS: " (rtos turn 2 1)
                 turn cls sign frame-ents
                 tp tb result
                 target-dir len-default len-input
-                forced-fitting dz-default dz-input )
+                forced-fitting dz-default dz-input
+                z-kind-str z-kind-sym )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -710,6 +727,14 @@ VAROITUS: " (rtos turn 2 1)
 
       ;; --- Keyword Z -> pystyputki Z-suuntaan ---
       ((and (= (type p_cur) 'STR) (= p_cur "Z"))
+        (initget "9 4 S")
+        (setq z-kind-str
+          (getkword "\nMutkatyyppi [9=88.5/4=45/S=ei mutkaa] <9>: "))
+        (if (null z-kind-str) (setq z-kind-str "9"))
+        (setq z-kind-sym
+          (cond ((= z-kind-str "9") '885)
+                ((= z-kind-str "4") '45)
+                ((= z-kind-str "S") 'none)))
         (setq dz-default
           (if (boundp '*vputki-last-dz*) *vputki-last-dz* -500.0))
         (setq dz-input
@@ -718,7 +743,8 @@ VAROITUS: " (rtos turn 2 1)
         (if (null dz-input) (setq dz-input dz-default))
         (setq *vputki-last-dz* dz-input)
         (setq result
-          (vputki-cont-insert-vertical D layerName p_prev p_prev_dir dz-input))
+          (vputki-cont-insert-vertical D layerName p_prev p_prev_dir
+                                        dz-input z-kind-sym))
         (if result
           (progn
             (setq undo-stack
