@@ -418,6 +418,10 @@
       (command "_.-INSERT" blockName p1 1 1 ang)
       (setq ref (entlast))
       (vputki-set-dyn-prop ref "Pituus" len)
+      ;; Talleta trimausta varten: viimeisin pipe + sen start-piste
+      (setq *vputki-last-pipe-ref* ref)
+      (setq *vputki-last-pipe-start* p1)
+      (setq *vputki-last-pipe-ang* ang)
       ref)))
 
 ;; ----- Kulmafitting kulmapisteeseen p_corner ------------------------
@@ -492,6 +496,8 @@
                       (* (cadr out-pos) (sin rot-rad) sy)))
       (setq out-dy (+ (* (car out-pos) (sin rot-rad))
                       (* (cadr out-pos) (cos rot-rad) sy)))
+      ;; Input port world = adj-p (basepoint, joka on fitting-frame:n input port)
+      (setq *vputki-last-input-port* adj-p)
       (setq *vputki-last-output-pos*
         (list (+ (car adj-p) out-dx)
               (+ (cadr adj-p) out-dy)
@@ -673,9 +679,10 @@ VAROITUS: " (rtos turn 2 1)
                 target-dir len-default len-input
                 forced-fitting dz-default dz-input
                 z-next-str z-next-dir z-kind-str z-kind-sym
-                corner-pt forced-len forced-rad
+                corner-pt forced-len forced-rad trim-len
                 start-kind-str start-kind-sym start-next-str start-next-dir
-                start-p-local start-elbow )
+                start-p-local start-elbow
+                saved-pos-off-45 saved-pos-off-885 )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -729,6 +736,12 @@ VAROITUS: " (rtos turn 2 1)
       (if (null start-next-str) (setq start-next-str "O"))
       (setq start-next-dir (vputki-cont-cardinal-dir start-next-str))
       ;; Insert elbow at p_prev with input UP (+Z), output next-dir
+      (setvar "CLAYER" layerName)  ;; varmista oikea layer
+      ;; Tilapaisesti pos_offset = (0,0) jotta input-portti landaa start-pisteessa
+      (setq saved-pos-off-45  *vputki-pos-offset-45*)
+      (setq saved-pos-off-885 *vputki-pos-offset-885*)
+      (setq *vputki-pos-offset-45*  '(0.0 0.0))
+      (setq *vputki-pos-offset-885* '(0.0 0.0))
       (command "_.UCS" "_W")
       (command "_.UCS" "_Z" start-next-dir)
       (command "_.UCS" "_X" 90.0)
@@ -736,6 +749,9 @@ VAROITUS: " (rtos turn 2 1)
       (setq start-elbow
         (vputki-cont-insert-corner D start-kind-sym start-p-local -90.0 1))
       (command "_.UCS" "_W")
+      ;; Palauta pos_offset
+      (setq *vputki-pos-offset-45*  saved-pos-off-45)
+      (setq *vputki-pos-offset-885* saved-pos-off-885)
       (if start-elbow
         (progn
           (setq undo-stack
@@ -867,13 +883,22 @@ Pituus <" (rtos len-default 2 0) ">: ")))
               ((eq cls 'straight) nil)
               ((or (eq cls '45) (eq cls '885))
                 ;; Port-aware: pipe lahtee fittingin output-portista,
-                ;; ja suunta lukitaan output-axis:iin.
+                ;; suunta lukitaan output-axis:iin.
                 (setq corner-pt p_prev)
                 (setq result (vputki-cont-insert-corner
                                D cls p_prev p_prev_dir sign))
                 (if result
                   (progn
                     (setq frame-ents (cons result frame-ents))
+                    ;; TRIM edellinen pipe: pipen loppupiste = fittingin input-portti
+                    (if (and *vputki-last-pipe-ref* *vputki-last-pipe-start*
+                             *vputki-last-input-port*)
+                      (progn
+                        (setq trim-len
+                          (vputki-dist-2d *vputki-last-pipe-start*
+                                          *vputki-last-input-port*))
+                        (if (> trim-len 1.0)
+                          (vputki-set-dyn-prop *vputki-last-pipe-ref* "Pituus" trim-len))))
                     (if *vputki-last-output-pos*
                       (setq p_prev *vputki-last-output-pos*))
                     (if *vputki-last-output-axis*
