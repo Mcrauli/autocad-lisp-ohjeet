@@ -317,6 +317,12 @@
 (if (not (boundp '*vputki-native-turn-45*))  (setq *vputki-native-turn-45*  -1))
 (if (not (boundp '*vputki-native-turn-885*)) (setq *vputki-native-turn-885* -1))
 
+;; Position offset: missa fittingin INPUT-portti on default-orientaatiossa
+;; suhteessa block-originiin (basepointiin). Jos basepoint on tarkalleen
+;; input-portissa, jata (0.0 0.0). VP-MEASURE-komento laskee oikeat arvot.
+(if (not (boundp '*vputki-pos-offset-45*))  (setq *vputki-pos-offset-45*  '(0.0 0.0)))
+(if (not (boundp '*vputki-pos-offset-885*)) (setq *vputki-pos-offset-885* '(0.0 0.0)))
+
 ;; Salli fittingin Y-peilaus (sy=-1) kun kaannos on CW. Jos nil, CW-
 ;; kaannos jaa suoraksi varoituksen kera.
 (if (not (boundp '*vputki-allow-fitting-mirror*))
@@ -412,7 +418,8 @@
 ;; turn-sign = +1 (CCW) tai -1 (CW)
 
 (defun vputki-cont-insert-corner (D kind p_corner rot-base turn-sign /
-                                   blockName offset rot sy ref native-sign)
+                                   blockName offset rot sy ref native-sign
+                                   pos-off rot-rad off-dx off-dy adj-p)
   (setq offset
     (cond ((eq kind '45)  *vputki-rot-offset-45*)
           ((eq kind '885) *vputki-rot-offset-885*)
@@ -443,11 +450,25 @@
               ((eq kind '885) *vputki-native-turn-885*)
               (T -1)))
       (setq sy (if (= turn-sign native-sign) 1 -1))
-      ;; sy=-1 -> AutoCAD prompttaa Z-scalen kun Y on ei-uniformi.
-      ;; Kaytetaan _XYZ-modea jotta Z=1 menee eksplisiittisesti.
+      ;; Position-offset: jos basepoint ei ole tarkalleen input-portissa,
+      ;; siirra insert-piste niin etta portti paatyy p_corner:iin.
+      (setq pos-off
+        (cond ((eq kind '45)  *vputki-pos-offset-45*)
+              ((eq kind '885) *vputki-pos-offset-885*)
+              (T '(0.0 0.0))))
+      (setq rot-rad (vputki-deg->rad rot))
+      (setq off-dx (- (* (car pos-off) (cos rot-rad))
+                      (* (cadr pos-off) (sin rot-rad) sy)))
+      (setq off-dy (+ (* (car pos-off) (sin rot-rad))
+                      (* (cadr pos-off) (cos rot-rad) sy)))
+      (setq adj-p
+        (list (- (car p_corner) off-dx)
+              (- (cadr p_corner) off-dy)
+              (if (caddr p_corner) (caddr p_corner) 0.0)))
+      ;; sy=-1 -> _XYZ-syntaksi etta Z=1 menee eksplisiittisesti.
       (if (= sy 1)
-        (command "_.-INSERT" blockName p_corner 1 1 rot)
-        (command "_.-INSERT" blockName p_corner "_XYZ" 1 sy 1 rot))
+        (command "_.-INSERT" blockName adj-p 1 1 rot)
+        (command "_.-INSERT" blockName adj-p "_XYZ" 1 sy 1 rot))
       (setq ref (entlast))
       ref)))
 
@@ -716,5 +737,62 @@ Pituus <" (rtos len-default 2 0) ">: ")))
   (princ (strcat "\nVP valmis: " (itoa (length undo-stack)) " lisaysta."))
   (princ))
 
-(princ "\nVPUTKI ladattu. Komennot: VP (continuous), VP32, VP50, VP75, VPUTKI.")
+;; ============================================================
+;; VP-MEASURE-FITTING : kalibroi fitting basepointin/orientaation
+;; ============================================================
+;;
+;; Insertoi fittingin (0,0,0) rotaatiolla 0, kysyy mihin klikkaat
+;; INPUT/OUTPUT-portit, ja kertoo mitä setq-arvoja vputki.lsp:n
+;; "Saadettavat asetukset" -lohkoon pitää lisätä.
+
+(defun c:VP-MEASURE-FITTING ( / kind-str size-str sfx sfx2 blockname dwgname
+                              ip op ix iy ox oy
+                              input-axis output-axis rot-offset
+                              native-turn native-sign kind-sym )
+  (initget "45 885")
+  (setq kind-str (getkword "\nKalibroitava [45/885] <885>: "))
+  (if (null kind-str) (setq kind-str "885"))
+  (initget "32 50 75")
+  (setq size-str (getkword "\nKoko [32/50/75] <50>: "))
+  (if (null size-str) (setq size-str "50"))
+  (setq sfx  (if (= kind-str "45") "-45" "-885"))
+  (setq sfx2 sfx)
+  (setq blockname (strcat "VPUTKI-" size-str sfx))
+  (setq dwgname   (strcat "vputki-" size-str sfx2 ".dwg"))
+  (if (not (vputki-ensure-block blockname dwgname))
+    (progn (princ "\nVIRHE: blokin lataus epaonnistui.") (exit)))
+  (setvar "CMDECHO" 0)
+  (princ (strcat "\nInsertoidaan " blockname " (0,0,0) rotaatiolla 0..."))
+  (command "_.-INSERT" blockname '(0 0 0) 1 1 0)
+  (princ "\nKlikkaa INPUT-portin keskipiste (CENTER-snap auttaa):")
+  (setq ip (getpoint))
+  (if (null ip) (progn (princ "\nKeskeytetty.") (exit)))
+  (princ "\nKlikkaa OUTPUT-portin keskipiste:")
+  (setq op (getpoint))
+  (if (null op) (progn (princ "\nKeskeytetty.") (exit)))
+  (setq ix (car ip)) (setq iy (cadr ip))
+  (setq ox (car op)) (setq oy (cadr op))
+  ;; Input axis = direction origin -> input port (= miten input portti osoittaa default-orientaatiossa)
+  (setq input-axis  (vputki-norm-deg (vputki-rad->deg (atan iy ix))))
+  (setq output-axis (vputki-norm-deg (vputki-rad->deg (atan oy ox))))
+  ;; rot-offset: lisataan rot:iin jotta input-portti osoittaa 180 (west) kun rot=0
+  (setq rot-offset (vputki-norm-deg (- 180.0 input-axis)))
+  ;; native-turn = output-axis - input-axis - 180  (normalisoitu)
+  (setq native-turn (vputki-norm-deg (- output-axis input-axis 180.0)))
+  (setq native-sign (if (< native-turn 0) -1 1))
+  (setq kind-sym (if (= kind-str "45") "45" "885"))
+  (princ "\n\n=== MITTAUSTULOKSET ===")
+  (princ (strcat "\nBlock: " blockname))
+  (princ (strcat "\nInput  port: (" (rtos ix 2 2) " " (rtos iy 2 2) ") -> axis " (rtos input-axis 2 1) "°"))
+  (princ (strcat "\nOutput port: (" (rtos ox 2 2) " " (rtos oy 2 2) ") -> axis " (rtos output-axis 2 1) "°"))
+  (princ (strcat "\nNative turn: " (rtos native-turn 2 1) "° (" (if (< native-turn 0) "CW" "CCW") ")"))
+  (princ "\n\n=== Kopioi nama vputki.lsp:n alkuun (saadettavat asetukset) ===")
+  (princ (strcat "\n(setq *vputki-rot-offset-" kind-sym "*  " (rtos rot-offset 2 2) ")"))
+  (princ (strcat "\n(setq *vputki-pos-offset-" kind-sym "* '(" (rtos ix 2 2) " " (rtos iy 2 2) "))"))
+  (princ (strcat "\n(setq *vputki-native-turn-" kind-sym "* " (itoa native-sign) ")"))
+  (princ "\n\nVoit ERASE:lla poistaa testifittingin ja kytkea auto-tilan:")
+  (princ "\n  (setq *vputki-fitting-interactive* nil)")
+  (princ))
+
+(princ "\nVPUTKI ladattu. Komennot: VP, VP32/50/75, VPUTKI, VP-MEASURE-FITTING.")
 (princ)
