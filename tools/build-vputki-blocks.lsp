@@ -29,7 +29,7 @@
 (vl-load-com)
 
 (setq *VPUTKI-WALL* 1.8)         ; mm, seinämäpaksuus
-(setq *VPUTKI-NUMSEGS* 32)       ; axial divisions (32 = sileän pyöreä)
+(setq *VPUTKI-NUMSEGS* 16)       ; axial divisions (16 = vertex 90 = top easy to snap)
 
 ;; ============================================================
 ;; 3DFACE-builder: 4 × NUMSEGS face per putki
