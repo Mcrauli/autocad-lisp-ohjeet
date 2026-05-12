@@ -418,9 +418,9 @@
       (command "_.-INSERT" blockName p1 1 1 ang)
       (setq ref (entlast))
       (vputki-set-dyn-prop ref "Pituus" len)
-      ;; Talleta trimausta varten: viimeisin pipe + sen start-piste
+      ;; Talleta trimausta varten: viimeisin pipe + sen start-piste WORLD-koordinaateissa
       (setq *vputki-last-pipe-ref* ref)
-      (setq *vputki-last-pipe-start* p1)
+      (setq *vputki-last-pipe-start* (trans p1 1 0))
       (setq *vputki-last-pipe-ang* ang)
       ref)))
 
@@ -496,8 +496,8 @@
                       (* (cadr out-pos) (sin rot-rad) sy)))
       (setq out-dy (+ (* (car out-pos) (sin rot-rad))
                       (* (cadr out-pos) (cos rot-rad) sy)))
-      ;; Input port world = adj-p (basepoint, joka on fitting-frame:n input port)
-      (setq *vputki-last-input-port* adj-p)
+      ;; Input port world = adj-p (basepoint) konvertoituna WORLD-koordinaatteihin
+      (setq *vputki-last-input-port* (trans adj-p 1 0))
       (setq *vputki-last-output-pos*
         (list (+ (car adj-p) out-dx)
               (+ (cadr adj-p) out-dy)
@@ -623,7 +623,7 @@ VAROITUS: " (rtos turn 2 1)
                               pipe-len pipe-bottom-ucs pipe-bottom-world
                               pipe-bottom-ucs2 bottom-elbow bottom-output-ucs
                               bottom-output-world drop-output-pos
-                              top-drop bottom-drop blockName )
+                              top-drop bottom-drop blockName trim-len )
   (setvar "CLAYER" layerName)
   (setq blockName (strcat "VPUTKI-" (itoa D)))
   (setq refs '())
@@ -644,7 +644,17 @@ VAROITUS: " (rtos turn 2 1)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq p_local (trans p_prev 0 1))
   (setq top-elbow (vputki-cont-insert-corner D kind p_local 0.0 -1))
-  (if top-elbow (setq refs (cons top-elbow refs)))
+  (if top-elbow
+    (progn
+      (setq refs (cons top-elbow refs))
+      ;; TRIM aiempi pipe niin etta paatyy top-elbown input-porttiin
+      (if (and *vputki-last-pipe-ref* *vputki-last-pipe-start*
+               *vputki-last-input-port*)
+        (progn
+          (setq trim-len
+            (vputki-dist-2d *vputki-last-pipe-start* *vputki-last-input-port*))
+          (if (> trim-len 1.0)
+            (vputki-set-dyn-prop *vputki-last-pipe-ref* "Pituus" trim-len))))))
   (setq top-output-ucs *vputki-last-output-pos*)
   ;; pipe_len = abs(dz) - top-drop - bottom-drop
   (setq pipe-len (- (abs dz) top-drop bottom-drop))
@@ -652,10 +662,12 @@ VAROITUS: " (rtos turn 2 1)
   (command "_.-INSERT" blockName top-output-ucs 1 1 -90.0)
   (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
   (setq refs (cons (entlast) refs))
+  ;; Bottom corner target = top corner + (0, 0, -abs(dz)) (= where bottom horiz pipe centerline)
+  ;; In top elbow UCS where Y=+Z (dz<0): top_corner + (0, -abs(dz), 0)
   (setq pipe-bottom-ucs
-    (list (car top-output-ucs)
-          (- (cadr top-output-ucs) pipe-len)
-          (if (caddr top-output-ucs) (caddr top-output-ucs) 0.0)))
+    (list (car p_local)
+          (- (cadr p_local) (abs dz))
+          (if (caddr p_local) (caddr p_local) 0.0)))
   (setq pipe-bottom-world (trans pipe-bottom-ucs 1 0))
   ;; --- BOTTOM elbow (port-aware) ---
   (command "_.UCS" "_W")
