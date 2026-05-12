@@ -372,6 +372,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <section class="changelog reveal">
 <h2>Viimeisimmät päivitykset</h2>
 <ul>
+<li><span class="when">12.5.2026</span><span><b>Uusi VARUSTEET-työkalu kylmäkoneikon sähkövarustelulle.</b> Komento <code>VARUSTEET</code> tarjoaa nuolinäppäimin navigoitavan valikon kuudelle laitteelle: CO2-anturi, CO2-sireeni, Huolto-PC, ryhmäkeskus (RK-JK10), säädinkeskus (KU) ja hätäseispainike. Valitse → pickaa insertion-piste + rotaatio. Layerit luodaan automaattisesti per laite (KYL-CO2-ANTURI, KYL-HATASEIS jne.). dxf2ifc v0.2.0a19 tunnistaa nämä IFC4-sähkölaite-tyypeiksi (IfcSensor, IfcAlarm, IfcController, IfcSwitchingDevice…) RAVA3Pro-tilavarauskoodeilla.</span></li>
 <li><span class="when">11.5.2026</span><span><b>VPUTKI: <code>V</code>/<code>O</code>/<code>A</code>/<code>Y</code>-pikakomennot continuous-tilaan.</b> Kesken <code>VP</code>-piirron paina <code>V</code>=vasen, <code>O</code>=oikea, <code>Y</code>=ylös tai <code>A</code>=alas, anna pituus, ja työkalu piirtää suoran + tarvittavan käännyksen fittingin. Edellinen pituus muistetaan oletukseksi. T-haaran <code>T</code>-pikakomento ennallaan, <code>U</code>=undo, <kbd>Enter</kbd>=lopeta.</span></li>
 <li><span class="when">11.5.2026</span><span><b>Komennot lyhennetty: <code>KLHYLLY</code> → <code>KLH</code>, <code>KLHYLLYV</code> → <code>KLHV</code>, <code>HYLLYKORKO</code> → <code>KORKO</code>.</b> Uusi <code>KORKO</code> toimii kaikille INSERT-blokeille (hyllyt, höyrystimet, koneikot, kompressorit) ja vanhoille UNION-3DSOLIDeille. Referenssipiste vaihtui INSERT-blokin insertion pointiksi (AutoCAD-yhdenmukainen), muille bbox-min Z fallback.</span></li>
 <li><span class="when">6.5.2026</span><span><b>KLHYLLY parametriseksi dynamic blockiksi.</b> Pituus muokattavissa Properties-paletista tai gripeillä molemmista päistä, leveys (300/400/500) dropdownista. TIKAS:n rungit lisääntyvät automaattisesti 250 mm askeleella. Block-kirjastot omissa DWG-tiedostoissaan: <code>klhylly-levy.dwg</code> + <code>klhylly-tikas.dwg</code>. POSITIO + KLHYLLY:n FILEDIA-vuoto korjattu — SAVE/OPEN-dialogit toimivat normaalisti komentojen jälkeen.</span></li>
@@ -385,7 +386,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <span class="file-badge zip">ZIP</span>
 <div class="file-meta">
 <h3>Kaikki työkalut</h3>
-<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>563 KB</span><span>6 LSP + 18 DWG</span><span>Päiv. 11.5.2026</span></div>
+<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>736 KB</span><span>7 LSP + 24 DWG</span><span>Päiv. 12.5.2026</span></div>
 </div>
 <a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>
@@ -399,6 +400,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <li><b>Kylmälaitehylly</b> — komennot <code>KLH</code> (vaaka), <code>KLHV</code> (3D-tikashylly), <code>KORKO</code> (korko jälkikäteen). <code>klhylly.lsp</code> + <code>klhylly-levy.dwg</code> + <code>klhylly-tikas.dwg</code>.</li>
 <li><b>VPUTKI</b> — viemäriputket: <code>VP</code> continuous-tila (pick-pick-pick, auto-fittingit) tai <code>VP32</code> / <code>VP50</code> / <code>VP75</code> yhdelle pätkälle. Mallit suora + 45° + 88.5° + T. <code>vputki.lsp</code> + 12 DWG:tä.</li>
 <li><b>HOYRYSTIN</b> — höyrystimien insertointi HY1 / HY2 / HY3 (1 / 2 / 3 puhaltimen mallit). <code>hoyrystin.lsp</code> + 3 DWG:tä.</li>
+<li><b>VARUSTEET</b> — kylmäkoneikon sähkövarustelu: CO2-anturi, CO2-sireeni, Huolto-PC, ryhmäkeskus (RK-JK10), säädinkeskus (KU) ja hätäseispainike. Komento <code>VARUSTEET</code> tarjoaa nuolinäppäin-valikon laitevalinnalle. <code>varusteet.lsp</code> + 6 DWG:tä.</li>
 </ul>
 <p>Pura ZIP yhteen kansioon (esim. <code>C:\AutoCADLisp\</code>) ja <code>APPLOAD</code>:lla halutut LSP-tiedostot AutoCADiin. LSP:t etsivät DWG-riippuvuudet automaattisesti samasta kansiosta.</p>
 </div>
