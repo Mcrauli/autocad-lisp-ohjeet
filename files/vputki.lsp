@@ -746,7 +746,7 @@ Pituus <" (rtos len-default 2 0) ">: ")))
 ;; "Saadettavat asetukset" -lohkoon pitää lisätä.
 
 (defun c:VP-MEASURE-FITTING ( / kind-str size-str sfx sfx2 blockname dwgname
-                              ip op ix iy ox oy
+                              ip ip2 op op2 ix iy ox oy
                               input-axis output-axis rot-offset
                               native-turn native-sign kind-sym )
   (initget "45 885")
@@ -764,17 +764,23 @@ Pituus <" (rtos len-default 2 0) ">: ")))
   (setvar "CMDECHO" 0)
   (princ (strcat "\nInsertoidaan " blockname " (0,0,0) rotaatiolla 0..."))
   (command "_.-INSERT" blockname '(0 0 0) 1 1 0)
-  (princ "\nKlikkaa INPUT-portin keskipiste (CENTER-snap auttaa):")
+  (princ "\nKlikkaa INPUT-portin KESKIPISTE (CENTER-snap cap-renkaalle):")
   (setq ip (getpoint))
   (if (null ip) (progn (princ "\nKeskeytetty.") (exit)))
-  (princ "\nKlikkaa OUTPUT-portin keskipiste:")
+  (princ "\nKlikkaa INPUT-pipe-stubin ULKOPAA (= mihin suuntaan portti osoittaa):")
+  (setq ip2 (getpoint ip))
+  (if (null ip2) (progn (princ "\nKeskeytetty.") (exit)))
+  (princ "\nKlikkaa OUTPUT-portin KESKIPISTE:")
   (setq op (getpoint))
   (if (null op) (progn (princ "\nKeskeytetty.") (exit)))
+  (princ "\nKlikkaa OUTPUT-pipe-stubin ULKOPAA:")
+  (setq op2 (getpoint op))
+  (if (null op2) (progn (princ "\nKeskeytetty.") (exit)))
   (setq ix (car ip)) (setq iy (cadr ip))
   (setq ox (car op)) (setq oy (cadr op))
-  ;; Input axis = direction origin -> input port (= miten input portti osoittaa default-orientaatiossa)
-  (setq input-axis  (vputki-norm-deg (vputki-rad->deg (atan iy ix))))
-  (setq output-axis (vputki-norm-deg (vputki-rad->deg (atan oy ox))))
+  ;; Axis suunnat lasketaan portti -> ulkopaa-vektorista
+  (setq input-axis  (vputki-angle-deg ip ip2))
+  (setq output-axis (vputki-angle-deg op op2))
   ;; rot-offset: lisataan rot:iin jotta input-portti osoittaa 180 (west) kun rot=0
   (setq rot-offset (vputki-norm-deg (- 180.0 input-axis)))
   ;; native-turn = output-axis - input-axis - 180  (normalisoitu)
