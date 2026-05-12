@@ -337,6 +337,23 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
       muokkaannu), JSON-LD FAQPage päivitetty. Lataukset-sivulle uusi
       DWG-latauskortti klhylly.dwg:lle, ZIP-meta päivitetty 4 LSP + 2 DWG.
 
+19. **VARUSTEET — kylmäkoneikon sähkövarustelu** (12.5.2026): uusi
+    `files/varusteet.lsp` + 6 DWG-blokkia (`co2-anturi.dwg`,
+    `co2-sireeni.dwg`, `huolto-pc.dwg`, `rk-jk10.dwg`,
+    `saadinkeskus-ku.dwg`, `hataseispainike.dwg`). Komento `VARUSTEET`
+    tarjoaa `initget`/`getkword`-keyword-promptin nuolinäppäin-navigointiin
+    (sama UX kuin KLH:n leveys-valitsin). Per-laite layer KYL-prefiksillä
+    + uniikit ACI-värit. dxf2ifc v0.2.0a19+ tunnistaa nämä IFC4-sähkölaite-
+    tyypeiksi (IfcSensor / IfcAlarm / IfcCommunicationsAppliance /
+    IfcElectricDistributionBoard / IfcController / IfcSwitchingDevice) +
+    RAVA-tilavarauskoodit T-TATE-02-01-003 / T-TATE-02-01-004.
+    - **Sivustolle:** uusi `#varusteet`-osio `ohjeet.html`:ssä (SVG-demo
+      6 laite-ikonilla + AutoCAD-keyword-prompt-strippi alareunassa,
+      komento/laitelistaus/miksi-näin -blokit), sidebar- ja mobile-toc-
+      linkit, etusivun `.feature-card` "SÄHKÖ"-badgella, JSON-LD
+      SoftwareApplication-entry. Lataukset-sivun ZIP-paketin meta päivitetty
+      7 LSP + 24 DWG / 736 KB sekä changelog-rivi.
+
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 
 - **Kopioi-nappi `<code>`-pätkille** ohjeissa + toast-feedback.
