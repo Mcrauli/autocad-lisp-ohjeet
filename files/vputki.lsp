@@ -349,8 +349,8 @@
 
 ;; Kulmaluokituksen toleranssit (asteita).
 (if (not (boundp '*vputki-tol-straight*)) (setq *vputki-tol-straight* 5.0))
-(if (not (boundp '*vputki-tol-45*))       (setq *vputki-tol-45*       8.0))
-(if (not (boundp '*vputki-tol-885*))      (setq *vputki-tol-885*      8.0))
+(if (not (boundp '*vputki-tol-45*))       (setq *vputki-tol-45*       20.0))
+(if (not (boundp '*vputki-tol-885*))      (setq *vputki-tol-885*      15.0))
 
 ;; ----- Geometria-apufunktiot -----------------------------------------
 
@@ -560,12 +560,9 @@
       (cond
         ((eq cls 'straight) nil)
         ((or (eq cls '45) (eq cls '885))
+          ;; Overlap-mode: ei port-paivitysta
           (setq result (vputki-cont-insert-corner D cls p_prev p_prev_dir sign))
-          (if result
-            (progn
-              (setq frame-ents (cons result frame-ents))
-              (if *vputki-last-output-pos*
-                (setq p_prev *vputki-last-output-pos*)))))
+          (if result (setq frame-ents (cons result frame-ents))))
         ((eq cls 'unknown)
           (princ (strcat "
 VAROITUS: " (rtos turn 2 1)
@@ -632,41 +629,34 @@ VAROITUS: " (rtos turn 2 1)
           (T '(0.0 0.0))))
   (setq top-drop    (abs (car  drop-output-pos)))
   (setq bottom-drop (abs (cadr drop-output-pos)))
-  ;; --- TOP elbow ---
+  ;; --- TOP elbow (overlap-mode Z-dropissa: pipet linjattuna corner:in lapi) ---
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" p_prev_dir)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq p_local (trans p_prev 0 1))
   (setq top-elbow (vputki-cont-insert-corner D kind p_local 0.0 -1))
   (if top-elbow (setq refs (cons top-elbow refs)))
-  (setq top-output-ucs *vputki-last-output-pos*)
-  ;; --- Vertikaalinen putki ---
-  ;; pipe_len = abs(dz) - 2*fitting-drop-y (kaksi elbowta vaihtaa Z:ta)
-  (setq pipe-len (- (abs dz) top-drop bottom-drop))
-  (if (< pipe-len 1.0) (setq pipe-len 1.0))
-  (command "_.-INSERT" blockName top-output-ucs 1 1 -90.0)
+  ;; Vertikaalinen putki lahtee CORNER-pisteesta (overlap fitting-rungon kanssa)
+  (setq pipe-len (abs dz))
+  (command "_.-INSERT" blockName p_local 1 1 -90.0)
   (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
   (setq refs (cons (entlast) refs))
-  ;; Pipe-bottom UCS-koordinaateissa
   (setq pipe-bottom-ucs
-    (list (car top-output-ucs)
-          (- (cadr top-output-ucs) pipe-len)
-          (if (caddr top-output-ucs) (caddr top-output-ucs) 0.0)))
+    (list (car p_local)
+          (- (cadr p_local) pipe-len)
+          (if (caddr p_local) (caddr p_local) 0.0)))
   (setq pipe-bottom-world (trans pipe-bottom-ucs 1 0))
-  ;; --- BOTTOM elbow ---
+  ;; --- BOTTOM elbow (overlap-mode) ---
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" next-dir)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq pipe-bottom-ucs2 (trans pipe-bottom-world 0 1))
-  ;; In UCS: pipe tulee -Y-suunnasta (d_in = -90), target d_out = 0 (UCS +X)
-  ;; turn = 0 - (-90) = +90 (CCW). turn-sign = +1.
-  ;; Native CW (-1) + user CCW (+1) -> mirror (sy=-1). Toimii.
   (setq bottom-elbow (vputki-cont-insert-corner D kind pipe-bottom-ucs2 -90.0 1))
   (if bottom-elbow (setq refs (cons bottom-elbow refs)))
-  (setq bottom-output-ucs *vputki-last-output-pos*)
-  (setq bottom-output-world (trans bottom-output-ucs 1 0))
   (command "_.UCS" "_W")
-  (list (reverse refs) bottom-output-world next-dir))
+  ;; Overlap-mode: bottom horiz pipe lahtee pipe-bottom-world:sta (= corner alapuolelta).
+  ;; Bottom elbow body on overlapissa pipe-paadyn kanssa, mutta pipe-keskilinjat linjaavat.
+  (list (reverse refs) pipe-bottom-world next-dir))
 
 ;; ----- Paakomento c:VP ----------------------------------------------
 
@@ -677,7 +667,7 @@ VAROITUS: " (rtos turn 2 1)
                 tp tb result
                 target-dir len-default len-input
                 forced-fitting dz-default dz-input
-                z-next-str z-next-dir
+                z-next-str z-next-dir z-kind-str z-kind-sym
                 corner-pt forced-len forced-rad )
 
   (defun *error* ( msg )
@@ -777,10 +767,8 @@ VAROITUS: " (rtos turn 2 1)
                             (rtos dz-default 2 0) ">: ")))
         (if (null dz-input) (setq dz-input dz-default))
         (setq *vputki-last-dz* dz-input)
-        ;; Drop-pattern vaatii p_prev_dir:in (= horisontaalinen pipe edelta)
         (cond
           ((null p_prev_dir)
-            ;; Ei horisontaalia edelta -> pelkka pystyputki ilman elbowta
             (setq result (vputki-cont-insert-vertical D layerName p_prev dz-input))
             (if result
               (progn
@@ -790,7 +778,12 @@ VAROITUS: " (rtos turn 2 1)
                   (list (car p_prev) (cadr p_prev)
                         (+ (if (caddr p_prev) (caddr p_prev) 0.0) dz-input))))))
           (T
-            ;; Drop-pattern
+            (initget "9 4")
+            (setq z-kind-str
+              (getkword "\nMutkatyyppi [9=88.5/4=45] <9>: "))
+            (if (null z-kind-str) (setq z-kind-str "9"))
+            (setq z-kind-sym
+              (if (= z-kind-str "4") '45 '885))
             (initget "V O Y A")
             (setq z-next-str
               (getkword "\nSeuraava horiz suunta [V/O/Y/A] <O>: "))
@@ -798,7 +791,7 @@ VAROITUS: " (rtos turn 2 1)
             (setq z-next-dir (vputki-cont-cardinal-dir z-next-str))
             (setq result
               (vputki-cont-do-drop D layerName p_prev p_prev_dir
-                                    dz-input z-next-dir '885))
+                                    dz-input z-next-dir z-kind-sym))
             (if result
               (progn
                 (setq undo-stack
@@ -838,18 +831,16 @@ Pituus <" (rtos len-default 2 0) ">: ")))
             (cond
               ((eq cls 'straight) nil)
               ((or (eq cls '45) (eq cls '885))
-                (setq corner-pt p_prev)
+                ;; Overlap-mode: pipe-keskilinjat linjattuna corner:in lapi
                 (setq result (vputki-cont-insert-corner
                                D cls p_prev p_prev_dir sign))
                 (if result
                   (progn
                     (setq frame-ents (cons result frame-ents))
-                    (if *vputki-last-output-pos*
-                      (setq p_prev *vputki-last-output-pos*))
-                    ;; Force pipen suunta output-axis:iin, pituus = corner->klikkaus
+                    ;; Force pipen suunta output-axis:iin, lahto corner:ista (= p_prev)
                     (if *vputki-last-output-axis*
                       (progn
-                        (setq forced-len (vputki-dist-2d corner-pt p_cur))
+                        (setq forced-len (vputki-dist-2d p_prev p_cur))
                         (setq forced-rad
                           (vputki-deg->rad *vputki-last-output-axis*))
                         (setq p_cur
