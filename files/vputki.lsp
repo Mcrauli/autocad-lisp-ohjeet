@@ -569,59 +569,84 @@ VAROITUS: " (rtos turn 2 1)
 ;; UCS-rotaatio +/-Y-akselin ympari muuttaa local +X = world +/-Z.
 ;; Inserttoi sitten suora-block standalone-tilassa ja palauttaa UCS:n.
 
-(defun vputki-cont-insert-vertical ( D layerName p_prev p_prev_dir dz kind /
-                                       blockName fitting-block p_local
-                                       fitting-ref pipe-ref refs
-                                       pipe-rot pipe-len rot-off pipe-start )
+(defun vputki-cont-insert-vertical ( D layerName p_prev dz /
+                                       blockName p_local ucs-angle ref )
+  ;; Yksinkertainen pystyputki ilman elbowta (kaytetaan jos p_prev_dir = nil).
   (if (or (null dz) (< (abs dz) 1.0))
     (progn (princ "\nVAROITUS: Z-muutos liian pieni.") nil)
     (progn
       (setq blockName (strcat "VPUTKI-" (itoa D)))
       (setvar "CLAYER" layerName)
+      (setq ucs-angle (if (> dz 0) -90.0 90.0))
       (command "_.UCS" "_W")
-      (setq refs '())
-      (cond
-        ;; --- Horisontaalinen pipe + 88.5-elbow (vertical), port-aware ---
-        ((and p_prev_dir (eq kind '885))
-          (command "_.UCS" "_Z" p_prev_dir)
-          (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
-          (setq p_local (trans p_prev 0 1))
-          ;; vputki-cont-insert-corner asettaa *vputki-last-output-pos* UCS-koordinaateissa
-          (setq fitting-ref
-            (vputki-cont-insert-corner D '885 p_local 0.0 -1))
-          (if fitting-ref (setq refs (cons fitting-ref refs)))
-          ;; Vertical pipe lahtee output-portista UCS -Y -suuntaan
-          (setq pipe-start
-            (if *vputki-last-output-pos* *vputki-last-output-pos* p_local))
-          (command "_.-INSERT" blockName pipe-start 1 1 -90.0)
-          (setq pipe-ref (entlast))
-          (vputki-set-dyn-prop pipe-ref "Pituus" (abs dz))
-          (if pipe-ref (setq refs (cons pipe-ref refs))))
-        ;; --- Horisontaalinen + 45-elbow (sloped down at 45°), port-aware ---
-        ((and p_prev_dir (eq kind '45))
-          (setq pipe-len (/ (abs dz) (sin (vputki-deg->rad 47.2))))
-          (command "_.UCS" "_Z" p_prev_dir)
-          (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
-          (setq p_local (trans p_prev 0 1))
-          (setq fitting-ref
-            (vputki-cont-insert-corner D '45 p_local 0.0 -1))
-          (if fitting-ref (setq refs (cons fitting-ref refs)))
-          (setq pipe-start
-            (if *vputki-last-output-pos* *vputki-last-output-pos* p_local))
-          (command "_.-INSERT" blockName pipe-start 1 1 -47.2)
-          (setq pipe-ref (entlast))
-          (vputki-set-dyn-prop pipe-ref "Pituus" pipe-len)
-          (if pipe-ref (setq refs (cons pipe-ref refs))))
-        ;; --- Ei elbowta (kind nil, none, tai ei p_prev_dir:ia) ---
-        (T
-          (command "_.UCS" "_Y" (if (> dz 0) -90.0 90.0))
-          (setq p_local (trans p_prev 0 1))
-          (command "_.-INSERT" blockName p_local 1 1 0)
-          (setq pipe-ref (entlast))
-          (vputki-set-dyn-prop pipe-ref "Pituus" (abs dz))
-          (if pipe-ref (setq refs (cons pipe-ref refs)))))
+      (command "_.UCS" "_Y" ucs-angle)
+      (setq p_local (trans p_prev 0 1))
+      (command "_.-INSERT" blockName p_local 1 1 0)
+      (setq ref (entlast))
+      (vputki-set-dyn-prop ref "Pituus" (abs dz))
       (command "_.UCS" "_W")
-      (reverse refs))))
+      ref)))
+
+;; ----- Drop-pattern: top-elbow + pystyputki + bottom-elbow ---------
+;;
+;; Insertoi:
+;;   1. Top elbow (horisontaali -> vertikaali)
+;;   2. Pystyputki
+;;   3. Bottom elbow (vertikaali -> seuraava horisontaali next-dir)
+;;
+;; Palauttaa (refs-list new-p_prev new-p_prev_dir).
+;; kind = '885 (90 mutka) tai '45 (45 mutka). Toistaiseksi vain 885.
+
+(defun vputki-cont-do-drop ( D layerName p_prev p_prev_dir dz next-dir kind /
+                              refs p_local top-elbow top-output-ucs
+                              pipe-len pipe-bottom-ucs pipe-bottom-world
+                              pipe-bottom-ucs2 bottom-elbow bottom-output-ucs
+                              bottom-output-world fitting-drop-y blockName )
+  (setvar "CLAYER" layerName)
+  (setq blockName (strcat "VPUTKI-" (itoa D)))
+  (setq refs '())
+  ;; fitting-drop-y = abs(Y component of output-pos) eli kuinka paljon
+  ;; elbow "pudottaa" Z-suunnassa. 88.5: |Y of (102, 106.5)| = 106.5.
+  ;; 45: |Y of (50.2, 125.2)| = 125.2.
+  (setq fitting-drop-y
+    (cond ((eq kind '885) 106.5)
+          ((eq kind '45)  125.2)
+          (T 0.0)))
+  ;; --- TOP elbow ---
+  (command "_.UCS" "_W")
+  (command "_.UCS" "_Z" p_prev_dir)
+  (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
+  (setq p_local (trans p_prev 0 1))
+  (setq top-elbow (vputki-cont-insert-corner D kind p_local 0.0 -1))
+  (if top-elbow (setq refs (cons top-elbow refs)))
+  (setq top-output-ucs *vputki-last-output-pos*)
+  ;; --- Vertikaalinen putki ---
+  ;; pipe_len = abs(dz) - 2*fitting-drop-y (kaksi elbowta vaihtaa Z:ta)
+  (setq pipe-len (- (abs dz) (* 2.0 fitting-drop-y)))
+  (if (< pipe-len 1.0) (setq pipe-len 1.0))
+  (command "_.-INSERT" blockName top-output-ucs 1 1 -90.0)
+  (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
+  (setq refs (cons (entlast) refs))
+  ;; Pipe-bottom UCS-koordinaateissa
+  (setq pipe-bottom-ucs
+    (list (car top-output-ucs)
+          (- (cadr top-output-ucs) pipe-len)
+          (if (caddr top-output-ucs) (caddr top-output-ucs) 0.0)))
+  (setq pipe-bottom-world (trans pipe-bottom-ucs 1 0))
+  ;; --- BOTTOM elbow ---
+  (command "_.UCS" "_W")
+  (command "_.UCS" "_Z" next-dir)
+  (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
+  (setq pipe-bottom-ucs2 (trans pipe-bottom-world 0 1))
+  ;; In UCS: pipe tulee -Y-suunnasta (d_in = -90), target d_out = 0 (UCS +X)
+  ;; turn = 0 - (-90) = +90 (CCW). turn-sign = +1.
+  ;; Native CW (-1) + user CCW (+1) -> mirror (sy=-1). Toimii.
+  (setq bottom-elbow (vputki-cont-insert-corner D kind pipe-bottom-ucs2 -90.0 1))
+  (if bottom-elbow (setq refs (cons bottom-elbow refs)))
+  (setq bottom-output-ucs *vputki-last-output-pos*)
+  (setq bottom-output-world (trans bottom-output-ucs 1 0))
+  (command "_.UCS" "_W")
+  (list (reverse refs) bottom-output-world next-dir))
 
 ;; ----- Paakomento c:VP ----------------------------------------------
 
@@ -632,7 +657,7 @@ VAROITUS: " (rtos turn 2 1)
                 tp tb result
                 target-dir len-default len-input
                 forced-fitting dz-default dz-input
-                z-kind-str z-kind-sym )
+                z-next-str z-next-dir )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -722,16 +747,8 @@ VAROITUS: " (rtos turn 2 1)
         (setq forced-fitting 'straight)
         (princ "\n>> Seuraava insert ilman fittingia."))
 
-      ;; --- Keyword Z -> pystyputki Z-suuntaan ---
+      ;; --- Keyword Z -> drop-pattern: top-elbow + pystyputki + bottom-elbow ---
       ((and (= (type p_cur) 'STR) (= p_cur "Z"))
-        (initget "9 4 S")
-        (setq z-kind-str
-          (getkword "\nMutkatyyppi [9=88.5/4=45/S=ei mutkaa] <9>: "))
-        (if (null z-kind-str) (setq z-kind-str "9"))
-        (setq z-kind-sym
-          (cond ((= z-kind-str "9") '885)
-                ((= z-kind-str "4") '45)
-                ((= z-kind-str "S") 'none)))
         (setq dz-default
           (if (boundp '*vputki-last-dz*) *vputki-last-dz* -500.0))
         (setq dz-input
@@ -739,17 +756,34 @@ VAROITUS: " (rtos turn 2 1)
                             (rtos dz-default 2 0) ">: ")))
         (if (null dz-input) (setq dz-input dz-default))
         (setq *vputki-last-dz* dz-input)
-        (setq result
-          (vputki-cont-insert-vertical D layerName p_prev p_prev_dir
-                                        dz-input z-kind-sym))
-        (if result
-          (progn
-            (setq undo-stack
-              (cons (list 'VERT result p_prev p_prev_dir) undo-stack))
-            (setq p_prev
-              (list (car p_prev) (cadr p_prev)
-                    (+ (if (caddr p_prev) (caddr p_prev) 0.0) dz-input)))
-            (setq p_prev_dir nil))))
+        ;; Drop-pattern vaatii p_prev_dir:in (= horisontaalinen pipe edelta)
+        (cond
+          ((null p_prev_dir)
+            ;; Ei horisontaalia edelta -> pelkka pystyputki ilman elbowta
+            (setq result (vputki-cont-insert-vertical D layerName p_prev dz-input))
+            (if result
+              (progn
+                (setq undo-stack
+                  (cons (list 'VERT (list result) p_prev p_prev_dir) undo-stack))
+                (setq p_prev
+                  (list (car p_prev) (cadr p_prev)
+                        (+ (if (caddr p_prev) (caddr p_prev) 0.0) dz-input))))))
+          (T
+            ;; Drop-pattern
+            (initget "V O Y A")
+            (setq z-next-str
+              (getkword "\nSeuraava horiz suunta [V/O/Y/A] <O>: "))
+            (if (null z-next-str) (setq z-next-str "O"))
+            (setq z-next-dir (vputki-cont-cardinal-dir z-next-str))
+            (setq result
+              (vputki-cont-do-drop D layerName p_prev p_prev_dir
+                                    dz-input z-next-dir '885))
+            (if result
+              (progn
+                (setq undo-stack
+                  (cons (list 'DROP (car result) p_prev p_prev_dir) undo-stack))
+                (setq p_prev (nth 1 result))
+                (setq p_prev_dir (nth 2 result)))))))
 
       ;; --- Keywords V/O/Y/A -> cardinal direction + pituus ---
       ((and (= (type p_cur) 'STR)
