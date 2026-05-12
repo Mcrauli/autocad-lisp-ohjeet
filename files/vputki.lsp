@@ -601,17 +601,22 @@ VAROITUS: " (rtos turn 2 1)
                               refs p_local top-elbow top-output-ucs
                               pipe-len pipe-bottom-ucs pipe-bottom-world
                               pipe-bottom-ucs2 bottom-elbow bottom-output-ucs
-                              bottom-output-world fitting-drop-y blockName )
+                              bottom-output-world drop-output-pos
+                              top-drop bottom-drop blockName )
   (setvar "CLAYER" layerName)
   (setq blockName (strcat "VPUTKI-" (itoa D)))
   (setq refs '())
   ;; fitting-drop-y = abs(Y component of output-pos) eli kuinka paljon
   ;; elbow "pudottaa" Z-suunnassa. 88.5: |Y of (102, 106.5)| = 106.5.
   ;; 45: |Y of (50.2, 125.2)| = 125.2.
-  (setq fitting-drop-y
-    (cond ((eq kind '885) 106.5)
-          ((eq kind '45)  125.2)
-          (T 0.0)))
+  ;; Top elbow rotated by -90 sy=1: Y-pudotus = |output X|
+  ;; Bottom elbow rotated by 0 sy=-1: Y-pudotus = |output Y|
+  (setq drop-output-pos
+    (cond ((eq kind '885) *vputki-output-pos-885*)
+          ((eq kind '45)  *vputki-output-pos-45*)
+          (T '(0.0 0.0))))
+  (setq top-drop    (abs (car  drop-output-pos)))
+  (setq bottom-drop (abs (cadr drop-output-pos)))
   ;; --- TOP elbow ---
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" p_prev_dir)
@@ -622,7 +627,7 @@ VAROITUS: " (rtos turn 2 1)
   (setq top-output-ucs *vputki-last-output-pos*)
   ;; --- Vertikaalinen putki ---
   ;; pipe_len = abs(dz) - 2*fitting-drop-y (kaksi elbowta vaihtaa Z:ta)
-  (setq pipe-len (- (abs dz) (* 2.0 fitting-drop-y)))
+  (setq pipe-len (- (abs dz) top-drop bottom-drop))
   (if (< pipe-len 1.0) (setq pipe-len 1.0))
   (command "_.-INSERT" blockName top-output-ucs 1 1 -90.0)
   (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
