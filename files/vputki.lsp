@@ -323,6 +323,12 @@
 (if (not (boundp '*vputki-pos-offset-45*))  (setq *vputki-pos-offset-45*  '(0.0 0.0)))
 (if (not (boundp '*vputki-pos-offset-885*)) (setq *vputki-pos-offset-885* '(0.0 0.0)))
 
+;; Output port -position default-orientaatiossa (mitattu VP-MEASURE:lla
+;; size 50:lle). Port-aware trim: seuraava putki alkaa fittingin output-
+;; portista, ei p_prev:sta.
+(if (not (boundp '*vputki-output-pos-45*))  (setq *vputki-output-pos-45*  '(50.2 125.2)))
+(if (not (boundp '*vputki-output-pos-885*)) (setq *vputki-output-pos-885* '(102.0 106.5)))
+
 ;; Salli fittingin Y-peilaus (sy=-1) kun kaannos on CW. Jos nil, CW-
 ;; kaannos jaa suoraksi varoituksen kera.
 (if (not (boundp '*vputki-allow-fitting-mirror*))
@@ -419,7 +425,8 @@
 
 (defun vputki-cont-insert-corner (D kind p_corner rot-base turn-sign /
                                    blockName offset rot sy ref native-sign
-                                   pos-off rot-rad off-dx off-dy adj-p)
+                                   pos-off rot-rad off-dx off-dy adj-p
+                                   out-pos out-dx out-dy)
   (setq offset
     (cond ((eq kind '45)  *vputki-rot-offset-45*)
           ((eq kind '885) *vputki-rot-offset-885*)
@@ -467,11 +474,22 @@
         (list (- (car p_corner) off-dx)
               (- (cadr p_corner) off-dy)
               (if (caddr p_corner) (caddr p_corner) 0.0)))
-      ;; sy=-1 -> _XYZ-syntaksi etta Z=1 menee eksplisiittisesti.
       (if (= sy 1)
         (command "_.-INSERT" blockName adj-p 1 1 rot)
         (command "_.-INSERT" blockName adj-p "_XYZ" 1 sy 1 rot))
       (setq ref (entlast))
+      (setq out-pos
+        (cond ((eq kind '45)  *vputki-output-pos-45*)
+              ((eq kind '885) *vputki-output-pos-885*)
+              (T '(0.0 0.0))))
+      (setq out-dx (- (* (car out-pos) (cos rot-rad))
+                      (* (cadr out-pos) (sin rot-rad) sy)))
+      (setq out-dy (+ (* (car out-pos) (sin rot-rad))
+                      (* (cadr out-pos) (cos rot-rad) sy)))
+      (setq *vputki-last-output-pos*
+        (list (+ (car adj-p) out-dx)
+              (+ (cadr adj-p) out-dy)
+              (if (caddr adj-p) (caddr adj-p) 0.0)))
       ref)))
 
 ;; ----- T-haaran insert + haaraputki ---------------------------------
@@ -528,7 +546,11 @@
         ((eq cls 'straight) nil)
         ((or (eq cls '45) (eq cls '885))
           (setq result (vputki-cont-insert-corner D cls p_prev p_prev_dir sign))
-          (if result (setq frame-ents (cons result frame-ents))))
+          (if result
+            (progn
+              (setq frame-ents (cons result frame-ents))
+              (if *vputki-last-output-pos*
+                (setq p_prev *vputki-last-output-pos*)))))
         ((eq cls 'unknown)
           (princ (strcat "
 VAROITUS: " (rtos turn 2 1)
@@ -740,7 +762,11 @@ Pituus <" (rtos len-default 2 0) ">: ")))
               ((or (eq cls '45) (eq cls '885))
                 (setq result (vputki-cont-insert-corner
                                D cls p_prev p_prev_dir sign))
-                (if result (setq frame-ents (cons result frame-ents))))
+                (if result
+                  (progn
+                    (setq frame-ents (cons result frame-ents))
+                    (if *vputki-last-output-pos*
+                      (setq p_prev *vputki-last-output-pos*)))))
               ((eq cls 'unknown)
                 (princ (strcat "\nVAROITUS: " (rtos turn 2 1)
                                " kaannos -- ei vastaavaa fittingia, "
@@ -820,6 +846,7 @@ Pituus <" (rtos len-default 2 0) ">: ")))
   (princ "\n\n=== Kopioi nama vputki.lsp:n alkuun (saadettavat asetukset) ===")
   (princ (strcat "\n(setq *vputki-rot-offset-" kind-sym "*  " (rtos rot-offset 2 2) ")"))
   (princ (strcat "\n(setq *vputki-pos-offset-" kind-sym "* '(" (rtos ix 2 2) " " (rtos iy 2 2) "))"))
+  (princ (strcat "\n(setq *vputki-output-pos-" kind-sym "* '(" (rtos ox 2 2) " " (rtos oy 2 2) "))"))
   (princ (strcat "\n(setq *vputki-native-turn-" kind-sym "* " (itoa native-sign) ")"))
   (princ "\n\nVoit ERASE:lla poistaa testifittingin ja kytkea auto-tilan:")
   (princ "\n  (setq *vputki-fitting-interactive* nil)")
