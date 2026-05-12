@@ -572,7 +572,7 @@ VAROITUS: " (rtos turn 2 1)
 (defun vputki-cont-insert-vertical ( D layerName p_prev p_prev_dir dz kind /
                                        blockName fitting-block p_local
                                        fitting-ref pipe-ref refs
-                                       pipe-rot pipe-len rot-off )
+                                       pipe-rot pipe-len rot-off pipe-start )
   (if (or (null dz) (< (abs dz) 1.0))
     (progn (princ "\nVAROITUS: Z-muutos liian pieni.") nil)
     (progn
@@ -581,37 +581,34 @@ VAROITUS: " (rtos turn 2 1)
       (command "_.UCS" "_W")
       (setq refs '())
       (cond
-        ;; --- Horisontaalinen pipe + 88.5-elbow (vertical) ---
+        ;; --- Horisontaalinen pipe + 88.5-elbow (vertical), port-aware ---
         ((and p_prev_dir (eq kind '885))
-          (setq fitting-block (strcat "VPUTKI-" (itoa D) "-885"))
-          (setq rot-off *vputki-rot-offset-885*)
-          (setq pipe-rot -90.0)
-          (setq pipe-len (abs dz))
           (command "_.UCS" "_Z" p_prev_dir)
           (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
           (setq p_local (trans p_prev 0 1))
-          (command "_.-INSERT" fitting-block p_local 1 1 (+ 0.0 rot-off))
-          (setq fitting-ref (entlast))
+          ;; vputki-cont-insert-corner asettaa *vputki-last-output-pos* UCS-koordinaateissa
+          (setq fitting-ref
+            (vputki-cont-insert-corner D '885 p_local 0.0 -1))
           (if fitting-ref (setq refs (cons fitting-ref refs)))
-          (command "_.-INSERT" blockName p_local 1 1 pipe-rot)
+          ;; Vertical pipe lahtee output-portista UCS -Y -suuntaan
+          (setq pipe-start
+            (if *vputki-last-output-pos* *vputki-last-output-pos* p_local))
+          (command "_.-INSERT" blockName pipe-start 1 1 -90.0)
           (setq pipe-ref (entlast))
-          (vputki-set-dyn-prop pipe-ref "Pituus" pipe-len)
+          (vputki-set-dyn-prop pipe-ref "Pituus" (abs dz))
           (if pipe-ref (setq refs (cons pipe-ref refs))))
-        ;; --- Horisontaalinen pipe + 45-elbow (sloped down at 45°) ---
+        ;; --- Horisontaalinen + 45-elbow (sloped down at 45°), port-aware ---
         ((and p_prev_dir (eq kind '45))
-          (setq fitting-block (strcat "VPUTKI-" (itoa D) "-45"))
-          (setq rot-off *vputki-rot-offset-45*)
-          ;; Output axis 42.8° default -> rot -90° = -47.2° UCS-suuntaan
-          (setq pipe-rot -47.2)
-          ;; Pituus = dz / sin(47.2°) jotta saadaan vertikaalinen pudotus = abs(dz)
           (setq pipe-len (/ (abs dz) (sin (vputki-deg->rad 47.2))))
           (command "_.UCS" "_Z" p_prev_dir)
           (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
           (setq p_local (trans p_prev 0 1))
-          (command "_.-INSERT" fitting-block p_local 1 1 (+ 0.0 rot-off))
-          (setq fitting-ref (entlast))
+          (setq fitting-ref
+            (vputki-cont-insert-corner D '45 p_local 0.0 -1))
           (if fitting-ref (setq refs (cons fitting-ref refs)))
-          (command "_.-INSERT" blockName p_local 1 1 pipe-rot)
+          (setq pipe-start
+            (if *vputki-last-output-pos* *vputki-last-output-pos* p_local))
+          (command "_.-INSERT" blockName pipe-start 1 1 -47.2)
           (setq pipe-ref (entlast))
           (vputki-set-dyn-prop pipe-ref "Pituus" pipe-len)
           (if pipe-ref (setq refs (cons pipe-ref refs))))
