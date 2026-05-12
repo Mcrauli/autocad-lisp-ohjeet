@@ -307,8 +307,8 @@
 ;; portti -X-suunnassa, output 45° / -88.5°), saada *vputki-rot-offset-X*
 ;; -globaaleja. Yksikko = asteita.
 
-(if (not (boundp '*vputki-rot-offset-45*))  (setq *vputki-rot-offset-45*  0.0))
-(if (not (boundp '*vputki-rot-offset-885*)) (setq *vputki-rot-offset-885* 0.0))
+(if (not (boundp '*vputki-rot-offset-45*))  (setq *vputki-rot-offset-45*  -90.0))
+(if (not (boundp '*vputki-rot-offset-885*)) (setq *vputki-rot-offset-885* -90.0))
 (if (not (boundp '*vputki-rot-offset-t*))   (setq *vputki-rot-offset-t*   0.0))
 
 ;; Fittingin natiivi-kaannos: -1 = CW (output kaytrtaa kellon mukaisesti),
@@ -333,7 +333,7 @@
 ;; mukana fallbackina (nil), mutta vaatii oikeat *vputki-rot-offset-*-arvot.
 ;; Suositus: T jos alignment ei toimi auto-tilassa.
 (if (not (boundp '*vputki-fitting-interactive*))
-    (setq *vputki-fitting-interactive* T))
+    (setq *vputki-fitting-interactive* nil))
 
 ;; Kulmaluokituksen toleranssit (asteita).
 (if (not (boundp '*vputki-tol-straight*)) (setq *vputki-tol-straight* 5.0))
@@ -443,13 +443,15 @@
       (princ "\nVAROITUS: CW-kaannos vaatii peilauksen, *vputki-allow-fitting-mirror* on nil -- ohitetaan fitting.")
       nil)
     (T
-      (setq rot (+ rot-base offset))
       ;; Mirror vain jos kayttajan kannosuunta poikkeaa natiivista.
       (setq native-sign
         (cond ((eq kind '45)  *vputki-native-turn-45*)
               ((eq kind '885) *vputki-native-turn-885*)
               (T -1)))
       (setq sy (if (= turn-sign native-sign) 1 -1))
+      ;; Mirror-tapauksessa input-axis flippaa Y:n kautta -> offset-merkki
+      ;; kaantyy. Ilman tata CCW-kayttaja CW-natiivilla menee 180° vaarin.
+      (setq rot (+ rot-base (if (= sy 1) offset (- offset))))
       ;; Position-offset: jos basepoint ei ole tarkalleen input-portissa,
       ;; siirra insert-piste niin etta portti paatyy p_corner:iin.
       (setq pos-off
