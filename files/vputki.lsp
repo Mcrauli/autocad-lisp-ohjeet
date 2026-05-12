@@ -547,24 +547,46 @@ VAROITUS: " (rtos turn 2 1)
 ;; UCS-rotaatio +/-Y-akselin ympari muuttaa local +X = world +/-Z.
 ;; Inserttoi sitten suora-block standalone-tilassa ja palauttaa UCS:n.
 
-(defun vputki-cont-insert-vertical ( D layerName p_prev dz /
-                                       blockName ref p_local ucs-angle )
+(defun vputki-cont-insert-vertical ( D layerName p_prev p_prev_dir dz /
+                                       blockName fitting-block p_local
+                                       fitting-ref pipe-ref refs )
   (if (or (null dz) (< (abs dz) 1.0))
     (progn (princ "\nVAROITUS: Z-muutos liian pieni.") nil)
     (progn
       (setq blockName (strcat "VPUTKI-" (itoa D)))
+      (setq fitting-block (strcat "VPUTKI-" (itoa D) "-885"))
       (setvar "CLAYER" layerName)
-      ;; +dz: paikallinen +X osoittaa world +Z -> UCS rotaatio -90 Y
-      ;; -dz: paikallinen +X osoittaa world -Z -> UCS rotaatio +90 Y
-      (setq ucs-angle (if (> dz 0) -90.0 90.0))
       (command "_.UCS" "_W")
-      (command "_.UCS" "_Y" ucs-angle)
-      (setq p_local (trans p_prev 0 1))
-      (command "_.-INSERT" blockName p_local 1 1 0)
-      (setq ref (entlast))
-      (vputki-set-dyn-prop ref "Pituus" (abs dz))
+      (setq refs '())
+      (cond
+        ;; --- Horisontaalinen pipe edelta -> insertoi 88.5-elbow siirtymaan ---
+        (p_prev_dir
+          ;; UCS: X = p_prev_dir suunta, Y = world +/-Z (riippuen dz-merkista)
+          (command "_.UCS" "_Z" p_prev_dir)
+          (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
+          (setq p_local (trans p_prev 0 1))
+          ;; UCS:ssa: pipe tulee +X-suunnasta, taipuu -Y-suuntaan (= world +/-Z)
+          ;; Native CW match (turn = -90, native = -1, sy = 1), rot = 0 + rot-offset = -90
+          (command "_.-INSERT" fitting-block p_local 1 1
+                   (+ 0.0 *vputki-rot-offset-885*))
+          (setq fitting-ref (entlast))
+          (if fitting-ref (setq refs (cons fitting-ref refs)))
+          ;; Vertical pipe samassa UCS:ssa, lahtee samasta pisteesta -Y-suuntaan
+          ;; Suora-block default +X-suuntaan -> rot=-90 makaa UCS -Y
+          (command "_.-INSERT" blockName p_local 1 1 -90.0)
+          (setq pipe-ref (entlast))
+          (vputki-set-dyn-prop pipe-ref "Pituus" (abs dz))
+          (if pipe-ref (setq refs (cons pipe-ref refs))))
+        ;; --- Ei edellista suuntaa -> pelkka pystyputki ---
+        (T
+          (command "_.UCS" "_Y" (if (> dz 0) -90.0 90.0))
+          (setq p_local (trans p_prev 0 1))
+          (command "_.-INSERT" blockName p_local 1 1 0)
+          (setq pipe-ref (entlast))
+          (vputki-set-dyn-prop pipe-ref "Pituus" (abs dz))
+          (if pipe-ref (setq refs (cons pipe-ref refs)))))
       (command "_.UCS" "_W")
-      ref)))
+      (reverse refs))))
 
 ;; ----- Paakomento c:VP ----------------------------------------------
 
@@ -673,11 +695,12 @@ VAROITUS: " (rtos turn 2 1)
                             (rtos dz-default 2 0) ">: ")))
         (if (null dz-input) (setq dz-input dz-default))
         (setq *vputki-last-dz* dz-input)
-        (setq result (vputki-cont-insert-vertical D layerName p_prev dz-input))
+        (setq result
+          (vputki-cont-insert-vertical D layerName p_prev p_prev_dir dz-input))
         (if result
           (progn
             (setq undo-stack
-              (cons (list 'VERT (list result) p_prev p_prev_dir) undo-stack))
+              (cons (list 'VERT result p_prev p_prev_dir) undo-stack))
             (setq p_prev
               (list (car p_prev) (cadr p_prev)
                     (+ (if (caddr p_prev) (caddr p_prev) 0.0) dz-input)))
