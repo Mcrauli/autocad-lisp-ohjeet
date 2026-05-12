@@ -329,6 +329,12 @@
 (if (not (boundp '*vputki-output-pos-45*))  (setq *vputki-output-pos-45*  '(50.2 125.2)))
 (if (not (boundp '*vputki-output-pos-885*)) (setq *vputki-output-pos-885* '(102.0 106.5)))
 
+;; Output axis default-orientaatiossa (mitattu). Force-direction:
+;; pipen suunta lukitaan tahan output-axis:iin (ei kayttajan klikkaussuuntaan)
+;; -> ei kinkkia fittingin output-portilla.
+(if (not (boundp '*vputki-output-axis-45*))  (setq *vputki-output-axis-45*  42.8))
+(if (not (boundp '*vputki-output-axis-885*)) (setq *vputki-output-axis-885* 0.0))
+
 ;; Salli fittingin Y-peilaus (sy=-1) kun kaannos on CW. Jos nil, CW-
 ;; kaannos jaa suoraksi varoituksen kera.
 (if (not (boundp '*vputki-allow-fitting-mirror*))
@@ -426,7 +432,7 @@
 (defun vputki-cont-insert-corner (D kind p_corner rot-base turn-sign /
                                    blockName offset rot sy ref native-sign
                                    pos-off rot-rad off-dx off-dy adj-p
-                                   out-pos out-dx out-dy)
+                                   out-pos out-dx out-dy out-axis-default)
   (setq offset
     (cond ((eq kind '45)  *vputki-rot-offset-45*)
           ((eq kind '885) *vputki-rot-offset-885*)
@@ -490,6 +496,15 @@
         (list (+ (car adj-p) out-dx)
               (+ (cadr adj-p) out-dy)
               (if (caddr adj-p) (caddr adj-p) 0.0)))
+      (setq out-axis-default
+        (cond ((eq kind '45)  *vputki-output-axis-45*)
+              ((eq kind '885) *vputki-output-axis-885*)
+              (T 0.0)))
+      (setq *vputki-last-output-axis*
+        (vputki-norm-deg
+          (if (= sy 1)
+            (+ rot out-axis-default)
+            (+ rot (- out-axis-default)))))
       ref)))
 
 ;; ----- T-haaran insert + haaraputki ---------------------------------
@@ -662,7 +677,8 @@ VAROITUS: " (rtos turn 2 1)
                 tp tb result
                 target-dir len-default len-input
                 forced-fitting dz-default dz-input
-                z-next-str z-next-dir )
+                z-next-str z-next-dir
+                corner-pt forced-len forced-rad )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -822,13 +838,25 @@ Pituus <" (rtos len-default 2 0) ">: ")))
             (cond
               ((eq cls 'straight) nil)
               ((or (eq cls '45) (eq cls '885))
+                (setq corner-pt p_prev)
                 (setq result (vputki-cont-insert-corner
                                D cls p_prev p_prev_dir sign))
                 (if result
                   (progn
                     (setq frame-ents (cons result frame-ents))
                     (if *vputki-last-output-pos*
-                      (setq p_prev *vputki-last-output-pos*)))))
+                      (setq p_prev *vputki-last-output-pos*))
+                    ;; Force pipen suunta output-axis:iin, pituus = corner->klikkaus
+                    (if *vputki-last-output-axis*
+                      (progn
+                        (setq forced-len (vputki-dist-2d corner-pt p_cur))
+                        (setq forced-rad
+                          (vputki-deg->rad *vputki-last-output-axis*))
+                        (setq p_cur
+                          (list (+ (car p_prev) (* forced-len (cos forced-rad)))
+                                (+ (cadr p_prev) (* forced-len (sin forced-rad)))
+                                (if (caddr p_prev) (caddr p_prev) 0.0)))
+                        (setq new-dir *vputki-last-output-axis*))))))
               ((eq cls 'unknown)
                 (princ (strcat "\nVAROITUS: " (rtos turn 2 1)
                                " kaannos -- ei vastaavaa fittingia, "
