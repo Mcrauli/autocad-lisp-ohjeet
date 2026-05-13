@@ -620,24 +620,14 @@ VAROITUS: " (rtos turn 2 1)
 
 (defun vputki-cont-do-drop ( D layerName p_prev p_prev_dir dz next-dir kind /
                               refs p_local top-elbow top-output-ucs
+                              top-output-world bottom-input-world
                               pipe-len pipe-bottom-ucs pipe-bottom-world
                               pipe-bottom-ucs2 bottom-elbow bottom-output-ucs
-                              bottom-output-world drop-output-pos
-                              top-drop bottom-drop blockName trim-len )
+                              bottom-output-world top-pipe-start-ucs
+                              blockName trim-len )
   (setvar "CLAYER" layerName)
   (setq blockName (strcat "VPUTKI-" (itoa D)))
   (setq refs '())
-  ;; fitting-drop-y = abs(Y component of output-pos) eli kuinka paljon
-  ;; elbow "pudottaa" Z-suunnassa. 88.5: |Y of (102, 106.5)| = 106.5.
-  ;; 45: |Y of (50.2, 125.2)| = 125.2.
-  ;; Top elbow rotated by -90 sy=1: Y-pudotus = |output X|
-  ;; Bottom elbow rotated by 0 sy=-1: Y-pudotus = |output Y|
-  (setq drop-output-pos
-    (cond ((eq kind '885) *vputki-output-pos-885*)
-          ((eq kind '45)  *vputki-output-pos-45*)
-          (T '(0.0 0.0))))
-  (setq top-drop    (abs (car  drop-output-pos)))
-  (setq bottom-drop (abs (cadr drop-output-pos)))
   ;; --- TOP elbow (port-aware: pipe lahtee output-portista) ---
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" p_prev_dir)
@@ -655,14 +645,10 @@ VAROITUS: " (rtos turn 2 1)
             (vputki-dist-2d *vputki-last-pipe-start* *vputki-last-input-port*))
           (if (> trim-len 1.0)
             (vputki-set-dyn-prop *vputki-last-pipe-ref* "Pituus" trim-len))))))
+  ;; Talleta top elbown output-portti WORLD-koordinaateissa (UCS voi muuttua myohemmin)
   (setq top-output-ucs *vputki-last-output-pos*)
-  ;; pipe_len = abs(dz) - top-drop - bottom-drop
-  (setq pipe-len (- (abs dz) top-drop bottom-drop))
-  (if (< pipe-len 1.0) (setq pipe-len 1.0))
-  (command "_.-INSERT" blockName top-output-ucs 1 1 -90.0)
-  (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
-  (setq refs (cons (entlast) refs))
-  ;; Bottom corner target = top corner + (0, 0, -abs(dz)) (= where bottom horiz pipe centerline)
+  (setq top-output-world (trans top-output-ucs 1 0))
+  ;; Bottom corner target = top corner + (0, 0, -abs(dz))
   ;; In top elbow UCS where Y=+Z (dz<0): top_corner + (0, -abs(dz), 0)
   (setq pipe-bottom-ucs
     (list (car p_local)
@@ -676,8 +662,23 @@ VAROITUS: " (rtos turn 2 1)
   (setq pipe-bottom-ucs2 (trans pipe-bottom-world 0 1))
   (setq bottom-elbow (vputki-cont-insert-corner D kind pipe-bottom-ucs2 -90.0 1))
   (if bottom-elbow (setq refs (cons bottom-elbow refs)))
+  ;; bottom elbown input-portti on jo WORLD-koordinaateissa (insert-corner tallettaa sen)
+  (setq bottom-input-world *vputki-last-input-port*)
   (setq bottom-output-ucs *vputki-last-output-pos*)
   (setq bottom-output-world (trans bottom-output-ucs 1 0))
+  ;; --- PYSTYPUTKI: laske pituus todellisesta WORLD-etaisyydesta -------
+  ;; (ei analyyttisesta top-drop/bottom-drop -laskennasta, jotta visuaalisesti
+  ;;  istuu kohillee riippumatta blockin basepoint-erikoisuuksista)
+  (setq pipe-len (distance top-output-world bottom-input-world))
+  (if (< pipe-len 1.0) (setq pipe-len 1.0))
+  ;; Sijoita pystyputki samaan UCS-framen kuin top elbow oli (jotta rot=-90 osoittaa alas)
+  (command "_.UCS" "_W")
+  (command "_.UCS" "_Z" p_prev_dir)
+  (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
+  (setq top-pipe-start-ucs (trans top-output-world 0 1))
+  (command "_.-INSERT" blockName top-pipe-start-ucs 1 1 -90.0)
+  (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
+  (setq refs (cons (entlast) refs))
   (command "_.UCS" "_W")
   (list (reverse refs) bottom-output-world next-dir))
 
