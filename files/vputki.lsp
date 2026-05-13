@@ -123,6 +123,80 @@
 )
 
 ;; ============================================================
+;; INSERT VIA ENTMAKE - kiertää AutoCAD:n _.INSERT bugin Y-scale -1 +
+;; 3D UCS -yhdistelmässä.
+;;
+;; Käytetään suoraan entmaketa INSERT-entiteetin luomiseen, lasketaan
+;; WCS->OCS itse perustuen nykyiseen UCS:n Z-akselin suuntaan.
+;; ============================================================
+
+(defun vputki-make-insert ( blockName layerName ins-pt-ucs sy rot-deg /
+                              ins-pt-wcs extr-wcs ocs-x ocs-y norm
+                              ocs-pt rot-rad ucs-x-wcs theta
+                              dot-val cross-vec cross-z )
+  ;; Selvitä UCS:n perustasot WCS:ssä
+  (setq extr-wcs (trans '(0.0 0.0 1.0) 1 0 T)) ; UCS Z direction WCS:ssä
+  (setq ucs-x-wcs (trans '(1.0 0.0 0.0) 1 0 T)) ; UCS X direction WCS:ssä
+  ;; Konvertoi insertion point UCS -> WCS
+  (setq ins-pt-wcs (trans ins-pt-ucs 1 0))
+  ;; Konvertoi WCS -> OCS (Arbitrary Axis Algorithm)
+  (setq norm extr-wcs)
+  (if (and (< (abs (car norm)) 0.015625)
+           (< (abs (cadr norm)) 0.015625))
+    ;; |Nx|<1/64 ja |Ny|<1/64: käytä WY x N
+    (setq ocs-x (list (caddr norm)
+                       0.0
+                       (- 0.0 (car norm))))
+    ;; Käytä WZ x N
+    (setq ocs-x (list (- 0.0 (cadr norm))
+                       (car norm)
+                       0.0)))
+  ;; Normalisoi ocs-x
+  (setq ocs-x (vputki-vec-normalize ocs-x))
+  ;; ocs-y = norm x ocs-x
+  (setq ocs-y (vputki-vec-cross norm ocs-x))
+  (setq ocs-y (vputki-vec-normalize ocs-y))
+  ;; OCS-pt = (pt . ocs-x, pt . ocs-y, pt . norm)
+  (setq ocs-pt
+    (list (vputki-vec-dot ins-pt-wcs ocs-x)
+          (vputki-vec-dot ins-pt-wcs ocs-y)
+          (vputki-vec-dot ins-pt-wcs norm)))
+  ;; Lasketaan kulma UCS_X:n ja OCS_X:n välillä (UCS_Z:n ympäri)
+  ;; ENTMAKE-rotaatio = INSERT-rotaatio - theta
+  (setq dot-val (vputki-vec-dot ucs-x-wcs ocs-x))
+  (setq cross-vec (vputki-vec-cross ucs-x-wcs ocs-x))
+  (setq cross-z (vputki-vec-dot cross-vec extr-wcs))
+  (setq theta (atan cross-z dot-val))
+  (setq rot-rad (- (vputki-deg->rad rot-deg) theta))
+  ;; Luo block reference
+  (entmake (list
+    '(0 . "INSERT")
+    '(100 . "AcDbEntity")
+    (cons 8 layerName)
+    '(100 . "AcDbBlockReference")
+    (cons 2 blockName)
+    (cons 10 ocs-pt)
+    (cons 41 1.0)
+    (cons 42 (float sy))
+    (cons 43 1.0)
+    (cons 50 rot-rad)
+    (cons 210 extr-wcs)))
+  (entlast))
+
+(defun vputki-vec-cross ( a b )
+  (list (- (* (cadr a) (caddr b)) (* (caddr a) (cadr b)))
+        (- (* (caddr a) (car b))  (* (car a)   (caddr b)))
+        (- (* (car a)   (cadr b)) (* (cadr a)  (car b)))))
+
+(defun vputki-vec-dot ( a b )
+  (+ (* (car a) (car b)) (* (cadr a) (cadr b)) (* (caddr a) (caddr b))))
+
+(defun vputki-vec-normalize ( v / len )
+  (setq len (sqrt (vputki-vec-dot v v)))
+  (if (< len 1e-12) v
+      (list (/ (car v) len) (/ (cadr v) len) (/ (caddr v) len))))
+
+;; ============================================================
 ;; DYNAMIC BLOCK PROPERTY -SETTERI (vain suoralle putkelle)
 ;; ============================================================
 
@@ -484,10 +558,25 @@
         (list (- (car p_corner) off-dx)
               (- (cadr p_corner) off-dy)
               (if (caddr p_corner) (caddr p_corner) 0.0)))
-      (if (= sy 1)
-        (command "_.-INSERT" blockName adj-p 1 1 rot)
-        (command "_.-INSERT" blockName adj-p "_XYZ" 1 sy 1 rot))
+      (princ (strcat "\n[DBG-CORNER] kind=" (vl-prin1-to-string kind)
+                     " sy=" (itoa sy) " rot=" (rtos rot 2 2)
+                     " adj-p_UCS=(" (rtos (car adj-p) 2 2) ", "
+                     (rtos (cadr adj-p) 2 2) ", "
+                     (rtos (if (caddr adj-p) (caddr adj-p) 0.0) 2 2) ")"
+                     " adj-p_WORLD=(" (rtos (car (trans adj-p 1 0)) 2 2) ", "
+                     (rtos (cadr (trans adj-p 1 0)) 2 2) ", "
+                     (rtos (caddr (trans adj-p 1 0)) 2 2) ")"))
+      ;; ENTMAKE INSERT entity directly, bypassing _.INSERT command (joka bugaa
+      ;; Y-scale -1 + 3D UCS yhdistelmässä). Lasketaan WCS->OCS itse.
+      (vputki-make-insert blockName (getvar "CLAYER") adj-p sy rot)
       (setq ref (entlast))
+      (princ (strcat "\n[DBG-CORNER] entity OCS="
+                     (vl-prin1-to-string (cdr (assoc 10 (entget ref))))
+                     " extr=" (vl-prin1-to-string (cdr (assoc 210 (entget ref))))
+                     " scale=(" (rtos (cdr (assoc 41 (entget ref))) 2 2) ","
+                                 (rtos (cdr (assoc 42 (entget ref))) 2 2) ","
+                                 (rtos (cdr (assoc 43 (entget ref))) 2 2) ")"
+                     " rot=" (rtos (cdr (assoc 50 (entget ref))) 2 2)))
       (setq out-pos
         (cond ((eq kind '45)  *vputki-output-pos-45*)
               ((eq kind '885) *vputki-output-pos-885*)
@@ -648,6 +737,19 @@ VAROITUS: " (rtos turn 2 1)
   ;; Talleta top elbown output-portti WORLD-koordinaateissa (UCS voi muuttua myohemmin)
   (setq top-output-ucs *vputki-last-output-pos*)
   (setq top-output-world (trans top-output-ucs 1 0))
+  (princ (strcat "\n[DBG] p_prev WORLD = "
+                 (rtos (car p_prev) 2 2) ", "
+                 (rtos (cadr p_prev) 2 2) ", "
+                 (rtos (if (caddr p_prev) (caddr p_prev) 0.0) 2 2)))
+  (princ (strcat "\n[DBG] top input WORLD = "
+                 (rtos (car *vputki-last-input-port*) 2 2) ", "
+                 (rtos (cadr *vputki-last-input-port*) 2 2) ", "
+                 (rtos (if (caddr *vputki-last-input-port*)
+                         (caddr *vputki-last-input-port*) 0.0) 2 2)))
+  (princ (strcat "\n[DBG] top output WORLD = "
+                 (rtos (car top-output-world) 2 2) ", "
+                 (rtos (cadr top-output-world) 2 2) ", "
+                 (rtos (if (caddr top-output-world) (caddr top-output-world) 0.0) 2 2)))
   ;; Bottom corner target = top corner + (0, 0, -abs(dz))
   ;; In top elbow UCS where Y=+Z (dz<0): top_corner + (0, -abs(dz), 0)
   (setq pipe-bottom-ucs
@@ -666,17 +768,30 @@ VAROITUS: " (rtos turn 2 1)
   (setq bottom-input-world *vputki-last-input-port*)
   (setq bottom-output-ucs *vputki-last-output-pos*)
   (setq bottom-output-world (trans bottom-output-ucs 1 0))
+  (princ (strcat "\n[DBG] pipe-bottom-target WORLD = "
+                 (rtos (car pipe-bottom-world) 2 2) ", "
+                 (rtos (cadr pipe-bottom-world) 2 2) ", "
+                 (rtos (if (caddr pipe-bottom-world) (caddr pipe-bottom-world) 0.0) 2 2)))
+  (princ (strcat "\n[DBG] bottom input WORLD = "
+                 (rtos (car bottom-input-world) 2 2) ", "
+                 (rtos (cadr bottom-input-world) 2 2) ", "
+                 (rtos (if (caddr bottom-input-world) (caddr bottom-input-world) 0.0) 2 2)))
+  (princ (strcat "\n[DBG] bottom output WORLD = "
+                 (rtos (car bottom-output-world) 2 2) ", "
+                 (rtos (cadr bottom-output-world) 2 2) ", "
+                 (rtos (if (caddr bottom-output-world) (caddr bottom-output-world) 0.0) 2 2)))
   ;; --- PYSTYPUTKI: laske pituus todellisesta WORLD-etaisyydesta -------
   ;; (ei analyyttisesta top-drop/bottom-drop -laskennasta, jotta visuaalisesti
   ;;  istuu kohillee riippumatta blockin basepoint-erikoisuuksista)
   (setq pipe-len (distance top-output-world bottom-input-world))
+  (princ (strcat "\n[DBG] computed pipe-len = " (rtos pipe-len 2 3)))
   (if (< pipe-len 1.0) (setq pipe-len 1.0))
   ;; Sijoita pystyputki samaan UCS-framen kuin top elbow oli (jotta rot=-90 osoittaa alas)
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" p_prev_dir)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq top-pipe-start-ucs (trans top-output-world 0 1))
-  (command "_.-INSERT" blockName top-pipe-start-ucs 1 1 -90.0)
+  (vputki-make-insert blockName layerName top-pipe-start-ucs 1 -90.0)
   (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
   (setq refs (cons (entlast) refs))
   (command "_.UCS" "_W")
