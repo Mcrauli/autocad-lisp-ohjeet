@@ -713,7 +713,10 @@ VAROITUS: " (rtos turn 2 1)
                               pipe-len pipe-bottom-ucs pipe-bottom-world
                               pipe-bottom-ucs2 bottom-elbow bottom-output-ucs
                               bottom-output-world top-pipe-start-ucs
-                              blockName trim-len )
+                              blockName trim-len
+                              out-axis-default out-axis-ucs-deg out-axis-ucs-rad
+                              out-axis-sin out-axis-cos diag-L x-shift
+                              bottom-rot-base )
   (setvar "CLAYER" layerName)
   (setq blockName (strcat "VPUTKI-" (itoa D)))
   (setq refs '())
@@ -750,19 +753,39 @@ VAROITUS: " (rtos turn 2 1)
                  (rtos (car top-output-world) 2 2) ", "
                  (rtos (cadr top-output-world) 2 2) ", "
                  (rtos (if (caddr top-output-world) (caddr top-output-world) 0.0) 2 2)))
-  ;; Bottom corner target = top corner + (0, 0, -abs(dz))
-  ;; In top elbow UCS where Y=+Z (dz<0): top_corner + (0, -abs(dz), 0)
+  ;; --- Lasketaan diagonaalisen pipe-suunnan parametrit (45° = viistossa, 88.5° = pystyssä) ---
+  ;; out-axis-default on output-pipe-keskilinjan kulma blockin XY-tasossa.
+  ;; UCS-tasossa (rot-base=-90 + offset=-90 + sy=1 + out-axis-default) = -90 + out-axis-default.
+  (setq out-axis-default
+    (cond ((eq kind '45)  *vputki-output-axis-45*)
+          ((eq kind '885) *vputki-output-axis-885*)
+          (T 0.0)))
+  (setq out-axis-ucs-deg (- out-axis-default 90.0))
+  (setq out-axis-ucs-rad (vputki-deg->rad out-axis-ucs-deg))
+  (setq out-axis-sin (sin out-axis-ucs-rad))
+  (setq out-axis-cos (cos out-axis-ucs-rad))
+  ;; Diagonal pipe pituus ja x-siirto: L = -abs(dz) / sin(angle), x-shift = L * cos(angle).
+  ;; 88.5°: sin=-1, L = abs(dz), x-shift=0 (pysty). 45°: sin=-0.7336, L=abs(dz)*1.363, x-shift = L*0.6794.
+  (if (< (abs out-axis-sin) 0.01)
+    (progn (setq diag-L (abs dz)) (setq x-shift 0.0))
+    (progn
+      (setq diag-L (/ (- 0.0 (abs dz)) out-axis-sin))
+      (setq x-shift (* diag-L out-axis-cos))))
+  ;; Bottom corner target UCS: top_corner + (x-shift, -abs(dz), 0)
   (setq pipe-bottom-ucs
-    (list (car p_local)
+    (list (+ (car p_local) x-shift)
           (- (cadr p_local) (abs dz))
           (if (caddr p_local) (caddr p_local) 0.0)))
   (setq pipe-bottom-world (trans pipe-bottom-ucs 1 0))
   ;; --- BOTTOM elbow (port-aware) ---
+  ;; Bottom rot-base: -90 + out-axis-default (jotta input-axis suuntautuu diagonaalin tuloa kohti).
+  ;; 88.5°: -90 + 0 = -90. 45°: -90 + 42.8 = -47.2.
+  (setq bottom-rot-base (+ -90.0 out-axis-default))
   (command "_.UCS" "_W")
   (command "_.UCS" "_Z" next-dir)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq pipe-bottom-ucs2 (trans pipe-bottom-world 0 1))
-  (setq bottom-elbow (vputki-cont-insert-corner D kind pipe-bottom-ucs2 -90.0 1))
+  (setq bottom-elbow (vputki-cont-insert-corner D kind pipe-bottom-ucs2 bottom-rot-base 1))
   (if bottom-elbow (setq refs (cons bottom-elbow refs)))
   ;; bottom elbown input-portti on jo WORLD-koordinaateissa (insert-corner tallettaa sen)
   (setq bottom-input-world *vputki-last-input-port*)
@@ -791,7 +814,8 @@ VAROITUS: " (rtos turn 2 1)
   (command "_.UCS" "_Z" p_prev_dir)
   (command "_.UCS" "_X" (if (> dz 0) -90.0 90.0))
   (setq top-pipe-start-ucs (trans top-output-world 0 1))
-  (vputki-make-insert blockName layerName top-pipe-start-ucs 1 -90.0)
+  ;; Putken rotation = out-axis-ucs-deg. Pysty (88.5°) = -90. Viistossa (45°) = -47.2.
+  (vputki-make-insert blockName layerName top-pipe-start-ucs 1 out-axis-ucs-deg)
   (vputki-set-dyn-prop (entlast) "Pituus" pipe-len)
   (setq refs (cons (entlast) refs))
   (command "_.UCS" "_W")
@@ -963,11 +987,19 @@ VAROITUS: " (rtos turn 2 1)
             (if (null z-kind-str) (setq z-kind-str "9"))
             (setq z-kind-sym
               (if (= z-kind-str "4") '45 '885))
-            (initget "V O Y A")
-            (setq z-next-str
-              (getkword "\nSeuraava horiz suunta [V/O/Y/A] <O>: "))
-            (if (null z-next-str) (setq z-next-str "O"))
-            (setq z-next-dir (vputki-cont-cardinal-dir z-next-str))
+            ;; 45-fitting on tasossaan: jatkaa AINA p_prev_dir-suuntaan.
+            ;; (Käännös tehdään erikseen V/O/Y/A-komennolla 45-pudotuksen jälkeen.)
+            ;; 88.5-fitting voi kääntyä mihin tahansa horisontaaliseen suuntaan.
+            (cond
+              ((eq z-kind-sym '45)
+                (setq z-next-dir p_prev_dir)
+                (princ "\n>> 45-Z-pudotus jatkaa diagonaalisesti samaan suuntaan."))
+              (T
+                (initget "V O Y A")
+                (setq z-next-str
+                  (getkword "\nSeuraava horiz suunta [V/O/Y/A] <O>: "))
+                (if (null z-next-str) (setq z-next-str "O"))
+                (setq z-next-dir (vputki-cont-cardinal-dir z-next-str))))
             (setq result
               (vputki-cont-do-drop D layerName p_prev p_prev_dir
                                     dz-input z-next-dir z-kind-sym))
