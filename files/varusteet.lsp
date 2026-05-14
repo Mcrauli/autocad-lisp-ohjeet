@@ -21,7 +21,8 @@
 ;;;
 ;;; Layerit luodaan automaattisesti per laite (KYL-CO2-ANTURI,
 ;;; KYL-CO2-SIREENI, KYL-HUOLTO-PC, KYL-RK-JK10, KYL-SAADINKESKUS-KU,
-;;; KYL-HATASEIS) AutoCAD-vareilla. Block-maaritysten sisalla geometria
+;;; KYL-HATASEIS), kaikki AutoCAD Color Index 175 (RGB 63,63,127).
+;;; Block-maaritysten sisalla geometria
 ;;; on layerilla 0 (BYBLOCK), joten instanssin layer periytyy alaspain
 ;;; ja dxf2ifc tunnistaa laitetyypin layer-pattern-mappauksesta.
 ;;;
@@ -54,14 +55,19 @@
 ;; - target-layer-name luodaan automaattisesti puuttuessaan annetulla
 ;;   ACI-varilla. Olemassaolevaan layeriin ei kosketa.
 
+;; Keyword-avaimet on valittu niin etta jokaisella on UNIIKKI ekakirjain
+;; (A/S/P/R/K/H). Aiemmat "CO2anturi" ja "CO2sireeni" lyhentyivat initget:ssa
+;; molemmat "CO":ksi -> getkword sekosi kun kayttaja nappaili lyhennetta.
+;; ACI 175 (RGB 63,63,127) kaikille — yhtenainen KYL-varikonventio,
+;; sama vari jonka dxf2ifc emittoi IFC:hen (Solibri-yhdenmukaisuus).
 (setq varusteet-device-map
   (list
-    (list "CO2anturi"    "co2-anturi.dwg"        "CO2-anturi"       "KYL-CO2-ANTURI"        5)
-    (list "CO2sireeni"   "co2-sireeni.dwg"       "CO2-sireeni"      "KYL-CO2-SIREENI"       1)
-    (list "HuoltoPC"     "huolto-pc.dwg"         "Huolto-PC"        "KYL-HUOLTO-PC"         250)
-    (list "RKJK10"       "rk-jk10.dwg"           "RK-JK10"          "KYL-RK-JK10"           6)
-    (list "Saadinkeskus" "saadinkeskus-ku.dwg"   "Saadinkeskus-KU"  "KYL-SAADINKESKUS-KU"   2)
-    (list "Hataseis"     "hataseispainike.dwg"   "Hataseispainike"  "KYL-HATASEIS"          1)
+    (list "Anturi"      "co2-anturi.dwg"        "CO2-anturi"       "KYL-CO2-ANTURI"        175)
+    (list "Sireeni"     "co2-sireeni.dwg"       "CO2-sireeni"      "KYL-CO2-SIREENI"       175)
+    (list "Pc"          "huolto-pc.dwg"         "Huolto-PC"        "KYL-HUOLTO-PC"         175)
+    (list "Ryhmakeskus" "rk-jk10.dwg"           "RK-JK10"          "KYL-RK-JK10"           175)
+    (list "Keskus"      "saadinkeskus-ku.dwg"   "Saadinkeskus-KU"  "KYL-SAADINKESKUS-KU"   175)
+    (list "Hataseis"    "hataseispainike.dwg"   "Hataseispainike"  "KYL-HATASEIS"          175)
   )
 )
 
@@ -154,12 +160,13 @@
 ;; VARUSTEET-KOMENTO
 ;; ============================================================
 
-(defun c:VARUSTEET ( / *error* oldClayer oldCmdecho oldOsmode
+(defun c:VARUSTEET ( / *error* oldClayer oldCmdecho oldOsmode oldDynmode
                        choice entry dwgName blockName layerName colorIndex
-                       blockPath )
+                       blockPath firstTime savedFiledia savedCmddia savedExpert )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
+    (if oldDynmode (setvar "DYNMODE" oldDynmode))
     (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
     (if oldClayer  (setvar "CLAYER"  oldClayer))
     (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
@@ -172,24 +179,29 @@
   (setq oldClayer  (getvar "CLAYER"))
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldOsmode  (getvar "OSMODE"))
+  (setq oldDynmode (getvar "DYNMODE"))
 
   (setvar "CMDECHO" 0)
+  ;; Dynamic input paalle valinnan ajaksi: keyword-lista naytetaan kursorin
+  ;; vieressa nuolinappaimin selattavana (toimii seka AutoCAD etta BricsCAD).
+  (setvar "DYNMODE" 3)
 
-  ;; 1) Valitse laite
-  (initget "CO2anturi CO2sireeni HuoltoPC RKJK10 Saadinkeskus Hataseis")
+  ;; 1) Valitse laite. Keyword-lyhennteet uniikit: A/S/P/R/K/H.
+  (initget "Anturi Sireeni Pc Ryhmakeskus Keskus Hataseis")
   (setq choice
     (getkword
       (strcat
         "\nValitse varuste "
-        "[CO2anturi/CO2sireeni/HuoltoPC/RKJK10/Saadinkeskus/Hataseis] "
-        "<CO2anturi>: ")))
-  (if (null choice) (setq choice "CO2anturi"))
+        "[Anturi/Sireeni/Pc/Ryhmakeskus/Keskus/Hataseis] "
+        "<Anturi>: ")))
+  (if (null choice) (setq choice "Anturi"))
 
   ;; 2) Hae mappaus-rivi
   (setq entry (assoc choice varusteet-device-map))
   (if (null entry)
     (progn
       (princ (strcat "\nVirhe: tuntematon varuste '" choice "'"))
+      (setvar "DYNMODE" oldDynmode)
       (setvar "CMDECHO" oldCmdecho)
       (setvar "CLAYER"  oldClayer)
       (exit)))
@@ -198,31 +210,60 @@
   (setq layerName  (nth 3 entry))
   (setq colorIndex (nth 4 entry))
 
-  ;; 3) Etsi block-DWG
-  (setq blockPath (varusteet-find-block-file dwgName))
-  (if (null blockPath)
+  ;; 3) Block-maaritys: lataa ensikerralla DWG:sta block-tauluun.
+  ;;    -INSERT name=path ajetaan VAIN kerran, kontrolloidusti origoon
+  ;;    ja poistetaan heti. Varsinainen sijoitus tehdaan vla-InsertBlock:lla
+  ;;    (sama strategia kuin klhylly.lsp) — ei riipu -INSERT:n prompt-
+  ;;    sekvenssista, joka eroaa AutoCADin ja BricsCADin valilla ja
+  ;;    aiheutti vaaran blockin / scalen BricsCADissa.
+  (setq firstTime (not (tblsearch "BLOCK" blockName)))
+  (if firstTime
     (progn
-      (princ (strcat
-        "\nVIRHE: " dwgName " ei loydy. Varmista etta tiedosto on samassa"
-        "\nkansiossa kuin varusteet.lsp. (DWG-tiedostot kuuluvat"
-        "\nsuunnittelutyokalut.zip-pakettiin.)"))
-      (setvar "CMDECHO" oldCmdecho)
-      (setvar "CLAYER"  oldClayer)
-      (exit)))
+      (setq blockPath (varusteet-find-block-file dwgName))
+      (if (null blockPath)
+        (progn
+          (princ (strcat
+            "\nVIRHE: " dwgName " ei loydy. Varmista etta tiedosto on samassa"
+            "\nkansiossa kuin varusteet.lsp. (DWG-tiedostot kuuluvat"
+            "\nsuunnittelutyokalut.zip-pakettiin.)"))
+          (setvar "DYNMODE" oldDynmode)
+          (setvar "CMDECHO" oldCmdecho)
+          (setvar "CLAYER"  oldClayer)
+          (exit)))
+      (setq savedFiledia (getvar "FILEDIA"))
+      (setq savedCmddia  (getvar "CMDDIA"))
+      (setq savedExpert  (getvar "EXPERT"))
+      (setvar "FILEDIA" 0)
+      (setvar "CMDDIA"  0)
+      (setvar "EXPERT"  5)
+      (vl-catch-all-apply
+        '(lambda ()
+           (command "_.-INSERT" (strcat blockName "=" blockPath) "0,0,0" 1 1 0)
+           (if (entlast) (entdel (entlast)))))
+      (setvar "FILEDIA" savedFiledia)
+      (setvar "CMDDIA"  savedCmddia)
+      (setvar "EXPERT"  savedExpert)
+    )
+  )
 
-  ;; 4) Varmista target-layer + aseta CLAYER:ksi
+  ;; 4) Varmista target-layer + aseta CLAYER:ksi jotta uusi instanssi
+  ;;    menee oikealle layerille.
   (varusteet-ensure-layer layerName colorIndex)
   (setvar "CLAYER" layerName)
 
-  ;; 5) Insertoi block. -INSERT-komento:
-  ;;    blockName=blockPath   -> lataa blocks-tauluun ekalla kerralla
-  ;;    pause                 -> kayttaja pickaa insertion-pisteen
-  ;;    "" ""                 -> X-scale + Y-scale defaultit (1,1)
-  ;;    pause                 -> kayttaja pickaa rotaation
-  (command "_.-INSERT" (strcat blockName "=" blockPath) pause "" "" pause)
+  ;; 5) Insertoi block interaktiivisesti -INSERT:lla. Block on jo
+  ;;    block-taulussa (vaihe 3), joten "-INSERT blockName" nayttaa
+  ;;    drag-preview:n kun kayttaja etsii sijoituspaikkaa. while-pause
+  ;;    -loop luovuttaa kaikki promptit (piste / scale / rotaatio)
+  ;;    kayttajalle interaktiivisesti — toimii seka AutoCAD etta
+  ;;    BricsCAD vaikka niiden -INSERT-prompt-sekvenssi eroaa.
+  (command "_.-INSERT" blockName)
+  (while (= 1 (logand 1 (getvar "CMDACTIVE")))
+    (command pause))
 
   ;; 6) Palauta tila
   (setvar "OSMODE"  oldOsmode)
+  (setvar "DYNMODE" oldDynmode)
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
   (princ)

@@ -28,9 +28,10 @@
   (princ)
 )
 
-(defun c:lti () (putki-line "LT IMU" 4))
-(defun c:mti () (putki-line "MT IMU" 5))
-(defun c:mtn () (putki-line "MT NESTE" 42))
+;; Kaikki layerit ACI 175 (RGB 63,63,127) — yhtenainen KYL-varikonventio.
+(defun c:lti () (putki-line "LT IMU" 175))
+(defun c:mti () (putki-line "MT IMU" 175))
+(defun c:mtn () (putki-line "MT NESTE" 175))
 
 
 ;; 🔥 3 PUTKEA
@@ -40,10 +41,10 @@
   (setq oldOrtho (getvar "ORTHOMODE"))
   (setvar "ORTHOMODE" 1)
 
-  ;; layerit
-  (make-layer "MT NESTE" 42)
-  (make-layer "LT IMU" 4)
-  (make-layer "MT IMU" 5)
+  ;; layerit — kaikki ACI 175 (RGB 63,63,127)
+  (make-layer "MT NESTE" 175)
+  (make-layer "LT IMU" 175)
+  (make-layer "MT IMU" 175)
 
   ;; pisteet
   (setq p1 (getpoint "\nAloituspiste: "))

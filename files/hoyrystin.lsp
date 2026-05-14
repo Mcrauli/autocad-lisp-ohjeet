@@ -5,7 +5,7 @@
 ;;;   HY2 / HOYR2 -> 2-puhaltimen hoyrystin (hoyrystin-2.dwg)
 ;;;   HY3 / HOYR3 -> 3-puhaltimen hoyrystin (hoyrystin-3.dwg)
 ;;;
-;;; Layer: KYL-HOYRYSTIMET (ACI 30, oranssi — erottuu sinisistä putkista).
+;;; Layer: KYL-HOYRYSTIMET (AutoCAD Color Index 175, RGB 63,63,127).
 ;;; dxf2ifc:n preprocessing.py kayttaa wildcardia *yrystin* matchaamaan
 ;;; sekä ä/o että H/h variantit -> IfcEvaporator IFC-eksportissa.
 ;;;
@@ -157,7 +157,7 @@
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldOsmode  (getvar "OSMODE"))
 
-  (hoyr-ensure-layer "KYL-HOYRYSTIMET" 30)   ; oranssi
+  (hoyr-ensure-layer "KYL-HOYRYSTIMET" 175)   ; ACI 175 (RGB 63,63,127)
 
   (setq blockName (strcat "HOYRYSTIN-" (itoa puh) "PUH"))
   (setq dwgName   (strcat "hoyrystin-" (itoa puh) ".dwg"))

@@ -20,8 +20,8 @@
 ;;;
 ;;; Lataa: APPLOAD -> valitse tama tiedosto.
 ;;;
-;;; Layerit luodaan automaattisesti: KYL-VIEMARI-32 (ACI 151, vaalea sin),
-;;; KYL-VIEMARI-50 (ACI 5, sininen), KYL-VIEMARI-75 (ACI 175, tumma sin).
+;;; Layerit luodaan automaattisesti: KYL-VIEMARI-32 / -50 / -75, kaikki
+;;; AutoCAD Color Index 175 (RGB 63,63,127, tumma sininen).
 
 (vl-load-com)
 
@@ -245,11 +245,7 @@
 ;; ============================================================
 
 (defun vputki-aci-for-size ( D )
-  (cond
-    ((= D 32) 151)    ; vaalea sininen
-    ((= D 50)   5)    ; perussininen
-    ((= D 75) 175)    ; tumma sininen
-    (T          7)))  ; default fallback
+  175)  ; kaikki KYL-* layerit yhtenaisesti ACI 175 (RGB 63,63,127)
 
 ;; ============================================================
 ;; INSERT: SUORA putki (dynamic block + Pituus-parametri)

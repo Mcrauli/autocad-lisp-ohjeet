@@ -20,7 +20,7 @@
 ;;;   KORKO      -> valitse kohteet -> kohdekorko z mm
 ;;;
 ;;; Layerit luodaan automaattisesti: KYL-LEVYHYLLY ja KYL-TIKASHYLLY,
-;;; molemmat true-color RGB(76,76,153). Block-maaritysten sisalla geometria
+;;; molemmat AutoCAD Color Index 175 (RGB 63,63,127). Block-maaritysten sisalla geometria
 ;;; on layerilla 0 (BYBLOCK), joten instanssin layer periytyy alaspain
 ;;; ja IFC-vienti (dxf2ifc) tunnistaa hyllytyypin.
 ;;;
