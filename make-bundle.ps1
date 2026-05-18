@@ -35,7 +35,13 @@ New-Item -ItemType Directory -Path $bundleDir      | Out-Null
 New-Item -ItemType Directory -Path $contentsDir    | Out-Null
 New-Item -ItemType Directory -Path $bundleIconsDir | Out-Null
 
-# 9 LSP tools auto-loaded by _loader.lsp
+# _loader.lsp on AINOA tiedosto jonka PackageContents merkitsee
+# LoadOnAutoCADStartup="True":ksi. Se lataa kaikki muut 9 LSP-tyokalua
+# absoluuttisella polulla ja paivittaa support search path:in.
+$loaderLsp = '_loader.lsp'
+Copy-Item (Join-Path $filesDir $loaderLsp) $contentsDir -Force
+
+# Tyokalu-LSP:t — ladataan _loader.lsp:n toimesta (ei oma ComponentEntry)
 $lspFiles = @('hoyrystin.lsp','kaato.lsp','klhylly.lsp','positio.lsp',
               'putkityokalu.lsp','varusteet.lsp',
               'kotelo.lsp','koneikko.lsp','lauhdutin.lsp')
@@ -68,11 +74,9 @@ Get-ChildItem -LiteralPath $iconsDir -Filter '*.png' | ForEach-Object {
 # - ProductCode = pysyva GUID taman paketin identifierina (sama paivityksissakin).
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
-# Build LSP ComponentEntries dynamically
-$lspEntries = ($lspFiles | ForEach-Object {
-  $appName = ($_ -replace '\.lsp$','')
-  "    <ComponentEntry AppName=`"RadikaTools-$appName`" Version=`"1.0.0`" ModuleName=`"./Contents/$_`" AppType=`".lsp`" LoadOnAutoCADStartup=`"True`" />"
-}) -join "`r`n"
+# LSP-tyokaluille EI tehda omia ComponentEntryja — _loader.lsp lataa
+# ne sisaisesti absoluuttisella polulla. Yksi LSP-entry alla.
+$lspEntries = "    <ComponentEntry AppName=`"RadikaTools-Loader`" Version=`"1.0.0`" ModuleName=`"./Contents/_loader.lsp`" AppType=`".lsp`" LoadOnAutoCADStartup=`"True`" />"
 
 $pkg = @"
 <?xml version="1.0" encoding="utf-8"?>
