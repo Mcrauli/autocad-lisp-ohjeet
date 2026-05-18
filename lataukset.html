@@ -372,6 +372,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <section class="changelog reveal">
 <h2>Viimeisimmät päivitykset</h2>
 <ul>
+<li><span class="when">18.5.2026</span><span><b>Paketti AutoCAD-plugin-bundleksi.</b> Ei enää APPLOADia, ei CUILOADia, ei skriptin ajamista. Pura ZIP, raahaa <code>RadikaTools.bundle</code>-kansio <code>%APPDATA%\Autodesk\ApplicationPlugins\</code>-kansioon ja käynnistä AutoCAD — kaikki työkalut + ribbon latautuvat automaattisesti. Käyttää AutoCADin omaa plug-in-bundle-formaattia (<code>PackageContents.xml</code>) jota CAD löytää ApplicationPlugins-kansiosta käynnistyessään.</span></li>
 <li><span class="when">18.5.2026</span><span><b>Kolme uutta työkalua: KOTELO, KONEIKKO, LAUHDUTIN.</b> KOTELO piirtää kotelo-tyyppisen kaapelireitin (suljettu poikkileikkaus, parametrinen pituus, sama logiikka kuin KLHYLLY). KONEIKKO ja LAUHDUTIN sijoittavat valmiit kylmälaitos-blokit drag-previewillä. Ribbonin <b>Höyrystimet</b>-paneeli nimetty uudelleen <b>Laitteet</b>-paneeliksi ja KONEIKKO + LAUHDUTIN lisätty sinne. KOTELO Hyllyt-paneelissa. Auto-load <code>acaddoc.lsp</code>:n kautta — APPLOAD ei enää tarpeen (asennus <code>tools/install-radika.ps1</code> hoitaa). dxf2ifc-puolella uusi <code>KYL-KOTELO</code> → <code>IfcCableCarrierSegment</code> / <code>CABLETRUNKINGSEGMENT</code> -mappaus.</span></li>
 <li><span class="when">18.5.2026</span><span><b>VPUTKI-viemäriputkityökalu poistettu paketista.</b> Viemäreiden piirto kannattaa tehdä BricsCAD-puolella jossa työnkulku on luontevampi. <code>vputki.lsp</code> säilyy repon arkistossa mahdollista tulevaa kehitystä varten, mutta se ei enää auto-lataudu eikä näy ZIP-paketissa, ribbon-välilehdellä eikä ohjeissa.</span></li>
 <li><span class="when">14.5.2026</span><span><b>Yhtenäinen piirtoväri KYL-työkaluille.</b> KYL-layereita luovat komennot (hyllyt, höyrystimet, varusteet) luovat layerinsä nyt samalla AutoCAD-värillä — Color Index 175 (tumma sininen, RGB 63,63,127). Sama väri näkyy myös Solibrissa kun piirustus viedään dxf2ifc:llä IFC-malliksi, joten AutoCAD ja BIM-katselin näyttävät samalta. (Putkityökalun LT/MT-putket säilyttävät omat värinsä — niissä väri erottaa putkityypin.)</span></li>
@@ -390,7 +391,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <span class="file-badge zip">ZIP</span>
 <div class="file-meta">
 <h3>Kaikki työkalut</h3>
-<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>903 KB</span><span>9 LSP + 14 DWG + ribbon</span><span>Päiv. 18.5.2026</span></div>
+<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>909 KB</span><span>AutoCAD-plugin-bundle</span><span>Päiv. 18.5.2026</span></div>
 </div>
 <a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>
@@ -409,8 +410,17 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <li><b>VARUSTEET</b> — kylmäkoneikon sähkövarustelu: CO2-anturi, CO2-sireeni, Huolto-PC, ryhmäkeskus (RK-JK10), säädinkeskus (KU) ja hätäseispainike. Komento <code>VARUSTEET</code> tarjoaa nuolinäppäin-valikon laitevalinnalle. <code>varusteet.lsp</code> + 6 DWG:tä.</li>
 <li><b>Radika-ribbon</b> — oma välilehti AutoCADin ribboniin, jossa kaikki komennot näkyvät kuvakkeina (5 paneelia: Hyllyt, Putket, Laitteet, Positio, Apuvälineet). Ei tarvitse muistaa komentonimiä — paina kuvaa. <code>radika-tools.cuix</code> + <code>icons/</code>-kansio.</li>
 </ul>
-<p><b>1. LSP-tiedostot:</b> Pura ZIP yhteen kansioon (esim. <code>C:\AutoCADLisp\</code>) ja <code>APPLOAD</code>:lla halutut LSP-tiedostot AutoCADiin. LSP:t etsivät DWG-riippuvuudet automaattisesti samasta kansiosta.</p>
-<p><b>2. Ribbon-välilehti:</b> Komento <code>CUILOAD</code> → Browse → valitse <code>radika-tools.cuix</code> samasta kansiosta → Load → Close. Komento <code>RIBBON</code> jos ribbon ei ole näkyvissä. Välilehti <b>Radika</b> ilmestyy ribbonin yläreunaan.</p>
+<p><b>Asennus on AutoCAD-plugin-bundle</b> — ei APPLOADia, ei CUILOADia, ei skriptin ajamista. Vain raahaa kansio paikoilleen ja käynnistä AutoCAD.</p>
+
+<ol class="install-steps">
+<li><b>Pura ZIP</b> mihin tahansa (esim. työpöydälle). Saat <code>RadikaTools.bundle</code>-kansion.</li>
+<li><b>Avaa Resurssienhallinta</b>. Liitä osoitepalkkiin: <code>%APPDATA%\Autodesk\ApplicationPlugins\</code> ja paina Enter.<br><span class="muted">(Kansio luodaan jos sitä ei vielä ole. Täysi polku: <code>C:\Users\&lt;käyttäjä&gt;\AppData\Roaming\Autodesk\ApplicationPlugins\</code>.)</span></li>
+<li><b>Raahaa</b> <code>RadikaTools.bundle</code> sinne.</li>
+<li><b>Käynnistä AutoCAD</b> (tai BricsCAD). Radika-välilehti ilmestyy ribboniin ja kaikki LSP-komennot toimivat ilman APPLOADia.</li>
+</ol>
+
+<p>Päivittäminen: lataa uusi ZIP, korvaa <code>RadikaTools.bundle</code>-kansio uudella, käynnistä CAD uudelleen.</p>
+<p>Poisto: poista <code>RadikaTools.bundle</code>-kansio ApplicationPlugins-kansiosta.</p>
 </div>
 
 <footer class="site-footer">

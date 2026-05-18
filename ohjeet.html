@@ -870,27 +870,30 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="section" id="kayttoonotto">
 <h2 class="category">Käyttöönotto</h2>
 <div class="block reveal">
-<h3>1. Komennot AutoCADiin</h3>
+<h3>Asennus AutoCAD-plugin-bundlena</h3>
+<p>Lataa <a href="lataukset.html">latauksista</a> <code>suunnittelutyokalut.zip</code> ja seuraa neljä askelta:</p>
 <ol>
-<li>Avaa AutoCAD</li>
-<li>Kirjoita <code>APPLOAD</code></li>
-<li>Lataa .lsp-tiedostot</li>
+<li><b>Pura ZIP</b> mihin tahansa (työpöydälle riittää). Saat <code>RadikaTools.bundle</code>-kansion.</li>
+<li><b>Avaa Resurssienhallinta</b>. Liitä osoitepalkkiin: <code>%APPDATA%\Autodesk\ApplicationPlugins\</code> ja paina Enter. Kansio luodaan jos sitä ei vielä ole.</li>
+<li><b>Raahaa</b> <code>RadikaTools.bundle</code>-kansio sinne.</li>
+<li><b>Käynnistä AutoCAD</b> (tai BricsCAD). Radika-välilehti ilmestyy ribboniin ja kaikki komennot ovat heti käytettävissä.</li>
 </ol>
 <p style="margin-top:14px;color:#94a3b8;font-size:14px;line-height:1.6;">
-POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code>positio.lsp</code>. Jos lataat ZIP-paketin, pura kaikki tiedostot yhteen kansioon ja LISP löytää DWG:n automaattisesti.
+Ei APPLOADia, ei CUILOADia, ei skriptin ajamista. AutoCAD löytää bundlen <code>PackageContents.xml</code>-tiedostosta käynnistyessään ja lataa kaikki LSPit + ribbonin automaattisesti. Päivittäminen: korvaa <code>RadikaTools.bundle</code>-kansio uudella ja käynnistä CAD uudelleen. Poisto: poista kansio.
 </p>
 </div>
 <div class="block reveal">
-<h3>2. Radika-ribbon-välilehti (vapaaehtoinen)</h3>
-<p>Komennot näkyvät kuvakkeina omalla ribbon-välilehdellä, jos lataat ZIP-paketin ja asennat ribbonin:</p>
-<ol>
-<li>Pura ZIP-paketti yhteen kansioon (sama kuin LSP-tiedostot)</li>
-<li>Kirjoita <code>CUILOAD</code></li>
-<li>Browse → valitse <code>radika-tools.cuix</code> samasta kansiosta → Load → Close</li>
-<li>Kirjoita <code>RIBBON</code> jos ribbon ei ole näkyvissä</li>
-</ol>
+<h3>Mitä Radika-välilehti sisältää</h3>
+<p>Komennot näkyvät kuvakkeina viidellä paneelilla:</p>
+<ul>
+<li><b>Hyllyt:</b> KLH (vaaka), KLHV (3D-tikashylly), KORKO, KOTELO</li>
+<li><b>Putket:</b> 3PTK, LTI, MTI, MTN</li>
+<li><b>Laitteet:</b> HY1/HY2/HY3, KONEIKKO, LAUHDUTIN</li>
+<li><b>Positio:</b> POSITIO, ASETANUMERO</li>
+<li><b>Apuvälineet:</b> KAATO3D, VARUSTEET (alavalikossa 6 laitetta)</li>
+</ul>
 <p style="margin-top:14px;color:#94a3b8;font-size:14px;line-height:1.6;">
-Välilehti <b>Radika</b> ilmestyy ribbonin yläreunaan viidellä paneelilla: Hyllyt (KLH, KLHV, KORKO), Putket (3PTK, LTI, MTI, MTN), Höyrystimet (HY1–HY3), Positio (POSITIO, ASETANUMERO) ja Apuvälineet (KAATO3D, VARUSTEET). Suuri päänappi käynnistää yleisimmän komennon, dropdownista löytyvät muut variantit.
+Suuri päänappi käynnistää yleisimmän komennon, dropdownista löytyvät muut variantit. Komentonimiä ei tarvitse muistaa — paina kuvaa.
 </p>
 </div>
 </div>
