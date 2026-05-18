@@ -80,11 +80,13 @@ $pkg = @"
                     ProductType="Application"
                     AutodeskProduct="AutoCAD"
                     ProductCode="{7A2B1E4F-3C5D-4E6F-8A9B-1C2D3E4F5A6B}"
+                    UpgradeCode="{5F9E8D7C-6B5A-4938-8271-6F5E4D3C2B1A}"
                     Name="RadikaTools"
                     Description="Kylmalaite-suunnittelun LISP-tyokalut + Radika-ribbon"
                     Author="Lauri Rekola"
                     Helpfile="https://mcrauli.github.io/autocad-lisp-ohjeet/"
                     AppVersion="1.0.0"
+                    FriendlyVersion="1.0.0"
                     SupportedLocales="*"
                     Icon="./Contents/icons/klh_32.png">
   <CompanyDetails Name="Lauri Rekola" />
@@ -93,11 +95,12 @@ $pkg = @"
        seuraavat tata. Vaarin sijoitettuna AutoCAD hylkaa koko bundlen. -->
   <RuntimeRequirements OS="Win32|Win64" Platform="AutoCAD*" SeriesMin="R23.0" SeriesMax="R25.0" />
   <Components Description="Radika ribbon + LSP-tyokalut">
+    <!-- CUIX: Autodeskin omat ribbon-bundlet eivat kayta AppType/MenuGroup
+         -attribuutteja taalla — AutoCAD tunnistaa CUIX:n paatteesta ja
+         lukee MenuGroup-nimen CUIX-tiedoston sisalta. -->
     <ComponentEntry AppName="RadikaTools-CUIX" Version="1.0.0"
                     ModuleName="./Contents/radika-tools.cuix"
-                    AppType=".cuix"
-                    MenuGroup="RADIKA"
-                    LoadOnAutoCADStartup="True" />
+                    AppDescription="Radika-ribbon (kylmalaite-tyokalut)" />
 $lspEntries
   </Components>
 </ApplicationPackage>
