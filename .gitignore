@@ -1,5 +1,12 @@
-# AutoCAD-automaattiset varmuuskopiot
+# AutoCAD-automaattiset varmuuskopiot ja lukitustiedostot
 *.bak
+*.bak.cuix
+*.dwl
+*.dwl2
+*.mnr
+# CUIX-purkuvälimuisti jonka CAD kirjoittaa .cuix:n viereen
+*.resz
+files/radika-tools.cui
 
 # Käyttäjäkohtaiset asetukset
 UsersLauriRekola.claudesettings.json

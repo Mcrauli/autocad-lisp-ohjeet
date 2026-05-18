@@ -560,80 +560,6 @@ li {
   95%, 100% { opacity: 0; }
 }
 
-/* VPUTKI demo — two points, pipe segment draws, stretch grips appear */
-.vputki-demo__p1 {
-  opacity: 0;
-  animation: vputki-p1-fade 6s ease-in-out infinite;
-}
-
-.vputki-demo__p2 {
-  opacity: 0;
-  animation: vputki-p2-fade 6s ease-in-out infinite;
-}
-
-.vputki-demo__shaft {
-  stroke-dasharray: 320;
-  stroke-dashoffset: 320;
-  opacity: 0;
-  animation: vputki-shaft-draw 6s ease-in-out infinite;
-}
-
-.vputki-demo__wall {
-  opacity: 0;
-  animation: vputki-wall-fade 6s ease-in-out infinite;
-}
-
-.vputki-demo__grip {
-  opacity: 0;
-  animation: vputki-grip-fade 6s ease-in-out infinite;
-}
-
-.vputki-demo__grip--left { animation-delay: 0s; }
-.vputki-demo__grip--right { animation-delay: 0.15s; }
-
-.vputki-demo__label {
-  opacity: 0;
-  animation: vputki-label-fade 6s ease-in-out infinite;
-}
-
-@keyframes vputki-p1-fade {
-  0%, 3%    { opacity: 0; }
-  7%, 88%   { opacity: 1; }
-  95%, 100% { opacity: 0; }
-}
-
-@keyframes vputki-p2-fade {
-  0%, 13%   { opacity: 0; }
-  18%, 88%  { opacity: 1; }
-  95%, 100% { opacity: 0; }
-}
-
-@keyframes vputki-shaft-draw {
-  0%, 22%   { stroke-dashoffset: 320; opacity: 0; }
-  26%       { opacity: 1; }
-  44%       { stroke-dashoffset: 0; opacity: 1; }
-  88%       { opacity: 1; }
-  95%, 100% { opacity: 0; }
-}
-
-@keyframes vputki-wall-fade {
-  0%, 46%   { opacity: 0; }
-  52%, 88%  { opacity: 0.65; }
-  95%, 100% { opacity: 0; }
-}
-
-@keyframes vputki-grip-fade {
-  0%, 56%   { opacity: 0; }
-  62%, 88%  { opacity: 1; }
-  95%, 100% { opacity: 0; }
-}
-
-@keyframes vputki-label-fade {
-  0%, 70%   { opacity: 0; }
-  75%, 88%  { opacity: 1; }
-  95%, 100% { opacity: 0; }
-}
-
 /* HOYRYSTIN demo — body fades in, fans pop in sequence */
 .hoyr-demo__body {
   opacity: 0;
@@ -891,7 +817,6 @@ code {
 <a href="#positio">Positio</a>
 <a href="#kaato">Kaato</a>
 <a href="#klhylly">Kylmälaitehylly</a>
-<a href="#viemariputki">Viemäriputki</a>
 <a href="#hoyrystin">Höyrystin</a>
 <a href="#varusteet">Varusteet</a>
 <span class="menu-group">Lisätietoa</span>
@@ -910,7 +835,6 @@ code {
 <a href="#positio">Positio</a>
 <a href="#kaato">Kaato</a>
 <a href="#klhylly">Kylmälaitehylly</a>
-<a href="#viemariputki">Viemäriputki</a>
 <a href="#hoyrystin">Höyrystin</a>
 <a href="#varusteet">Varusteet</a>
 <span class="menu-group">Lisätietoa</span>
@@ -946,6 +870,7 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="section" id="kayttoonotto">
 <h2 class="category">Käyttöönotto</h2>
 <div class="block reveal">
+<h3>1. Komennot AutoCADiin</h3>
 <ol>
 <li>Avaa AutoCAD</li>
 <li>Kirjoita <code>APPLOAD</code></li>
@@ -953,6 +878,19 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 </ol>
 <p style="margin-top:14px;color:#94a3b8;font-size:14px;line-height:1.6;">
 POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code>positio.lsp</code>. Jos lataat ZIP-paketin, pura kaikki tiedostot yhteen kansioon ja LISP löytää DWG:n automaattisesti.
+</p>
+</div>
+<div class="block reveal">
+<h3>2. Radika-ribbon-välilehti (vapaaehtoinen)</h3>
+<p>Komennot näkyvät kuvakkeina omalla ribbon-välilehdellä, jos lataat ZIP-paketin ja asennat ribbonin:</p>
+<ol>
+<li>Pura ZIP-paketti yhteen kansioon (sama kuin LSP-tiedostot)</li>
+<li>Kirjoita <code>CUILOAD</code></li>
+<li>Browse → valitse <code>radika-tools.cuix</code> samasta kansiosta → Load → Close</li>
+<li>Kirjoita <code>RIBBON</code> jos ribbon ei ole näkyvissä</li>
+</ol>
+<p style="margin-top:14px;color:#94a3b8;font-size:14px;line-height:1.6;">
+Välilehti <b>Radika</b> ilmestyy ribbonin yläreunaan viidellä paneelilla: Hyllyt (KLH, KLHV, KORKO), Putket (3PTK, LTI, MTI, MTN), Höyrystimet (HY1–HY3), Positio (POSITIO, ASETANUMERO) ja Apuvälineet (KAATO3D, VARUSTEET). Suuri päänappi käynnistää yleisimmän komennon, dropdownista löytyvät muut variantit.
 </p>
 </div>
 </div>
@@ -1287,98 +1225,6 @@ POSITIO-työkalu tarvitsee <code>positio.dwg</code>:n samaan kansioon kuin <code
 <li>Yhdellä klikkauksella valitaan koko hylly</li>
 <li>Layerit muodostuvat automaattisesti jos puuttuvat</li>
 <li>Pituus ja leveys muokattavissa jälkikäteen Properties-paletista ja stretch-gripeillä — ei tarvitse piirtää hyllyä uusiksi</li>
-</ul>
-</div>
-</div>
-
-<div class="section" id="viemariputki">
-<h2 class="category">Viemäriputki</h2>
-
-<div class="pipe-demo-block">
-<div class="pipe-demo-caption">Command: VP50</div>
-<svg class="pipe-demo" viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VP50-komento piirtää suoran viemäriputken kahdella klikkauksella, gripit ilmestyvät kummallekin päädylle">
-<defs>
-<pattern id="vputki-demo-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-<path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.06)" stroke-width="0.5"/>
-</pattern>
-</defs>
-<rect width="100%" height="100%" fill="url(#vputki-demo-grid)"/>
-
-<line class="vputki-demo__shaft" x1="80" y1="90" x2="480" y2="90" stroke="#60a5fa" stroke-width="20" stroke-linecap="butt" opacity="0.85"/>
-<line class="vputki-demo__wall" x1="80" y1="80" x2="480" y2="80" stroke="#3b82f6" stroke-width="1.5"/>
-<line class="vputki-demo__wall" x1="80" y1="100" x2="480" y2="100" stroke="#3b82f6" stroke-width="1.5"/>
-
-<circle class="vputki-demo__p1" cx="80" cy="90" r="5" fill="#f59e0b"/>
-<circle class="vputki-demo__p2" cx="480" cy="90" r="5" fill="#f59e0b"/>
-
-<rect class="vputki-demo__grip vputki-demo__grip--left" x="73" y="83" width="14" height="14" fill="rgba(96,165,250,0.35)" stroke="#60a5fa" stroke-width="1.4"/>
-<rect class="vputki-demo__grip vputki-demo__grip--right" x="473" y="83" width="14" height="14" fill="rgba(96,165,250,0.35)" stroke="#60a5fa" stroke-width="1.4"/>
-
-<g font-family="JetBrains Mono, ui-monospace, monospace" font-size="11" font-weight="500">
-<text class="vputki-demo__label" x="280" y="145" fill="#f59e0b" text-anchor="middle">DN50 · KYL-VIEMARI-50</text>
-</g>
-</svg>
-</div>
-
-<div class="block reveal">
-<p>
-VPUTKI on viemäriputken (kondenssi/jätevesi) piirtotyökalu kolmella koolla:
-<b>DN32</b>, <b>DN50</b> ja <b>DN75</b>. Suora putki on parametrinen dynamic
-block joka venyy gripeistä molemmista päistä; kulmat (45°, 88,5°) ja
-T-haarat tulevat staattisina WBLOCKeina, joissa on snap-piste keskellä
-liitäntäkohtaa.
-</p>
-</div>
-
-<div class="block reveal">
-<h2>Komennot</h2>
-<p><b>Continuous-tila (PLINE-tyylinen):</b></p>
-<ul>
-<li><code>VP</code> — kysyy koon ja aloituspisteen, jatkaa sitten pick-pick-pick. Suunnan vaihdot tunnistetaan automaattisesti ja oikea fitting (45° tai 88,5°) lisätään kulmapisteeseen.</li>
-</ul>
-<p>Kesken piirron toimivat kirjainkomennot:</p>
-<ul>
-<li><code>V</code> / <code>O</code> / <code>Y</code> / <code>A</code> — vasen / oikea / ylös / alas. Painat kirjaimen, annat pituuden, ja työkalu piirtää suoran sinne suuntaan (ja tarvittaessa lisää käännöksen fittingin). Edellinen pituus muistetaan sessiokohtaisesti.</li>
-<li><code>T</code> — T-haara: klikkaa liitospiste pääputkeen + haaran loppupiste. Pääputki jatkuu edellisestä pisteestä.</li>
-<li><code>U</code> — Undo: peruu viimeisen pätkän tai fittingin.</li>
-<li><kbd>Enter</kbd> — lopettaa silmukan.</li>
-</ul>
-<p><b>Yhden pätkän tila (yksi insert kerrallaan):</b></p>
-<ul>
-<li><code>VP32</code>, <code>VP50</code>, <code>VP75</code> — pikakomennot per koko</li>
-<li><code>VPUTKI</code> — kysyy halkaisijan ensin</li>
-</ul>
-<p>Yhden pätkän tilassa kysytään seuraavaksi malli:</p>
-<ul>
-<li><code>SUORA</code> — kaksi klikkausta, putken pituus pisteiden välimatkasta</li>
-<li><code>45</code> — 45° kulma, yksi klikkaus paikalle + rotaatio</li>
-<li><code>885</code> — 88,5° kulma, kuten 45°</li>
-<li><code>T</code> — T-haara, kuten kulmat</li>
-</ul>
-</div>
-
-<div class="block reveal">
-<h2>Layerit</h2>
-<p>
-Putket luodaan automaattisesti omille layereille per koko (väri erottaa
-kokoja):
-</p>
-<ul>
-<li><code>KYL-VIEMARI-32</code> — vaalea sininen</li>
-<li><code>KYL-VIEMARI-50</code> — perussininen (yleisin koko)</li>
-<li><code>KYL-VIEMARI-75</code> — tumma sininen</li>
-</ul>
-<p>Layerit luodaan automaattisesti komennon ensimmäisellä kutsulla.</p>
-</div>
-
-<div class="block reveal">
-<h2>Miksi näin?</h2>
-<ul>
-<li>Suora dynamic block sisältää 1.8 mm seinämägeometrian — section-näkymässä näkyy oikea rengas-poikkileikkaus kuten oikea muoviputki</li>
-<li>32-segmenttinen 3DFACE-sylinteri näyttää sileän pyöreänä Conceptual/Realistic-visual-style:llä</li>
-<li>Pituutta voi venyttää molemmista päistä gripeillä — ei tarvitse poistaa ja piirtää uudestaan</li>
-<li>Yhteissä on snap-pisteet liitäntäkohdissa — NODE-snap kiinnittää yhteet oikeaan kohtaan edellisen putken päätyyn</li>
-<li>dxf2ifc-yhteensopiva: KYL-VIEMARI-32/50/75 -layerit mappautuvat <code>IfcPipeSegment</code>-elementteihin RAVA-luokituksin (T-LVI-04-01-001 + J-LVI-04-04 Viemäri-kondenssi)</li>
 </ul>
 </div>
 </div>

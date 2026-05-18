@@ -372,6 +372,10 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <section class="changelog reveal">
 <h2>Viimeisimmät päivitykset</h2>
 <ul>
+<li><span class="when">18.5.2026</span><span><b>Kolme uutta työkalua: KOTELO, KONEIKKO, LAUHDUTIN.</b> KOTELO piirtää kotelo-tyyppisen kaapelireitin (suljettu poikkileikkaus, parametrinen pituus, sama logiikka kuin KLHYLLY). KONEIKKO ja LAUHDUTIN sijoittavat valmiit kylmälaitos-blokit drag-previewillä. Ribbonin <b>Höyrystimet</b>-paneeli nimetty uudelleen <b>Laitteet</b>-paneeliksi ja KONEIKKO + LAUHDUTIN lisätty sinne. KOTELO Hyllyt-paneelissa. Auto-load <code>acaddoc.lsp</code>:n kautta — APPLOAD ei enää tarpeen (asennus <code>tools/install-radika.ps1</code> hoitaa). dxf2ifc-puolella uusi <code>KYL-KOTELO</code> → <code>IfcCableCarrierSegment</code> / <code>CABLETRUNKINGSEGMENT</code> -mappaus.</span></li>
+<li><span class="when">18.5.2026</span><span><b>VPUTKI-viemäriputkityökalu poistettu paketista.</b> Viemäreiden piirto kannattaa tehdä BricsCAD-puolella jossa työnkulku on luontevampi. <code>vputki.lsp</code> säilyy repon arkistossa mahdollista tulevaa kehitystä varten, mutta se ei enää auto-lataudu eikä näy ZIP-paketissa, ribbon-välilehdellä eikä ohjeissa.</span></li>
+<li><span class="when">14.5.2026</span><span><b>Yhtenäinen piirtoväri KYL-työkaluille.</b> KYL-layereita luovat komennot (hyllyt, höyrystimet, varusteet) luovat layerinsä nyt samalla AutoCAD-värillä — Color Index 175 (tumma sininen, RGB 63,63,127). Sama väri näkyy myös Solibrissa kun piirustus viedään dxf2ifc:llä IFC-malliksi, joten AutoCAD ja BIM-katselin näyttävät samalta. (Putkityökalun LT/MT-putket säilyttävät omat värinsä — niissä väri erottaa putkityypin.)</span></li>
+<li><span class="when">13.5.2026</span><span><b>Uusi Radika-ribbon-välilehti AutoCADiin.</b> Kaikki komennot näkyvät kuvakkeina viidellä paneelilla: Hyllyt, Putket, Höyrystimet, Positio ja Apuvälineet. Suuri päänappi avaa yleisimmän komennon, dropdownista löytyvät variantit. Ei tarvitse muistaa komentonimiä. Asennus: pura ZIP yhteen kansioon, anna komento <code>CUILOAD</code> ja valitse <code>radika-tools.cuix</code> — välilehti <b>Radika</b> ilmestyy ribbonin yläreunaan.</span></li>
 <li><span class="when">12.5.2026</span><span><b>Uusi VARUSTEET-työkalu kylmäkoneikon sähkövarustelulle.</b> Komento <code>VARUSTEET</code> tarjoaa nuolinäppäimin navigoitavan valikon kuudelle laitteelle: CO2-anturi, CO2-sireeni, Huolto-PC, ryhmäkeskus (RK-JK10), säädinkeskus (KU) ja hätäseispainike. Valitse → pickaa insertion-piste + rotaatio. Layerit luodaan automaattisesti per laite (KYL-CO2-ANTURI, KYL-HATASEIS jne.). dxf2ifc v0.2.0a19 tunnistaa nämä IFC4-sähkölaite-tyypeiksi (IfcSensor, IfcAlarm, IfcController, IfcSwitchingDevice…) RAVA3Pro-tilavarauskoodeilla.</span></li>
 <li><span class="when">11.5.2026</span><span><b>VPUTKI: <code>V</code>/<code>O</code>/<code>A</code>/<code>Y</code>-pikakomennot continuous-tilaan.</b> Kesken <code>VP</code>-piirron paina <code>V</code>=vasen, <code>O</code>=oikea, <code>Y</code>=ylös tai <code>A</code>=alas, anna pituus, ja työkalu piirtää suoran + tarvittavan käännyksen fittingin. Edellinen pituus muistetaan oletukseksi. T-haaran <code>T</code>-pikakomento ennallaan, <code>U</code>=undo, <kbd>Enter</kbd>=lopeta.</span></li>
 <li><span class="when">11.5.2026</span><span><b>Komennot lyhennetty: <code>KLHYLLY</code> → <code>KLH</code>, <code>KLHYLLYV</code> → <code>KLHV</code>, <code>HYLLYKORKO</code> → <code>KORKO</code>.</b> Uusi <code>KORKO</code> toimii kaikille INSERT-blokeille (hyllyt, höyrystimet, koneikot, kompressorit) ja vanhoille UNION-3DSOLIDeille. Referenssipiste vaihtui INSERT-blokin insertion pointiksi (AutoCAD-yhdenmukainen), muille bbox-min Z fallback.</span></li>
@@ -386,7 +390,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <span class="file-badge zip">ZIP</span>
 <div class="file-meta">
 <h3>Kaikki työkalut</h3>
-<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>736 KB</span><span>7 LSP + 24 DWG</span><span>Päiv. 12.5.2026</span></div>
+<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>903 KB</span><span>9 LSP + 14 DWG + ribbon</span><span>Päiv. 18.5.2026</span></div>
 </div>
 <a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>
@@ -398,11 +402,15 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <li><b>KAATO3D</b> — 3D-kappaleen kallistus pivot-pisteestä. <code>kaato.lsp</code>.</li>
 <li><b>Putkityökalu</b> — LT/MT IMU + NESTE -putkien piirto valmiilla layereilla, väreillä ja etäisyyksillä. <code>putkityokalu.lsp</code>.</li>
 <li><b>Kylmälaitehylly</b> — komennot <code>KLH</code> (vaaka), <code>KLHV</code> (3D-tikashylly), <code>KORKO</code> (korko jälkikäteen). <code>klhylly.lsp</code> + <code>klhylly-levy.dwg</code> + <code>klhylly-tikas.dwg</code>.</li>
-<li><b>VPUTKI</b> — viemäriputket: <code>VP</code> continuous-tila (pick-pick-pick, auto-fittingit) tai <code>VP32</code> / <code>VP50</code> / <code>VP75</code> yhdelle pätkälle. Mallit suora + 45° + 88.5° + T. <code>vputki.lsp</code> + 12 DWG:tä.</li>
+<li><b>KOTELO</b> — suljettu kaapelireitti / kotelo parametrisellä pituudella. Sama 2-pisteen flow kuin KLH:lla, lisäksi Z-pudotuksen näppäinsyöttö pystyä varten. <code>kotelo.lsp</code> + <code>Kotelo.dwg</code>.</li>
 <li><b>HOYRYSTIN</b> — höyrystimien insertointi HY1 / HY2 / HY3 (1 / 2 / 3 puhaltimen mallit). <code>hoyrystin.lsp</code> + 3 DWG:tä.</li>
+<li><b>KONEIKKO</b> — kylmäkoneikon sijoitus drag-previewillä. <code>koneikko.lsp</code> + <code>Koneikko.dwg</code>.</li>
+<li><b>LAUHDUTIN</b> — lauhduttimen sijoitus drag-previewillä. <code>lauhdutin.lsp</code> + <code>Lauhdutin.dwg</code>.</li>
 <li><b>VARUSTEET</b> — kylmäkoneikon sähkövarustelu: CO2-anturi, CO2-sireeni, Huolto-PC, ryhmäkeskus (RK-JK10), säädinkeskus (KU) ja hätäseispainike. Komento <code>VARUSTEET</code> tarjoaa nuolinäppäin-valikon laitevalinnalle. <code>varusteet.lsp</code> + 6 DWG:tä.</li>
+<li><b>Radika-ribbon</b> — oma välilehti AutoCADin ribboniin, jossa kaikki komennot näkyvät kuvakkeina (5 paneelia: Hyllyt, Putket, Laitteet, Positio, Apuvälineet). Ei tarvitse muistaa komentonimiä — paina kuvaa. <code>radika-tools.cuix</code> + <code>icons/</code>-kansio.</li>
 </ul>
-<p>Pura ZIP yhteen kansioon (esim. <code>C:\AutoCADLisp\</code>) ja <code>APPLOAD</code>:lla halutut LSP-tiedostot AutoCADiin. LSP:t etsivät DWG-riippuvuudet automaattisesti samasta kansiosta.</p>
+<p><b>1. LSP-tiedostot:</b> Pura ZIP yhteen kansioon (esim. <code>C:\AutoCADLisp\</code>) ja <code>APPLOAD</code>:lla halutut LSP-tiedostot AutoCADiin. LSP:t etsivät DWG-riippuvuudet automaattisesti samasta kansiosta.</p>
+<p><b>2. Ribbon-välilehti:</b> Komento <code>CUILOAD</code> → Browse → valitse <code>radika-tools.cuix</code> samasta kansiosta → Load → Close. Komento <code>RIBBON</code> jos ribbon ei ole näkyvissä. Välilehti <b>Radika</b> ilmestyy ribbonin yläreunaan.</p>
 </div>
 
 <footer class="site-footer">

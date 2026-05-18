@@ -253,11 +253,13 @@
 
   ;; 5) Insertoi block interaktiivisesti -INSERT:lla. Block on jo
   ;;    block-taulussa (vaihe 3), joten "-INSERT blockName" nayttaa
-  ;;    drag-preview:n kun kayttaja etsii sijoituspaikkaa. while-pause
-  ;;    -loop luovuttaa kaikki promptit (piste / scale / rotaatio)
-  ;;    kayttajalle interaktiivisesti — toimii seka AutoCAD etta
-  ;;    BricsCAD vaikka niiden -INSERT-prompt-sekvenssi eroaa.
-  (command "_.-INSERT" blockName)
+  ;;    drag-preview:n kun kayttaja etsii sijoituspaikkaa.
+  ;;    "_S" 1 lukitsee skaalan 1:ksi heti (Scale-keyword insertion-
+  ;;    point-promptissa) - nain skaalaa EI kysyta erikseen. while-pause
+  ;;    -loop luovuttaa loput (insertointipiste + rotaatio) kayttajalle.
+  ;;    Toimii seka AutoCAD etta BricsCAD vaikka niiden -INSERT-prompt-
+  ;;    sekvenssi muuten eroaa.
+  (command "_.-INSERT" blockName "_S" 1)
   (while (= 1 (logand 1 (getvar "CMDACTIVE")))
     (command pause))
 

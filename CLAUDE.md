@@ -117,8 +117,12 @@ looppi, respektoi `prefers-reduced-motion`:
 1. **3PTK** (Putkityökalu) — kolme viivaa (cyan LT IMU, amber MT
    NESTE, blue MT IMU) piirtyvät start→end. Värit matchaavat
    `files/putkityokalu.lsp`:n `make-layer` -komentojen colorindexit
-   (4, 42, 5). Vertikaalinen järjestys vastaa LISP vecL/vecR -logiikkaa
-   vasen→oikea-piirtovektorilla.
+   (4, 42, 5). **Huom:** putkityökalun LT/MT-layerit EIVÄT ole
+   `KYL-*`-layereita eivätkä kuulu ACI 175 -yhtenäistyksen piiriin
+   (muutos #21) — LT IMU / MT IMU / MT NESTE pidetään tarkoituksella
+   omilla väreillään (4/5/42), koska putkityyppien visuaalinen erottelu
+   on työkalun pointti. Vertikaalinen järjestys vastaa LISP vecL/vecR
+   -logiikkaa vasen→oikea-piirtovektorilla.
 2. **POSITIO** — viisi numeroitua amber-outline-palloa pop-in-
    sekvenssinä scattered-pisteissä. (Työkalun nimi muutettu
    NPALLOsta POSITIOon LSP-lähdön myötä; komento nyt `POSITIO`,
@@ -353,6 +357,140 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
       linkit, etusivun `.feature-card` "SÄHKÖ"-badgella, JSON-LD
       SoftwareApplication-entry. Lataukset-sivun ZIP-paketin meta päivitetty
       7 LSP + 24 DWG / 736 KB sekä changelog-rivi.
+
+20. **Radika-ribbon-välilehti AutoCADiin** (13.5.2026): kaikki LSP-komennot
+    saatavilla nyt myös kuvakkeina ribbonilla, jotta komentonimiä ei tarvitse
+    muistaa. Toteutus on partial CUIX-tiedosto `files/radika-tools.cuix` jonka
+    käyttäjä lataa `CUILOAD`-komennolla — tämä on käyttäjän eksplisiittinen
+    asennus, ei automaattista profiilin muokkausta.
+    - **Rakenne:** 1 välilehti (`Radika`), 6 paneelia, 18 komentoa.
+      Paneelit: Hyllyt (KLH, KLHV, KORKO), Putket (3PTK, LTI, MTI, MTN),
+      Höyrystimet (HY1–HY3), Positio (POSITIO,
+      ASETANUMERO), Apuvälineet (KAATO3D, VARUSTEET). Jokainen paneeli =
+      Split Button: suuri päänappi yleisimmälle komennolle + dropdown
+      varianteille.
+    - **Ikonit:** `tools/make-icons.ps1` generoi 36 PNG:tä (18 komentoa ×
+      16/32 px) System.Drawingilla. Tyyli: kategoriavärinen tausta + valkoinen
+      2–3 kirjaimen lyhenne, pyöristetyt kulmat, ARGB-32. Värikoodit per
+      paneeli: Hylly ruskea `#8B5A2B`, Putki sininen `#1F75D9`, Höyrystin
+      vihreä `#2E8B57`, Viemäri violetti `#7B3F99`, Positio keltainen `#E0B400`,
+      Apu/Varusteet harmaa `#555555`. PNG:t sijoittuvat `files/icons/`-kansioon,
+      ja CUIX viittaa niihin sisäisesti (embedded saving Save-vaiheessa).
+    - **CUIX-rakentaminen:** `tools/RIBBON-OHJEET.md` sisältää askel-
+      askeleelta ohjeen CUI-editorin käyttöön (Commands → Panels → Tab).
+      CUIX on käytännössä XML+ikonit zip-pakattuna; käsin XML-rakentaminen
+      jätettiin pois (hauras AutoCAD-versioiden välillä) ja CUI-editori hoitaa
+      formaatin oikein.
+    - **make-bundle.ps1:** päivitetty sisällyttämään `files/icons/`-alikansio
+      (säilyy `icons/`-prefiksinä zip:ssä) ja kaikki `files/`-juuren
+      ei-`.bak`/ei-legacy-tiedostot — eli myös tuleva `radika-tools.cuix`
+      lähtee mukaan automaattisesti.
+    - **Sivustolle:** lataukset.html `.zip-contents`-listalle uusi
+      "Radika-ribbon"-rivi + asennusohje "2. Ribbon-välilehti: CUILOAD →
+      radika-tools.cuix", paketin meta päivitetty (765 KB, "7 LSP + 24 DWG +
+      ribbon", päiv. 13.5.2026), changelog-entry 13.5.2026. ohjeet.html
+      Käyttöönotto-osio jaettu kahteen vaiheeseen: "1. Komennot AutoCADiin"
+      (APPLOAD) + "2. Radika-ribbon-välilehti (vapaaehtoinen)" (CUILOAD).
+
+21. **Yhtenäinen ACI 175 -piirtoväri KYL-työkaluihin** (14.5.2026):
+    kaikki `KYL-*`-layereita luovat työkalut käyttävät nyt samaa
+    AutoCAD Color Index 175:tä (RGB 63,63,127, tumma sininen). Aiemmin
+    värit olivat hajallaan: höyrystin ACI 30 (oranssi), viemärit
+    151/5/175 per koko, varusteet 1/2/5/6/250 per laite. klhylly oli
+    jo 175.
+    - **Syy:** dxf2ifc (`core/ifc_writer/styling.py`) emittoi JO IFC:hen
+      kovakoodatun ACI 175 -värin (`DEFAULT_ACI = 175`) jokaiselle
+      tuotteelle — eli Solibri näyttää kaiken KYL-geometrian värillä
+      RGB(63,63,127). LISP-puoli oli synkkaamaton tämän kanssa. Nyt
+      AutoCAD ja Solibri näyttävät identtisiltä.
+    - **Muutetut tiedostot:** `files/vputki.lsp` (`vputki-aci-for-size`
+      palauttaa aina 175), `files/hoyrystin.lsp` (rivi 160),
+      `files/varusteet.lsp` (`varusteet-device-map` 6 riviä).
+      `files/klhylly.lsp` — vain rivin 23 kommentti korjattu (koodi oli
+      jo 175). Kommentti-/dokumentaatiorivit per LISP päivitetty.
+    - **putkityökalu EI muuttunut:** `files/putkityokalu.lsp`:n
+      layerit (LT IMU / MT IMU / MT NESTE) eivät ole `KYL-*`-layereita
+      — ne pidetään tarkoituksella omilla väreillään (4/5/42), koska
+      putkityyppien visuaalinen erottelu on työkalun pointti. Sama
+      koskee 3PTK-SVG-animaatiota `ohjeet.html`:ssä.
+    - **ZIP + lataukset.html:** ZIP rebuildattu (809 KB), changelog-
+      entry 14.5.2026, ZIP-meta päiv. 14.5.2026.
+
+22. **VPUTKI poistettu kaikkialta paitsi arkistosta** (18.5.2026):
+    viemäriputkityökalu osoittautui ergonomisesti hankalaksi
+    AutoCAD-puolella; BricsCADin natiivit putkityökalut ovat luontevampia.
+    `files/vputki.lsp` + 12 companion DWG:tä säilytetään `files/`-kansiossa
+    arkistossa mahdollista tulevaa uudelleenkirjoitusta varten, mutta
+    poistettu kaikista käyttäjälle näkyvistä paikoista:
+    - `tools/install-radika.ps1` — `vputki.lsp` poistettu `$lspFiles`-
+      autoload-listasta. AutoCAD ei enää lataa sitä automaattisesti
+      jokaiseen piirustukseen.
+    - `make-bundle.ps1` — uusi exclusion-pattern `^vputki(\.lsp$|-)`
+      sulkee `vputki.lsp`:n + kaikki `vputki-*.dwg`:t (mukaan lukien
+      `VPUTKI-*.dwg` -muodot) jaettavasta ZIP-paketista.
+    - `tools/make-cuix.ps1` + `tools/make-icons.ps1` — Viemari-paneeli
+      ja 4 komentoa (VPUTKI/VP32/VP50/VP75) poistettu CUIX-rakentajasta;
+      orpojen iconit (`vputki-*.png`, `vp32/50/75-*.png`) poistettu
+      `files/icons/`-kansiosta. CUIX nyt 5 paneelia, 45.9 KB.
+    - `tools/RIBBON-OHJEET.md` — 3 taulukkoa + ohjeteksti päivitetty
+      "6 paneelia → 5 paneelia", VPUTKI-rivit poistettu.
+    - `ohjeet.html` — koko `#viemariputki`-osio (SVG-demo + Komennot +
+      Layerit + Miksi näin? + CSS-keyframes) poistettu. Sidebar +
+      mobile-toc -linkit poistettu. Käyttöönotto-osion ribbon-paneeliluettelo
+      päivitetty viideksi paneeliksi.
+    - `index.html` — Viemäriputki-feature-card + SoftwareApplication
+      JSON-LD -entry poistettu @graph:sta.
+    - `lataukset.html` — VPUTKI-rivi zip-contents-listasta poistettu,
+      changelog-entry 18.5.2026 lisätty, ZIP-meta päiv.
+      "6 LSP + 12 DWG + ribbon" / 896 KB. Vanhat VPUTKI-changelog-merkinnät
+      (11.5.2026 V/O/A/Y-pikakomennot, 13.5.2026 ribbon mainitsee
+      Viemäri-paneelin) säilyvät historiana — niitä ei takautuvasti
+      uudelleenkirjoiteta.
+    - `tools/build-vputki-blocks.lsp` + `tools/VPUTKI-OHJEET.md` —
+      säilyvät dev-toolseina arkistoidun LSP:n tueksi, eivät käyttäjälle
+      näkyviä.
+    - Komento `VPUTKI` (ja `VP32`/`VP50`/`VP75`) toimii edelleen jos
+      Lauri lataa `vputki.lsp`:n käsin APPLOAD:lla, mutta ne eivät
+      lataudu automaattisesti uudestaan ennen kuin niitä taas tarvitaan.
+
+23. **Kolme uutta työkalua: KOTELO, KONEIKKO, LAUHDUTIN + auto-load** (18.5.2026):
+    - **KOTELO** (`files/kotelo.lsp` + `files/Kotelo.dwg`): parametrinen
+      kotelo-tyyppinen kaapelireitti (suljettu suorakaide-poikkileikkaus,
+      pituus Dynamic Block Linear-parametri Stretch-actionilla). Sama
+      2-pisteen flow kuin KLH:lla + `getreal` Z-pudotuksen syöttöön
+      ennen pickkausta (Enter = pickaa loppupiste). ROTATE lopuksi
+      live-previewillä. bbox-based anchor + auto-detect orientaatio
+      (vaaka → pohjareunan keski, pystypudotus → kansireunan keski) →
+      ei upota objektien sisään. 4 NODe-osnap-pistettä X=0-päädyssä
+      (vasen / kansi / oikea / pohja) MOVE-vaiheen helpotukseen.
+      `tools/build-kotelo-blocks.lsp` luo block-geometrian, BEDIT-ohje
+      `tools/KOTELO-BEDIT-OHJEET.md`.
+    - **KONEIKKO** (`files/koneikko.lsp` + `files/Koneikko.dwg`) ja
+      **LAUHDUTIN** (`files/lauhdutin.lsp` + `files/Lauhdutin.dwg`):
+      yksinkertaiset drag-preview-sijoitustyökalut (kuten HOYR1/2/3).
+      Layerit `KYL-KONEIKKO` / `KYL-LAUHDUTIN`, ACI 175.
+    - **Ribbon-paneeli "Höyrystimet" → "Laitteet"** (yleisempi nimi
+      koska KONEIKKO + LAUHDUTIN eivät ole höyrystimiä). Sisältää
+      HY1/HY2/HY3 (split) + KONEIKKO + LAUHDUTIN (button-nappeina).
+      KOTELO Hyllyt-paneeliin button-nappina KLH/KLHV/KORKO:n viereen.
+      Kolme uutta ikonia (`make-icons.ps1`:n uudet glyph-funktiot
+      `Draw-Box`, `Draw-Koneikko`, `Draw-Lauhdutin`).
+    - **Auto-load `acaddoc.lsp`:n kautta** (`tools/install-radika.ps1`
+      kirjoittaa AutoCADin Support-kansioon): kaikki 9 LSP-työkalua
+      latautuu automaattisesti jokaiseen piirustukseen, ei tarvitse
+      APPLOAD:ia. acaddoc.lsp osoittaa repo:n `files/`-kansioon, joten
+      LSP-editit näkyvät seuraavalla piirustuksen avauksella ilman
+      uudelleen-installia. `install-radika.ps1` myös kopioi ikonit
+      `Support\Icons`-kansioon, tyhjentää `radika-tools.mnr`-CUIX-cachen
+      ja rebuildaa ZIP-paketin.
+    - **dxf2ifc-puolella:** uusi sääntö `KYL-KOTELO*` →
+      `IfcCableCarrierSegment` / `CABLETRUNKINGSEGMENT` profiili-toml:ssa.
+      KYL-KONEIKKO ja KYL-LAUHDUTI olivat jo mapatut.
+    - **Bugfix: `*error*`-handler palauttaa nyt FILEDIA/CMDDIA/EXPERT**
+      KOTELO + KLHV:ssä, jos firstTime-haaran block-load keskeytyy
+      odottamattomasti.
+    - ZIP-paketti nyt 903 KB / 9 LSP + 14 DWG + ribbon (oli 896 KB /
+      6 LSP + 12 DWG + ribbon). lataukset.html päivitetty.
 
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 

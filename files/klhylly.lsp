@@ -16,7 +16,7 @@
 ;;;
 ;;; Komennot:
 ;;;   KLH   -> LEVY/TIKAS -> 300/400/500 -> V=vasen / K=keski -> pisteet
-;;;   KLHV  -> 300/400/500 -> alaosa -> ylaosa -> leveyden suunta (pysty-TIKAS)
+;;;   KLHV  -> 300/400/500 -> alkupiste -> loppupiste (pick tai Z=pystysuunta) -> rotaatio
 ;;;   KORKO      -> valitse kohteet -> kohdekorko z mm
 ;;;
 ;;; Layerit luodaan automaattisesti: KYL-LEVYHYLLY ja KYL-TIKASHYLLY,
@@ -266,10 +266,14 @@
 
   (setvar "CMDECHO" 0)
 
-  ;; 1) Tyyppi
+  ;; 1) Tyyppi — oletus globaalista klhylly-last-tyyppi (ribbon-valikko
+  ;;    asettaa sen setterilla; Enter promptissa = kayta edellista).
+  (if (null klhylly-last-tyyppi) (setq klhylly-last-tyyppi "LEVY"))
   (initget "LEVY TIKAS")
-  (setq tyyppi (getkword "\nSelect type [LEVY/TIKAS] <LEVY>: "))
-  (if (null tyyppi) (setq tyyppi "LEVY"))
+  (setq tyyppi (getkword (strcat "\nSelect type [LEVY/TIKAS] <"
+                                  klhylly-last-tyyppi ">: ")))
+  (if (null tyyppi) (setq tyyppi klhylly-last-tyyppi))
+  (setq klhylly-last-tyyppi tyyppi)
 
   (cond
     ((= tyyppi "TIKAS")
@@ -282,10 +286,13 @@
       (setq layerName "KYL-LEVYHYLLY"))
   )
 
-  ;; 2) Leveys
+  ;; 2) Leveys — oletus globaalista klhylly-last-levy.
+  (if (null klhylly-last-levy) (setq klhylly-last-levy "300"))
   (initget "300 400 500")
-  (setq levyStr (getkword "\nSelect plate [300/400/500] <300>: "))
-  (if (null levyStr) (setq levyStr "300"))
+  (setq levyStr (getkword (strcat "\nSelect plate [300/400/500] <"
+                                   klhylly-last-levy ">: ")))
+  (if (null levyStr) (setq levyStr klhylly-last-levy))
+  (setq klhylly-last-levy levyStr)
   (setq levy (atof levyStr))
 
   ;; 2b) Aloituspisteen sijainti — V = hyllyn vasen paa, K = hyllyn keski.
@@ -382,10 +389,21 @@
   (setq ms  (vla-get-ModelSpace doc))
   (setq ins (vla-InsertBlock ms (vlax-3d-point insertPt) blockName 1.0 scaleY 1.0 ang))
 
-  ;; 10) Aseta layer + dynaamiset properties
+  ;; 10) Aseta layer + dynaamiset properties.
+  ;;     JARJESTYS: Leveys ENNEN Pituutta. KLHYLLY-TIKAS:n Leveys-Stretch
+  ;;     venyttaa rung-masteria; Pituus-Array kopioi sen. BricsCAD ei
+  ;;     ketjuta Stretch+Array-yhdistelmaa jalkikateen, joten leveys on
+  ;;     asetettava ennen kuin pituus laukaisee arrayn — nain array
+  ;;     kopioi jo-venytetyn masterin. AutoCAD evaluoi koko blockin
+  ;;     lopuksi, joten jarjestyksella ei ole sille merkitysta.
   (vla-put-Layer ins layerName)
-  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
+  ;; BricsCAD ei evaluoi dynamic-block-actioneita (Stretch/Array)
+  ;; reaaliaikaisesti parametrin muutoksen jalkeen — REGEN pakottaa
+  ;; evaluoinnin niin etta rungit/leveys nakyvat heti oikein. AutoCAD
+  ;; hyvaksyy saman REGEN:n harmittomasti.
+  (vl-catch-all-apply '(lambda () (command "_.REGEN")))
 
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
@@ -396,25 +414,35 @@
 )
 
 ;; ============================================================
-;; KLHV (TIKAS-hylly vapaaseen 3D-suuntaan)
+;; KLHV (TIKAS-hylly kahden pisteen valiin, vapaa 3D-suunta)
 ;; ============================================================
-;; Sama dynamic block KLHYLLY-TIKAS kuin vaakaversiossa. INSERT WCS-origoon,
-;; sitten vla-TransformBy 4x4-matriisilla haluttuun 3D-orientaatioon.
-;; Pituus/Leveys-parametrit toimivat instanssin paikallisessa avaruudessa,
-;; joten Properties-paletti ja stretch toimivat samoin kuin vaakaversiossa.
+;; Sama dynamic block KLHYLLY-TIKAS kuin vaakaversiossa. Sama
+;; toimintaperiaate kuin kotelo.lsp:ssa: pick alkupiste -> loppupiste
+;; (pick tai keyword Z = kirjoita +/- Z-pituus, esim. -2100 = pystyhylly
+;; 2100 mm alaspain) -> rotaatio tavallisella ROTATE:lla (live-preview).
+;; Pituussuunta tulee pisteista, korkeus = maailman +Z kohtisuoraksi
+;; tehtyna L:aa vasten (lahes pystysuoralla hyllylla fallback +X),
+;; leveys vaakaan kohtisuoraan. INSERT WCS-origoon + vla-TransformBy.
 
 (defun c:KLHV ( / *error* oldClayer oldCmdecho oldOsmode
                      blockName dwgName blockPath layerName firstTime
-                     levyStr levy modeKw lenInput
-                     p1 p2 p3 length
-                     Lraw Lmag L Wraw dotLW Wperp Wmag W D
-                     mat doc ms ins
+                     levyStr levy
+                     p1 inp dz p2 length
+                     Lraw Lmag L Zw dotZL Draw Dmag D Xw dotXL W
+                     minPt maxPt bbRes bbMin bbMax halfW halfH
+                     anchorY anchorZ
+                     mat doc ms ins ename
                      savedFiledia savedCmddia savedExpert )
 
   (defun *error* ( msg )
-    (if oldOsmode  (setvar "OSMODE"  oldOsmode))
-    (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
-    (if oldClayer  (setvar "CLAYER"  oldClayer))
+    (if oldOsmode    (setvar "OSMODE"  oldOsmode))
+    (if oldCmdecho   (setvar "CMDECHO" oldCmdecho))
+    (if oldClayer    (setvar "CLAYER"  oldClayer))
+    ;; firstTime-haaran sysvar-tallennukset — palautetaan vain jos
+    ;; ehdittiin tallentaa (muuten nil, ei kosketa).
+    (if savedFiledia (setvar "FILEDIA" savedFiledia))
+    (if savedCmddia  (setvar "CMDDIA"  savedCmddia))
+    (if savedExpert  (setvar "EXPERT"  savedExpert))
     (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
       (princ (strcat "\nVirhe: " msg)))
     (princ)
@@ -432,10 +460,13 @@
   (setq dwgName   "klhylly-tikas.dwg")
   (setq layerName "KYL-TIKASHYLLY")
 
-  ;; 1) Leveys
+  ;; 1) Leveys — jaettu globaali klhylly-last-levy KLH:n kanssa.
+  (if (null klhylly-last-levy) (setq klhylly-last-levy "300"))
   (initget "300 400 500")
-  (setq levyStr (getkword "\nLeveys [300/400/500] <300>: "))
-  (if (null levyStr) (setq levyStr "300"))
+  (setq levyStr (getkword (strcat "\nLeveys [300/400/500] <"
+                                   klhylly-last-levy ">: ")))
+  (if (null levyStr) (setq levyStr klhylly-last-levy))
+  (setq klhylly-last-levy levyStr)
   (setq levy (atof levyStr))
 
   ;; 2) Block-maaritys
@@ -449,71 +480,73 @@
     )
   )
 
-  ;; 3) Pisteet
-  (setq p1 (getpoint "\nAlaosa tai ylaosa (base point): "))
+  ;; 3) Alkupiste + loppupiste. Loppupiste: klikkaa piste, TAI kirjoita
+  ;;    +/- pituus Z-suunnassa (pystyhylly, esim. -2100 = 2100 mm alas).
+  ;;    initget 128 nappaa kirjoitetun luvun stringina; keyword Z on
+  ;;    varmempi reitti samaan. Base pointia EI anneta getpointille —
+  ;;    muuten kirjoitettu luku menisi direct distance entry:lle ja
+  ;;    tekisi vaakahyllyn vaaraan suuntaan.
+  (setq p1 (getpoint "\nHyllyn alkupiste: "))
   (if (null p1) (exit))
-
-  (initget "N P")
-  (setq modeKw (getkword "\nToinen piste [N=numerona alaspain / P=pisteena] <N>: "))
-  (if (null modeKw) (setq modeKw "N"))
-
+  (initget 128 "Z")
+  (setq inp (getpoint "\nHyllyn loppupiste, +/- Z-pituus, tai [Z]: "))
   (cond
-    ((= modeKw "N")
-      (setq lenInput (getreal "\nPituus mm (positiivinen = alaspain p1:sta): "))
-      (if (or (null lenInput) (< (abs lenInput) 1.0))
-        (progn (princ "\nPituus liian pieni.") (exit)))
-      (setq length (abs lenInput))
-      (setq p2 (list (car p1) (cadr p1) (- (caddr p1) lenInput)))
-    )
-    ((= modeKw "P")
-      (setq p2 (getpoint p1 "\nYlaosa (length end): "))
-      (if (null p2) (exit))
-      (setq length (distance p1 p2))
-      (if (< length 1.0)
-        (progn (princ "\nPituus liian lyhyt.") (exit)))
-    )
+    ((null inp) (exit))
+    ((equal inp "Z")
+      (setq dz (getreal "\nPituus Z-suunnassa (+ = ylos / - = alas): "))
+      (if (or (null dz) (< (abs dz) 1.0))
+        (progn (princ "\nLiian pieni pituus.") (exit)))
+      (setq p2 (list (car p1) (cadr p1) (+ (caddr p1) dz))))
+    ((eq (type inp) 'STR)
+      (setq dz (atof inp))
+      (if (< (abs dz) 1.0)
+        (progn (princ "\nVirheellinen syote.") (exit)))
+      (setq p2 (list (car p1) (cadr p1) (+ (caddr p1) dz))))
+    (t (setq p2 inp))
   )
 
-  (setq p3 (getpoint p1 "\nLeveyden suunta (horisontaalinen viittauspiste): "))
-  (if (null p3) (exit))
-
-  ;; 4) Akseliyksikkovektorit (samat kaavat kuin vanhassa toteutuksessa)
+  ;; 4) Pituusakseli L = yksikkovektori p1->p2
   (setq Lraw (mapcar '- p2 p1))
   (setq Lmag (distance '(0.0 0.0 0.0) Lraw))
   (if (< Lmag 1.0)
     (progn (princ "\nPituus liian lyhyt.") (exit)))
+  (setq length Lmag)
   (setq L (list (/ (car Lraw)   Lmag)
                 (/ (cadr Lraw)  Lmag)
                 (/ (caddr Lraw) Lmag)))
 
-  (setq Wraw (mapcar '- p3 p1))
-  (setq dotLW (+ (* (car Wraw)   (car L))
-                 (* (cadr Wraw)  (cadr L))
-                 (* (caddr Wraw) (caddr L))))
-  (setq Wperp
-    (mapcar '-
-            Wraw
-            (list (* dotLW (car L))
-                  (* dotLW (cadr L))
-                  (* dotLW (caddr L)))))
-  (setq Wmag (distance '(0.0 0.0 0.0) Wperp))
-  (if (< Wmag 0.001)
+  ;; 5) Korkeusakseli D = maailman +Z kohtisuoraksi tehtyna L:aa vasten.
+  ;;    Lahes pystysuoralla hyllylla fallback maailman +X:aan.
+  (setq Zw '(0.0 0.0 1.0))
+  (setq dotZL (caddr L))
+  (setq Draw (mapcar '- Zw (list (* dotZL (car L))
+                                 (* dotZL (cadr L))
+                                 (* dotZL (caddr L)))))
+  (setq Dmag (distance '(0.0 0.0 0.0) Draw))
+  (if (< Dmag 0.001)
     (progn
-      (princ "\np3 on samalla suoralla kuin p1-p2. Valitse p3 kauemmas sivulle.")
-      (exit)))
-  (setq W (list (/ (car Wperp)   Wmag)
-                (/ (cadr Wperp)  Wmag)
-                (/ (caddr Wperp) Wmag)))
+      (setq Xw '(1.0 0.0 0.0))
+      (setq dotXL (car L))
+      (setq Draw (mapcar '- Xw (list (* dotXL (car L))
+                                     (* dotXL (cadr L))
+                                     (* dotXL (caddr L)))))
+      (setq Dmag (distance '(0.0 0.0 0.0) Draw))
+    )
+  )
+  (setq D (list (/ (car Draw)   Dmag)
+                (/ (cadr Draw)  Dmag)
+                (/ (caddr Draw) Dmag)))
 
-  (setq D (list
-            (- (* (cadr L)  (caddr W)) (* (caddr L) (cadr W)))
-            (- (* (caddr L) (car W))   (* (car L)   (caddr W)))
-            (- (* (car L)   (cadr W))  (* (cadr L)  (car W)))))
+  ;; 6) Leveysakseli W = D x L (oikeakatinen kanta: L x W = D)
+  (setq W (list
+            (- (* (cadr D)  (caddr L)) (* (caddr D) (cadr L)))
+            (- (* (caddr D) (car L))   (* (car D)   (caddr L)))
+            (- (* (car D)   (cadr L))  (* (cadr D)  (car L)))))
 
-  ;; 5) Layer luonti
+  ;; 7) Layer luonti
   (klhylly-ensure-layer layerName 175)
 
-  ;; 6) Lataa block-maaritys ensikerralla -INSERT:lla origin:iin ja poista
+  ;; 8) Lataa block-maaritys ensikerralla -INSERT:lla origin:iin ja poista
   ;;    valittomasti. FILEDIA/CMDDIA/EXPERT vain talle kapealle blokille.
   (if firstTime
     (progn
@@ -533,27 +566,74 @@
     )
   )
 
-  ;; 7) Sijoita instanssi WCS-origoon vla-InsertBlock:lla
+  ;; 9) Sijoita instanssi WCS-origoon vla-InsertBlock:lla
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
   (setq ms  (vla-get-ModelSpace doc))
   (setq ins (vla-InsertBlock ms (vlax-3d-point '(0.0 0.0 0.0))
                              blockName 1.0 1.0 1.0 0.0))
 
-  ;; 8) 4x4-muunnos: kanonisen X-akselin -> L, Y-akselin -> W, Z-akselin -> D,
-  ;;    sijoitus pisteeseen p1
+  ;; 9b) Anchor auto-detect orientaation mukaan — SAMA LOGIIKKA KUIN
+  ;;     KOTELO:SSA. Aiempi yritys (halfH=17.5 = tikkaiden keski) embed-asi
+  ;;     vaakaan koska anchor oli cross-sectionin sisalla.
+  ;;
+  ;;     halfW = levy/2 (kayttaja valitsi 300/400/500).
+  ;;     halfH = bboxin Z-extent/2 (rail-korkeus / 2, default 30 mm).
+  ;;     anchorY = halfW (aina lateral keski).
+  ;;     anchorZ:
+  ;;       - VAAKA (null dz, pickattu loppupiste): 0 (rail-pohja)
+  ;;         -> TIKAS lepaa pinnalla, ei upota
+  ;;       - PYSTYPUDOTUS (dz < 0): 2*halfH = rail-yläpinta
+  ;;         -> TIKAS riippuu pinnan alapuolelta, ei upota kattoon
+  ;;       - PYSTYNOUSU (dz > 0): 0 (rail-pohja)
+  (setq halfW (* 0.5 levy))
+  (setq halfH 30.0)
+  (setq minPt nil  maxPt nil)
+  (setq bbRes (vl-catch-all-apply
+                'vla-GetBoundingBox (list ins 'minPt 'maxPt)))
+  (if (and (not (vl-catch-all-error-p bbRes)) minPt maxPt)
+    (progn
+      (setq bbMin (vlax-safearray->list minPt))
+      (setq bbMax (vlax-safearray->list maxPt))
+      (setq halfH (* 0.5 (- (caddr bbMax) (caddr bbMin))))
+    )
+  )
+  (setq anchorY halfW)
+  (setq anchorZ
+    (cond
+      ((null dz) 0.0)                  ; vaaka -> rail-pohja
+      ((< dz 0)  (* 2.0 halfH))        ; pudotus -> rail-yläpinta
+      (t         0.0)))                ; nousu -> rail-pohja
+
+  ;; 10) 4x4-muunnos: kanonisen X -> L, Y -> W, Z -> D.
+  ;;     Translaatio = p1 - anchorY*W - anchorZ*D, jotta block-koord
+  ;;     (0, anchorY, anchorZ) landaa pickattuun pisteeseen p1.
   (setq mat
     (vlax-tmatrix
       (list
-        (list (car L)   (car W)   (car D)   (car p1))
-        (list (cadr L)  (cadr W)  (cadr D)  (cadr p1))
-        (list (caddr L) (caddr W) (caddr D) (caddr p1))
+        (list (car L)   (car W)   (car D)
+              (- (car p1)   (* anchorY (car W))   (* anchorZ (car D))))
+        (list (cadr L)  (cadr W)  (cadr D)
+              (- (cadr p1)  (* anchorY (cadr W))  (* anchorZ (cadr D))))
+        (list (caddr L) (caddr W) (caddr D)
+              (- (caddr p1) (* anchorY (caddr W)) (* anchorZ (caddr D))))
         (list 0.0 0.0 0.0 1.0))))
   (vla-TransformBy ins mat)
 
-  ;; 9) Layer + dynaamiset properties
+  ;; 11) Layer + dynaamiset properties. Leveys ENNEN Pituutta — ks. c:KLH
+  ;;     vaihe 10: BricsCAD ei ketjuta Leveys-Stretch + Pituus-Array.
   (vla-put-Layer ins layerName)
-  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" length)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" length)
+  ;; REGEN pakottaa BricsCADin evaluoimaan dynamic-block-actionit — ks. c:KLH.
+  (vl-catch-all-apply '(lambda () (command "_.REGEN")))
+
+  ;; 12) Rotaatio: tavallinen 2D-ROTATE p1:n ympari. AutoCAD nayttaa
+  ;;     natiivin dynaamisen previewn kun kayttaja liikuttaa hiirta —
+  ;;     voi myos kirjoittaa kulman. Esc/Enter = ei kiertoa.
+  (setq ename (vlax-vla-object->ename ins))
+  (vl-catch-all-apply
+    '(lambda ()
+       (command "_.ROTATE" ename "" (trans p1 0 1) pause)))
 
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
@@ -631,6 +711,31 @@
   )
   (princ)
 )
+
+;; ============================================================
+;; RIBBON-VALIKON SETTER-KOMENNOT
+;; ============================================================
+;; Naita kutsutaan Hyllyt-paneelin tyyppi/leveys/snap-dropdowneista.
+;; Ne vain asettavat globaalin oletuksen — eivat piirra mitaan.
+;; KLH-paapainikkeen makro on "KLH;;;" joka hyvaksyy nama oletukset
+;; (Enter joka promptissa) ja siirtyy suoraan pisteiden valintaan.
+
+(defun c:KLH-LEVY  () (setq klhylly-last-tyyppi "LEVY")
+  (princ "\nHyllytyyppi: LEVY")  (princ))
+(defun c:KLH-TIKAS () (setq klhylly-last-tyyppi "TIKAS")
+  (princ "\nHyllytyyppi: TIKAS") (princ))
+
+(defun c:KLH-W300 () (setq klhylly-last-levy "300")
+  (princ "\nHyllyleveys: 300 mm") (princ))
+(defun c:KLH-W400 () (setq klhylly-last-levy "400")
+  (princ "\nHyllyleveys: 400 mm") (princ))
+(defun c:KLH-W500 () (setq klhylly-last-levy "500")
+  (princ "\nHyllyleveys: 500 mm") (princ))
+
+(defun c:KLH-SNAPV () (setq klhylly-last-startmode "V")
+  (princ "\nAloituspiste: V (vasen paa)") (princ))
+(defun c:KLH-SNAPK () (setq klhylly-last-startmode "K")
+  (princ "\nAloituspiste: K (keski)") (princ))
 
 (princ "\nKLH + KLHV + KORKO ladattu.")
 (princ "\nProperties-paletista voi vaihtaa Leveys/Pituus, gripeilla stretchata.")
