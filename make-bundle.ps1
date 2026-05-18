@@ -95,6 +95,14 @@ $pkg = @"
        seuraavat tata. Vaarin sijoitettuna AutoCAD hylkaa koko bundlen. -->
   <RuntimeRequirements OS="Win32|Win64" Platform="AutoCAD*" SeriesMin="R23.0" SeriesMax="R25.0" />
   <Components Description="Radika ribbon + LSP-tyokalut">
+    <!-- SupportPath lisaa Contents/ ja Contents/icons/ AutoCAD:n support
+         file search path:iin niin etta:
+           - CUIX loytaa ikonit pelkalla nimella (klh_32.png)
+           - LSP findfile loytaa Kotelo.dwg / Koneikko.dwg / Lauhdutin.dwg
+             yms. blokit joita LSP-komennot INSERT:aavat
+         Ilman tata LSP:t lataavat mutta kaatuvat ekassa komennossa kun
+         block-haku ei loyda DWG:ta (FILEDIA/CMDDIA jaavat 0:lle). -->
+    <RuntimeRequirements SupportPath="./Contents;./Contents/icons" OS="Win32|Win64" Platform="AutoCAD*" />
     <!-- CUIX: Autodeskin omat ribbon-bundlet eivat kayta AppType/MenuGroup
          -attribuutteja taalla — AutoCAD tunnistaa CUIX:n paatteesta ja
          lukee MenuGroup-nimen CUIX-tiedoston sisalta. -->
