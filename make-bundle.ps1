@@ -60,53 +60,45 @@ Get-ChildItem -LiteralPath $iconsDir -Filter '*.png' | ForEach-Object {
   Copy-Item $_.FullName $dst -Force
 }
 
-# _loader.lsp — autoloader joka latautuu PackageContents.xml:n kautta
-# (LoadOnAutoCADStartup="True"). Lataa muut LSPit Contents-kansiosta.
-$loader = @"
-;; Radika-tyokalujen autoloader (AutoCAD/BricsCAD bundle).
-;; AutoCAD lataa taman LSP:n bundle-kaynnistyksen yhteydessa
-;; PackageContents.xml:n LoadOnAutoCADStartup-direktiivilla.
-;; Tama puolestaan lataa muut tyokalu-LSPit samasta Contents-kansiosta.
-
-(defun radika-load-all ( / dir f )
-  (setq dir (vl-filename-directory (findfile "_loader.lsp")))
-  (if dir
-    (foreach f '("hoyrystin.lsp" "kaato.lsp" "klhylly.lsp" "koneikko.lsp"
-                 "kotelo.lsp" "lauhdutin.lsp" "positio.lsp"
-                 "putkityokalu.lsp" "varusteet.lsp")
-      (load (strcat dir "/" f) nil))))
-
-(radika-load-all)
-(princ "\nRadika-tyokalut ladattu (bundle).")
-(princ)
-"@
-$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText((Join-Path $contentsDir '_loader.lsp'), $loader, $utf8NoBom)
-
 # PackageContents.xml — kertoo AutoCADille mita ladata.
-# ProductCode = pysyva GUID taman paketin identifierina (sama paivityksissakin).
+# - Jokainen LSP omana ComponentEntry-rivina (LoadOnAutoCADStartup="True")
+#   jotta AutoCAD lataa ne suoraan full path:lla, ei findfile-tempun kautta.
+# - CUIX-rivi sisaltaa MenuGroup-attribuutin jotta AutoCAD tietaa kayttaa
+#   sita partial-CUI:na ja ribbon-valilehti ilmestyy.
+# - ProductCode = pysyva GUID taman paketin identifierina (sama paivityksissakin).
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+# Build LSP ComponentEntries dynamically
+$lspEntries = ($lspFiles | ForEach-Object {
+  $appName = ($_ -replace '\.lsp$','')
+  "    <ComponentEntry AppName=`"RadikaTools-$appName`" Version=`"1.0.0`" ModuleName=`"./Contents/$_`" AppType=`".lsp`" LoadOnAutoCADStartup=`"True`" />"
+}) -join "`r`n"
+
 $pkg = @"
 <?xml version="1.0" encoding="utf-8"?>
 <ApplicationPackage SchemaVersion="1.0"
+                    ProductType="Application"
+                    AutodeskProduct="AutoCAD"
                     ProductCode="{7A2B1E4F-3C5D-4E6F-8A9B-1C2D3E4F5A6B}"
                     Name="RadikaTools"
                     Description="Kylmalaite-suunnittelun LISP-tyokalut + Radika-ribbon"
                     Author="Lauri Rekola"
                     Helpfile="https://mcrauli.github.io/autocad-lisp-ohjeet/"
                     AppVersion="1.0.0"
-                    AutodeskProduct="AutoCAD"
-                    SupportedLocales="Enu">
+                    SupportedLocales="*"
+                    Icon="./Contents/icons/klh_32.png">
   <CompanyDetails Name="Lauri Rekola" />
+  <!-- RuntimeRequirements pitaa olla ApplicationPackage:n lapsena, EI
+       Components:n sisalla. Toimivat Autodesk-bundlet (esim. App Manager)
+       seuraavat tata. Vaarin sijoitettuna AutoCAD hylkaa koko bundlen. -->
+  <RuntimeRequirements OS="Win32|Win64" Platform="AutoCAD*" SeriesMin="R23.0" SeriesMax="R25.0" />
   <Components Description="Radika ribbon + LSP-tyokalut">
-    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R23.0" />
     <ComponentEntry AppName="RadikaTools-CUIX" Version="1.0.0"
                     ModuleName="./Contents/radika-tools.cuix"
                     AppType=".cuix"
+                    MenuGroup="RADIKA"
                     LoadOnAutoCADStartup="True" />
-    <ComponentEntry AppName="RadikaTools-Lisp" Version="1.0.0"
-                    ModuleName="./Contents/_loader.lsp"
-                    AppType=".lsp"
-                    LoadOnAutoCADStartup="True" />
+$lspEntries
   </Components>
 </ApplicationPackage>
 "@
