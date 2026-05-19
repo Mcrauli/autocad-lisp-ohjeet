@@ -103,21 +103,23 @@
 ;; BLOCK-DEFINITION LOADER
 ;; ============================================================
 
-(defun lauhdutin-ensure-block ( blockName dwgFileName / dwgPath )
-  (if (tblsearch "BLOCK" blockName)
-    T
+;; Aina pakota block-maarityksen lataus polusta — varmistaa etta
+;; ATTDEF:n / geometrian / varin paivitykset DWG:hen naky vat ilman
+;; etta kayttajan tarvitsee manuaalisesti redefinetada blockia.
+(defun lauhdutin-ensure-block ( blockName dwgFileName / dwgPath isRedefine )
+  (setq dwgPath (lauhdutin-find-block-file dwgFileName))
+  (if (or (null dwgPath) (not (= (type dwgPath) 'STR)))
     (progn
-      (setq dwgPath (lauhdutin-find-block-file dwgFileName))
-      (if (or (null dwgPath) (not (= (type dwgPath) 'STR)))
-        (progn
-          (princ (strcat "\nVIRHE: " dwgFileName " ei loydy."))
-          (princ "\nTarkista etta Lauhdutin.dwg on samassa kansiossa kuin")
-          (princ "\nlauhdutin.lsp tai $USERPROFILE\\suunnittelutyokalut\\.")
-          nil)
-        (progn
-          (command "_.-INSERT" (strcat blockName "=" dwgPath))
-          (command)
-          T))))
+      (princ (strcat "\nVIRHE: " dwgFileName " ei loydy."))
+      (princ "\nTarkista etta Lauhdutin.dwg on samassa kansiossa kuin")
+      (princ "\nlauhdutin.lsp tai $USERPROFILE\\suunnittelutyokalut\\.")
+      nil)
+    (progn
+      (setq isRedefine (if (tblsearch "BLOCK" blockName) T nil))
+      (command "_.-INSERT" (strcat blockName "=" dwgPath))
+      (if isRedefine (command "_Y"))   ; "Redefine block?" -> Yes
+      (command)                         ; cancel INSERT instance
+      T))
 )
 
 ;; ============================================================
@@ -125,9 +127,12 @@
 ;; ============================================================
 
 (defun lauhdutin-insert ( / *error* oldClayer oldCmdecho oldOsmode
+                              oldAttreq oldAttdia
                               blockName dwgName ok )
 
   (defun *error* ( msg )
+    (if oldAttdia  (setvar "ATTDIA"  oldAttdia))
+    (if oldAttreq  (setvar "ATTREQ"  oldAttreq))
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
     (if oldCmdecho (setvar "CMDECHO" oldCmdecho))
     (if oldClayer  (setvar "CLAYER"  oldClayer))
@@ -138,6 +143,8 @@
   (setq oldClayer  (getvar "CLAYER"))
   (setq oldCmdecho (getvar "CMDECHO"))
   (setq oldOsmode  (getvar "OSMODE"))
+  (setq oldAttreq  (getvar "ATTREQ"))
+  (setq oldAttdia  (getvar "ATTDIA"))
 
   (lauhdutin-ensure-layer "KYL-LAUHDUTIN" 175)   ; ACI 175 (RGB 63,63,127)
 
@@ -149,6 +156,9 @@
 
   (setvar "CLAYER" "KYL-LAUHDUTIN")
   (setvar "CMDECHO" 0)
+  ;; Pakota attribuuttien kysely INSERT:in yhteydessa (kts. koneikko.lsp).
+  (setvar "ATTREQ" 1)
+  (setvar "ATTDIA" 1)
 
   ;; Anna AutoCAD:n hoitaa INSERT-prompts interaktiivisesti — kayttaja
   ;; saa live-preview kun pyorittaa rotaatiota. "_S" 1 lukitsee skaalan
@@ -159,6 +169,8 @@
   (while (= 1 (logand 1 (getvar "CMDACTIVE")))
     (command pause))
 
+  (setvar "ATTDIA"  oldAttdia)
+  (setvar "ATTREQ"  oldAttreq)
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
