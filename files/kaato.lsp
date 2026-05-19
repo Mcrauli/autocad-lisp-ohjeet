@@ -41,13 +41,13 @@
         (setq deg (- deg))
       )
 
-      ;; rotaatio
+      ;; rotaatio — ROTATE3D ottaa kaksi pistetta rotaatioakselille
+      ;; suoraan ilman "Axis"-keywordia, joka aiheuttaa BricsCAD:ssa
+      ;; akselin tulkinnan menemisen sekaisin (toimii muka 90 asteena).
       (command "ROTATE3D"
                ent ""
-               p1
-               "Axis"
-               p1
-               (mapcar '+ p1 axis)
+               p1                          ; akselin 1. piste
+               (mapcar '+ p1 axis)         ; akselin 2. piste
                deg
       )
 
