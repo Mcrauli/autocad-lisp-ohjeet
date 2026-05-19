@@ -817,7 +817,10 @@ code {
 <a href="#positio">Positio</a>
 <a href="#kaato">Kaato</a>
 <a href="#klhylly">Kylmälaitehylly</a>
+<a href="#kotelo">Kotelo</a>
 <a href="#hoyrystin">Höyrystin</a>
+<a href="#koneikko">Koneikko</a>
+<a href="#lauhdutin">Lauhdutin</a>
 <a href="#varusteet">Varusteet</a>
 <span class="menu-group">Lisätietoa</span>
 <a href="#faq">Usein kysyttyä</a>
@@ -835,7 +838,10 @@ code {
 <a href="#positio">Positio</a>
 <a href="#kaato">Kaato</a>
 <a href="#klhylly">Kylmälaitehylly</a>
+<a href="#kotelo">Kotelo</a>
 <a href="#hoyrystin">Höyrystin</a>
+<a href="#koneikko">Koneikko</a>
+<a href="#lauhdutin">Lauhdutin</a>
 <a href="#varusteet">Varusteet</a>
 <span class="menu-group">Lisätietoa</span>
 <a href="#faq">Usein kysyttyä</a>
@@ -1309,6 +1315,135 @@ ensimmäisellä kutsulla.
 <li>Layer-erottelu (KYL-HOYRYSTIMET vs siniset putket) tekee laitteista visuaalisesti tunnistettavia plan-näkymässä</li>
 <li>dxf2ifc-yhteensopiva: KYL-HOYRYSTIMET → <code>IfcEvaporator</code> IFC-eksportissa (Talo2000 + RAVA-luokitus)</li>
 </ul>
+</div>
+</div>
+
+<div class="section" id="koneikko">
+<h2 class="category">Koneikko</h2>
+
+<div class="block reveal">
+<p>
+KONEIKKO sijoittaa kylmäkoneikon valmis-blockin piirustukseen drag-previewillä.
+Komennon ajamisen jälkeen block seuraa hiirtä, ja sijoituksen jälkeen
+AutoCAD avaa <b>attribuuttidialogin</b> jossa täytetään koneikon
+tunnistetiedot (esim. tyyppi, teho, tunnus). Arvot tallentuvat
+block-instanssin attribuutteina ja näkyvät myöhemmin Properties-paletissa
+sekä eksportoituvat dxf2ifc:llä IFC-malliin.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Komennot</h2>
+<ul>
+<li><code>KONEIKKO</code> — täysi nimi</li>
+<li><code>KKO</code> — lyhyt pikakomento (sama toiminto)</li>
+</ul>
+<p>Komentokutsu:</p>
+<ol>
+<li>Block seuraa hiirtä — klikkaa lisäyspiste</li>
+<li>Pyöritä hiirellä rotaatio paikalleen (live-preview)</li>
+<li>Klikkaa hyväksy</li>
+<li>Täytä attribuuttiarvot avautuvassa dialogissa → OK</li>
+</ol>
+</div>
+
+<div class="block reveal">
+<h2>Layer</h2>
+<p>
+Koneikot menevät layerille <code>KYL-KONEIKKO</code> (AutoCAD Color Index
+175, tumma sininen — sama väri kuin muilla KYL-työkaluilla).
+Layer luodaan automaattisesti ensimmäisellä kutsulla.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Block-määrityksen päivittäminen</h2>
+<p>
+Jos muokkaat <code>Koneikko.dwg</code>-block-tiedostoa (esim. lisäät
+uuden attribuutin tai muutat geometriaa), LSP lataa <b>aina uusimman
+version polusta</b> seuraavalla KONEIKKO-kutsulla — ei tarvitse
+manuaalisesti redefinetoida piirustuksessa. Vanhat sijoitetut instanssit
+päivittyvät uuteen block-määritykseen automaattisesti (paitsi
+attribuuttiarvot, jotka säilyvät kuten käyttäjä on syöttänyt).
+</p>
+</div>
+
+<div class="block reveal">
+<h2>dxf2ifc</h2>
+<p>
+KYL-KONEIKKO-layer mappautuu IFC-eksportissa: <code>IfcUnitaryEquipment</code>
+(RAVA-LVI-koodi). Attribuutit kulkevat mukaan Property Setteinä Solibrissa.
+</p>
+</div>
+</div>
+
+<div class="section" id="lauhdutin">
+<h2 class="category">Lauhdutin</h2>
+
+<div class="block reveal">
+<p>
+LAUHDUTIN sijoittaa lauhduttimen (esim. kaasunjäähdytin koneikolla)
+valmis-blockin piirustukseen. Toiminta sama kuin KONEIKKO:lla: block
+seuraa hiirtä, rotaatio live-previewillä, ja sijoituksen jälkeen
+attribuuttidialogi avautuu tunnistetietojen syöttämiseen.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Komennot</h2>
+<ul>
+<li><code>LAUHDUTIN</code> — täysi nimi</li>
+<li><code>LAU</code> — lyhyt pikakomento (sama toiminto)</li>
+</ul>
+</div>
+
+<div class="block reveal">
+<h2>Layer ja dxf2ifc</h2>
+<p>
+Layer <code>KYL-LAUHDUTIN</code> (ACI 175). IFC-eksportissa
+<code>IfcCondenser</code> (RAVA-LVI). Attribuutit Property Setteinä.
+</p>
+</div>
+</div>
+
+<div class="section" id="kotelo">
+<h2 class="category">Kotelo</h2>
+
+<div class="block reveal">
+<p>
+KOTELO piirtää parametrisen, suljetun kaapelireitti/kotelo-blockin
+kahden pisteen väliin. Pituus syötetään joko kahden pisteen klikkauksella
+tai Z-pudotuksen numerona (pystysuuntaiselle kotelolle, esim. hyllyltä
+alaspäin). Sama 2-pisteen flow kuin KLH-vaakahyllyllä: pickaa kaksi pistettä
+ja leveys, KOTELO määrittelee orientaation automaattisesti niin että
+kotelo ei mene toisten objektien sisään.
+</p>
+</div>
+
+<div class="block reveal">
+<h2>Komennot</h2>
+<ul>
+<li><code>KOTELO</code> — vaaka- tai pystysuuntainen kotelo, 2-pisteen flow</li>
+</ul>
+<p>Komentokutsu:</p>
+<ol>
+<li>Pickaa <b>alkupiste</b></li>
+<li>Anna <b>Z-pudotus mm</b> numerona (negat. = alaspäin, positiivinen = ylöspäin)
+    tai <b>Enter</b> ja pickaa loppupiste vaakatasossa</li>
+<li>Pickaa <b>leveyden suunta</b></li>
+<li>Pyöritä lopullinen rotaatio paikalleen → klikkaa hyväksy</li>
+</ol>
+<p>Pituus on dynamic-block-parametri (<b>Pituus</b>), eli voit muokata
+sitä jälkikäteen Properties-paletista tai grippien kautta.</p>
+</div>
+
+<div class="block reveal">
+<h2>Layer ja dxf2ifc</h2>
+<p>
+Layer <code>KYL-KOTELO</code> (ACI 175). IFC-eksportissa
+<code>IfcCableCarrierSegment / CABLETRUNKINGSEGMENT</code> — sama
+luokitus kuin sähkökeskuksen yhteyteen tuleville kaapelireiteille.
+</p>
 </div>
 </div>
 
