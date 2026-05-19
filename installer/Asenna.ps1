@@ -205,18 +205,8 @@ if ($autocadInstalled -or $bricscadInstalled) {
   Write-Host ""
   Write-Host "LSP-tyokalut: $toolsDst" -ForegroundColor Gray
   Write-Host ""
-  Write-Host "Seuraavaksi:"
-  if ($autocadInstalled) {
-    Write-Host "  AutoCAD:  Kaynnista uudelleen. Ribbon + komennot toimivat" -ForegroundColor White
-    Write-Host "            automaattisesti. Ei lisaaskelia." -ForegroundColor White
-  }
-  if ($bricscadInstalled) {
-    Write-Host "  BricsCAD: Kaynnista uudelleen. Komennot toimivat heti." -ForegroundColor White
-    Write-Host "            Ribbon-valilehden saa nakyviin yhden kerran:" -ForegroundColor White
-    Write-Host "              1. Komentoriville: CUILOAD" -ForegroundColor White
-    Write-Host "              2. Klikkaa Browse, kirjoita: radika-tools.cuix" -ForegroundColor White
-    Write-Host "              3. Klikkaa Load -> Close" -ForegroundColor White
-  }
+  Write-Host "Kaynnista CAD uudelleen - Radika-ribbon + komennot toimivat"
+  Write-Host "automaattisesti, ei lisaaskelia."
   Write-Host ""
   Write-Host "Komennot: KLH KLHV KOTELO KORKO MTI LTI MTN POSITIO" -ForegroundColor Gray
   Write-Host "          KAATO VARUSTEET HOYRYSTIN KONEIKKO LAUHDUTIN" -ForegroundColor Gray

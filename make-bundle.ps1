@@ -124,7 +124,9 @@ ASENNUS:
   4. Kaynnista CAD uudelleen
 
 KAYTTO:
-  Komennot toimivat suoraan komentorivilta jokaisessa piirustuksessa:
+  Radika-ribbon-valilehti ilmestyy automaattisesti molempiin
+  CAD:eihin. Komennot toimivat suoraan komentorivilta jokaisessa
+  piirustuksessa:
 
     KLH KLHV KOTELO KORKO     - hyllyt ja kotelot
     MTI LTI MTN               - putket
@@ -132,14 +134,6 @@ KAYTTO:
     LAUHDUTIN                 -   "    "
     POSITIO ASETANUMERO       - merkinta
     KAATO VARUSTEET           - apuvalineet (sahkokomponentit)
-
-  AutoCAD:lla Radika-ribbon-valilehti ilmestyy automaattisesti.
-
-  BricsCAD:lla ribbon vaatii kerran:
-    1. Komentoriville: CUILOAD
-    2. Browse -> kirjoita radika-tools.cuix
-    3. Load -> Close
-    Tab pysyy nakyvilla seuraavissa sessioissa.
 
 PAIVITYS:
   Lataa uusi ZIP, aja Asenna.cmd uudelleen. Idempotentti.
