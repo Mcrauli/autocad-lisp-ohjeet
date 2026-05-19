@@ -1,29 +1,32 @@
-# Asenna.ps1 — RadikaTools-asentaja AutoCAD + BricsCAD:lle.
+# Asenna.ps1 - RadikaTools-asentaja AutoCAD + BricsCAD:lle.
 #
 # Tama skripti:
 #   1. Kopioi LSP- ja DWG-tyokalut polkuun %APPDATA%\Radika\Tools\
-#   2. Kirjoittaa acaddoc.lsp jokaisen lyodetyn CAD-asennuksen Support-
+#   2. Kirjoittaa acaddoc.lsp jokaisen loydetyn CAD-asennuksen Support-
 #      kansioon. acaddoc.lsp lataa LSP:t kohdasta 1 jokaisen piirustuksen
-#      avauksen yhteydessa. Koska acaddoc.lsp itse asuu CAD:in omassa
+#      avauksen yhteydessa. Koska acaddoc.lsp itse asuu CAD:n omassa
 #      Support-kansiossa, AutoCAD:n SECURELOAD pitaa sita implisiittisesti
-#      trusted:na — ei tarvita TRUSTEDPATHS-rekisterimuutoksia.
+#      trusted:na - ei tarvita TRUSTEDPATHS-rekisterimuutoksia.
 #   3. AutoCAD: kopioi RadikaTools.bundle ApplicationPlugins-kansioon.
-#      Bundle sisaltaa vain CUIX-ribbonin (ei LSP:ita) — ribbon
+#      Bundle sisaltaa vain CUIX-ribbonin (ei LSP:ita) - ribbon
 #      autoloadataan, LSP:t tulee Support-acaddoc-loaderista.
 #   4. BricsCAD: kopioi CUIX + ikonit BricsCAD:n Support-kansioon, ja
 #      kayttaja saa ohjeen ajaa kerran CUILOAD-komennon (BricsCAD ei
 #      autoloadaa CUIX:ia samalla tavalla kuin AutoCAD).
-#   5. Idempotentti — saman skriptin ajaminen uudelleen paivittaa
+#   5. Idempotentti - saman skriptin ajaminen uudelleen paivittaa
 #      kaikki tiedostot.
 #
 # Kayttotapa: Asenna.cmd kaksoisklikkauksella.
+#
+# ASCII-only on purpose: Windows PowerShell 5.1 mis-decodes UTF-8 scripts
+# ilman BOM:ia, joten Unicode-merkit (esim. em-dash) rikkovat parserin.
 
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host " RadikaTools — AutoCAD/BricsCAD asentaja" -ForegroundColor Cyan
+Write-Host " RadikaTools - AutoCAD/BricsCAD asentaja" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -80,7 +83,7 @@ if (-not $lspDirFwd.EndsWith('/')) { $lspDirFwd += '/' }
 $loadLines = ($lspList | ForEach-Object { "(radika-load-lsp `"$_`")" }) -join "`r`n"
 $acaddocBody = @"
 ;; RadikaTools-tyokalujen automaattinen lataus.
-;; Generoitu Asenna.ps1:lla. Ala muokkaa kasin — aja Asenna.cmd
+;; Generoitu Asenna.ps1:lla. Ala muokkaa kasin - aja Asenna.cmd
 ;; uudelleen paivittaaksesi LSP-listan tai polun.
 
 (setq *radika-lsp-dir* "$lspDirFwd")
@@ -119,10 +122,8 @@ if ($acadRoots) {
   Write-Host "[AutoCAD] havaittu" -ForegroundColor Green
   foreach ($support in $acadRoots) {
     Write-Host "  Support: $support" -ForegroundColor Gray
-    # acaddoc.lsp -> autoload LSP-tyokalut
     [System.IO.File]::WriteAllText((Join-Path $support 'acaddoc.lsp'), $acaddocBody, $utf8NoBom)
     Write-Host "    + acaddoc.lsp" -ForegroundColor Gray
-    # Ikonit Support\Icons -> CUIX-ribbonin ikonit
     $iconDst = Join-Path $support 'Icons'
     if (-not (Test-Path -LiteralPath $iconDst)) {
       New-Item -ItemType Directory -Path $iconDst -Force | Out-Null
@@ -137,7 +138,6 @@ if ($acadRoots) {
     }
     Write-Host "    + $iconN ikonia Support\Icons" -ForegroundColor Gray
   }
-  # Bundle ApplicationPlugins -> CUIX-ribbon automaattisesti
   $acadPluginDir = Join-Path $env:APPDATA 'Autodesk\ApplicationPlugins'
   if (-not (Test-Path -LiteralPath $acadPluginDir)) {
     New-Item -ItemType Directory -Path $acadPluginDir -Force | Out-Null
@@ -174,14 +174,11 @@ if ($brixRoots) {
   Write-Host "[BricsCAD] havaittu" -ForegroundColor Green
   foreach ($support in $brixRoots) {
     Write-Host "  Support: $support" -ForegroundColor Gray
-    # acaddoc.lsp + on_doc_load.lsp -> autoload LSP-tyokalut joka DWG:hen
     [System.IO.File]::WriteAllText((Join-Path $support 'acaddoc.lsp'),     $acaddocBody, $utf8NoBom)
     [System.IO.File]::WriteAllText((Join-Path $support 'on_doc_load.lsp'), $acaddocBody, $utf8NoBom)
     Write-Host "    + acaddoc.lsp + on_doc_load.lsp" -ForegroundColor Gray
-    # CUIX -> Support-kansioon jotta CUILOAD loytaa sen
     Copy-Item -LiteralPath (Join-Path $bundleSrc 'Contents\radika-tools.cuix') (Join-Path $support 'radika-tools.cuix') -Force
     Write-Host "    + radika-tools.cuix" -ForegroundColor Gray
-    # Ikonit Support-juureen (BricsCAD etsii niita sielta CUIX:lle)
     $bundleIcons = Join-Path $bundleSrc 'Contents\icons'
     $iconN = 0
     if (Test-Path -LiteralPath $bundleIcons) {
