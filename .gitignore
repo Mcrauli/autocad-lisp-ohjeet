@@ -14,3 +14,6 @@ UsersLauriRekola.claudesettings.json
 # Virheelliset/keskeneräiset tallennukset
 files/vputki-322.dwg
 files/klhylly-tikaspp.dwg
+
+# Asentaja-ZIP:n auto-purku jos joku tekee sen vahingossa
+files/suunnittelutyokalut/

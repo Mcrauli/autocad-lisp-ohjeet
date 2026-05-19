@@ -870,16 +870,16 @@ Työkalut automatisoivat toistuvat työvaiheet ja tekevät suunnittelusta nopeam
 <div class="section" id="kayttoonotto">
 <h2 class="category">Käyttöönotto</h2>
 <div class="block reveal">
-<h3>Asennus AutoCAD-plugin-bundlena</h3>
-<p>Lataa <a href="lataukset.html">latauksista</a> <code>suunnittelutyokalut.zip</code> ja seuraa neljä askelta:</p>
+<h3>Asennus AutoCAD:lle ja BricsCAD:lle</h3>
+<p>Lataa <a href="lataukset.html">latauksista</a> <code>suunnittelutyokalut.zip</code>. Sama paketti toimii kummallakin CAD:lla — asentaja tunnistaa kumpi (tai molemmat) on koneella.</p>
 <ol>
-<li><b>Pura ZIP</b> mihin tahansa (työpöydälle riittää). Saat <code>RadikaTools.bundle</code>-kansion.</li>
-<li><b>Avaa Resurssienhallinta</b>. Liitä osoitepalkkiin: <code>%APPDATA%\Autodesk\ApplicationPlugins\</code> ja paina Enter. Kansio luodaan jos sitä ei vielä ole.</li>
-<li><b>Raahaa</b> <code>RadikaTools.bundle</code>-kansio sinne.</li>
-<li><b>Käynnistä AutoCAD</b> (tai BricsCAD). Radika-välilehti ilmestyy ribboniin ja kaikki komennot ovat heti käytettävissä.</li>
+<li><b>Pura ZIP</b> mihin tahansa (työpöydälle riittää). Saat kansion jossa on <code>Asenna.cmd</code>, <code>Tools/</code> ja <code>RadikaTools.bundle/</code>.</li>
+<li><b>Kaksoisklikkaa <code>Asenna.cmd</code></b>. Skripti tunnistaa CAD:n, kopioi työkalut polkuun <code>%APPDATA%\Radika\Tools\</code> ja loaderit Support-kansioihin. Kestää sekunnin pari.</li>
+<li><b>Käynnistä CAD uudelleen</b>. Komennot toimivat heti, ribbon-välilehti ilmestyy automaattisesti AutoCAD:lla.</li>
+<li><b>BricsCAD:lla yksi lisäaskel ribbon-välilehdelle</b> (ensimmäisellä kerralla): komentorivi <code>CUILOAD</code> → <i>Browse</i> → kirjoita <code>radika-tools.cuix</code> → <i>Load</i> → <i>Close</i>. LSP-komennot toimivat heti ilman tätä askelta.</li>
 </ol>
 <p style="margin-top:14px;color:#94a3b8;font-size:14px;line-height:1.6;">
-Ei APPLOADia, ei CUILOADia, ei skriptin ajamista. AutoCAD löytää bundlen <code>PackageContents.xml</code>-tiedostosta käynnistyessään ja lataa kaikki LSPit + ribbonin automaattisesti. Päivittäminen: korvaa <code>RadikaTools.bundle</code>-kansio uudella ja käynnistä CAD uudelleen. Poisto: poista kansio.
+Asentaja ei vaadi admin-oikeuksia eikä kosketa AutoCAD:n profiilirekisteriä. LSP-työkalut latautuvat <code>acaddoc.lsp</code>:n kautta jokaiseen piirustukseen automaattisesti — ei APPLOADia. Päivittäminen: lataa uusi ZIP, aja <code>Asenna.cmd</code> uudelleen (idempotentti). Poisto: poista kansiot <code>%APPDATA%\Radika</code> ja <code>%APPDATA%\Autodesk\ApplicationPlugins\RadikaTools.bundle</code>.
 </p>
 </div>
 <div class="block reveal">

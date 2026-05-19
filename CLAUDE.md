@@ -453,6 +453,59 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
       Lauri lataa `vputki.lsp`:n käsin APPLOAD:lla, mutta ne eivät
       lataudu automaattisesti uudestaan ennen kuin niitä taas tarvitaan.
 
+24. **Jakelu-installer AutoCAD + BricsCAD** (19.5.2026): yritys
+    pakata kaikki AutoCAD-plug-in-bundleksi (`PackageContents.xml` +
+    `LoadOnAutoCADStartup="True"` LSP-entryt) törmäsi AutoCAD:n
+    SECURELOAD-feature:en — TRUSTEDPATHS-rekisteri on per-user ja
+    yleensä tyhjä, joten AutoCAD hylkäsi LSP-tiedostot hiljaisesti
+    vaikka bundle latautui (CUIX-ribbon näkyi mutta komennot
+    "Unknown command"). Tutkittu syvällisesti: `UpgradeCode`,
+    `SupportPath`, `MenuGroup`, `AppType`, eri muodot, jne. — ei
+    auttanut. Oikea malli on sama jolla BricsCAD on toiminut alusta
+    asti ja jolla install-radika.ps1 jo asentaa kehityskoneelle:
+    **`acaddoc.lsp` CAD:n omassa Support-kansiossa**, joka on
+    implicitly trusted (SECURELOAD ei kosketa sitä). acaddoc.lsp
+    lataa LSP:t mistä tahansa polusta `(load ...)`-kutsulla — myös
+    se on trusted-kontekstista.
+    - **Lopullinen jakelu-rakenne** (`installer/Asenna.ps1` +
+      `make-bundle.ps1`): yksi ZIP joka sisältää:
+        - `Asenna.cmd` (kaksoisklikkaa) + `Asenna.ps1` (varsinainen
+          asennus) + `LUEMINUT.txt`
+        - `Tools/` — 9 LSP + 15 DWG, asentuvat polkuun
+          `%APPDATA%\Radika\Tools\`
+        - `RadikaTools.bundle/` — vain CUIX + ikonit (EI LSP/DWG),
+          asentuu `%APPDATA%\Autodesk\ApplicationPlugins\`-kansioon
+          ribbon-Tab:in autoloadausta varten. CUIX ei kuulu
+          SECURELOAD-piiriin, joten ribbon latautuu ilman
+          TrustedPaths-temppuja.
+    - **Asenna.ps1 toimii idempotentisti molemmilla**: tunnistaa
+      AutoCAD/BricsCAD HKCU-rekisteristä, etsii kunkin Support-
+      kansion, kirjoittaa generoidun acaddoc.lsp:n (osoittaa
+      `%APPDATA%\Radika\Tools`-polkuun, EI repon files/-kansioon
+      kuten kehityskäytössä), kopioi ikonit Support\Icons-kansioon
+      (AutoCAD) tai Support-juureen (BricsCAD), bundle:n
+      ApplicationPlugins-kansioon. BricsCAD:lle myös erillinen
+      CUIX-kopio Support-kansioon helpottamaan CUILOAD-komentoa.
+    - **Käyttäjäkokemus**: pura ZIP → Asenna.cmd → restart CAD.
+      AutoCAD: täysin automaattinen. BricsCAD: yksi CUILOAD-komento
+      kerran ribbon-Tab:lle (BricsCAD ei autoloadaa CUIX:ia samalla
+      tavalla kuin AutoCAD).
+    - **Päivitysrutiini**: kehittäjä muokkaa LSP/DWG → ajaa
+      `make-bundle.ps1` → push gittiin (GitHub Pages serveeraa
+      `files/suunnittelutyokalut.zip`). Loppukäyttäjä lataa uuden
+      ZIP:n ja ajaa Asenna.cmd:n uudelleen. Vanha ylikirjoittuu.
+    - **Lauri:n kehityskonfiguraatio säilyy** ennallaan: `tools/install-
+      radika.ps1` osoittaa edelleen repon `files/`-kansioon, joten
+      LSP-iteraatio "muokkaa LSP → seuraava DWG:n avaus näkee
+      muutoksen" toimii ilman make-bundle/restart-sykliä. Lauri ei
+      saa ajaa Asenna.cmd:tä omalla koneellaan — se ylikirjoittaisi
+      acaddoc.lsp:n osoittamaan `%APPDATA%\Radika\Tools`-polkuun ja
+      iteraatio katkeaisi.
+    - **lataukset.html + ohjeet.html**: latauskortin meta päivitetty
+      (911 KB, "AutoCAD + BricsCAD", 19.5.2026), asennusohjeet
+      uusittu ("Kaksoisklikkaa Asenna.cmd"), changelog-entry
+      19.5.2026, ohjeet-sivun Käyttöönotto-osio päivitetty.
+
 23. **Kolme uutta työkalua: KOTELO, KONEIKKO, LAUHDUTIN + auto-load** (18.5.2026):
     - **KOTELO** (`files/kotelo.lsp` + `files/Kotelo.dwg`): parametrinen
       kotelo-tyyppinen kaapelireitti (suljettu suorakaide-poikkileikkaus,
