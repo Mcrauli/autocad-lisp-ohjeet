@@ -61,42 +61,65 @@
 ;; ============================================================
 ;; BLOCK-DWG LOCATOR
 ;; ============================================================
-;; Etsii dwgName:n: Support Path -> cached -> LSP-kansio -> DWGPREFIX ->
-;; %USERPROFILE%\suunnittelutyokalut\. Jos ei loydy -> file-dialog.
+;; Hakujarjestys:
+;;   1. *radika-lsp-dir*  (asentajan asettama Tools-polku) — ENSISIJAINEN
+;;      jotta projektikansion samannimiset DWG:t (esim. vanha
+;;      Koneikko.dwg toisesta projektista) eivat varasta hakua.
+;;   2. *koneikko-lsp-folder* (LSP:n oma kansio)
+;;   3. *koneikko-cached-folder* (session aikana muistettu)
+;;   4. findfile (Support Path -haku)
+;;   5. DWGPREFIX (nykyisen DWG:n kansio)
+;;   6. %USERPROFILE%\suunnittelutyokalut\
+;;   7. file-dialog viimeisena fallback:na
 
-(defun koneikko-find-block-file ( dwgName / cands prefix found p picked )
+(defun koneikko-find-block-file ( dwgName / cands prefix found p picked ff )
   (vl-load-com)
-  (setq found (findfile dwgName))
-  (if (and found (= (type found) 'STR))
-    found
+  (setq found nil)
+  (setq cands '())
+  ;; 1. ENSISIJAINEN: asentajan asettama Tools-polku
+  (if (and (boundp '*radika-lsp-dir*) *radika-lsp-dir*
+           (= (type *radika-lsp-dir*) 'STR))
+    (setq cands (list (strcat *radika-lsp-dir* dwgName))))
+  ;; 2. LSP-kansio
+  (if (and *koneikko-lsp-folder* (= (type *koneikko-lsp-folder*) 'STR))
+    (setq cands (append cands
+                        (list (strcat *koneikko-lsp-folder* "\\" dwgName)))))
+  ;; 3. Session cached folder
+  (if (and *koneikko-cached-folder* (= (type *koneikko-cached-folder*) 'STR))
+    (setq cands (append cands
+                        (list (strcat *koneikko-cached-folder* "\\" dwgName)))))
+  ;; Etsi ensimmainen joka on olemassa
+  (foreach p cands
+    (if (and (not found) (= (type p) 'STR) (vl-file-systime p))
+      (setq found p)))
+  ;; 4. findfile (Support Path)
+  (if (null found)
     (progn
-      (setq found nil)
-      (setq cands '())
-      (if (and *koneikko-cached-folder* (= (type *koneikko-cached-folder*) 'STR))
-        (setq cands (list (strcat *koneikko-cached-folder* "\\" dwgName))))
-      (if (and *koneikko-lsp-folder* (= (type *koneikko-lsp-folder*) 'STR))
-        (setq cands (append cands
-                            (list (strcat *koneikko-lsp-folder* "\\" dwgName)))))
+      (setq ff (findfile dwgName))
+      (if (and ff (= (type ff) 'STR)) (setq found ff))))
+  ;; 5. DWGPREFIX
+  (if (null found)
+    (progn
       (setq prefix (getvar "DWGPREFIX"))
-      (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0))
-        (setq cands (append cands (list (strcat prefix dwgName)))))
-      (setq cands (append cands
-        (list (strcat (getenv "USERPROFILE")
-                      "\\suunnittelutyokalut\\" dwgName))))
-      (foreach p cands
-        (if (and (not found) (= (type p) 'STR) (vl-file-systime p))
-          (setq found p)))
-      (if (null found)
+      (if (and prefix (= (type prefix) 'STR) (> (strlen prefix) 0)
+               (vl-file-systime (strcat prefix dwgName)))
+        (setq found (strcat prefix dwgName)))))
+  ;; 6. USERPROFILE
+  (if (null found)
+    (progn
+      (setq p (strcat (getenv "USERPROFILE") "\\suunnittelutyokalut\\" dwgName))
+      (if (vl-file-systime p) (setq found p))))
+  ;; 7. file-dialog
+  (if (null found)
+    (progn
+      (princ (strcat "\n" dwgName " ei loytynyt - valitse kansio file-dialogilla."))
+      (setq picked (getfiled (strcat "Etsi " dwgName) dwgName "dwg" 0))
+      (if (and picked (= (type picked) 'STR))
         (progn
-          (princ (strcat "\n" dwgName " ei loytynyt — valitse kansio file-dialogilla."))
-          (setq picked (getfiled (strcat "Etsi " dwgName) dwgName "dwg" 0))
-          (if (and picked (= (type picked) 'STR))
-            (progn
-              (setq found picked)
-              (setq *koneikko-cached-folder* (vl-filename-directory picked))
-              (princ "\nKansio muistettu istunnon ajaksi.")))))
-      found)
-  )
+          (setq found picked)
+          (setq *koneikko-cached-folder* (vl-filename-directory picked))
+          (princ "\nKansio muistettu istunnon ajaksi.")))))
+  found
 )
 
 ;; ============================================================
