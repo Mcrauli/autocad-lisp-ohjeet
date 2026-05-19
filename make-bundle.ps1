@@ -110,8 +110,42 @@ $pkg = @"
 # ============================================================
 # Asentaja + lueminut ZIP-juureen
 # ============================================================
-Copy-Item (Join-Path $installerDir 'Asenna.cmd') $staging -Force
-Copy-Item (Join-Path $installerDir 'Asenna.ps1') $staging -Force
+# CRITICAL: Asenna.cmd ja Asenna.ps1 on PAKKO olla:
+#   1. CRLF-rivinerottimilla. cmd.exe mis-parsii REM-rivit LF:lla, antaa
+#      tyhjan ikkunan ja "'M' is not recognized" -virheen.
+#   2. ASCII-only. PowerShell 5.1 olettaa BOM-ttoman .ps1:n Windows-1252:ksi
+#      ja kaatuu parseriin jos sisalla on UTF-8 multibyte:tta (esim. em-dash).
+#      Sama vaikutus Asenna.cmd:n REM-riveihin tietyissa konfiguraatiossa.
+# Tama on bittanyt jakelua jo kahdesti. NORMALISOI AUTOMAATTISESTI.
+# Tata tarkistusta EI saa poistaa. Tama funktio itse ja sen kayttamat
+# string-literaalit on KIRJOITETTAVA ASCII-only:lla, muuten make-bundle.ps1:n
+# oma parser kaatuu samaan bugiin.
+
+function Normalize-InstallerFile {
+  param([string]$SrcPath, [string]$DstPath)
+  $content = [System.IO.File]::ReadAllText($SrcPath)
+  $content = ($content -replace "`r`n", "`n") -replace "`n", "`r`n"
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($content)
+  $nonAscii = @($bytes | Where-Object { $_ -gt 127 })
+  if ($nonAscii.Count -gt 0) {
+    $firstIdx = -1
+    for ($i = 0; $i -lt $bytes.Length; $i++) {
+      if ($bytes[$i] -gt 127) { $firstIdx = $i; break }
+    }
+    $msg = "INSTALLER NON-ASCII VIRHE: " + (Split-Path $SrcPath -Leaf) `
+         + " sisaltaa " + $nonAscii.Count + " non-ASCII tavua (ensimmainen" `
+         + " kohdassa " + $firstIdx + "). Korjaa Unicode-merkit ASCII:lle."
+    throw $msg
+  }
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($DstPath, $content, $utf8NoBom)
+}
+
+Normalize-InstallerFile -SrcPath (Join-Path $installerDir 'Asenna.cmd') -DstPath (Join-Path $staging 'Asenna.cmd')
+Normalize-InstallerFile -SrcPath (Join-Path $installerDir 'Asenna.ps1') -DstPath (Join-Path $staging 'Asenna.ps1')
+# Normalisoi myos lahdetiedostot (jotta git-historia pysyy puhtaana)
+Normalize-InstallerFile -SrcPath (Join-Path $installerDir 'Asenna.cmd') -DstPath (Join-Path $installerDir 'Asenna.cmd')
+Normalize-InstallerFile -SrcPath (Join-Path $installerDir 'Asenna.ps1') -DstPath (Join-Path $installerDir 'Asenna.ps1')
 
 $readme = @"
 RadikaTools — AutoCAD/BricsCAD LISP-tyokalut + Radika-ribbon
