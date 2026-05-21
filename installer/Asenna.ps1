@@ -74,13 +74,24 @@ Write-Host ""
 # ------------------------------------------------------------
 # Generoi acaddoc.lsp-sisalto
 # ------------------------------------------------------------
-$lspList = @('hoyrystin.lsp','kaato.lsp','klhylly.lsp','positio.lsp',
+# Huom: klhylly puuttuu tasta listasta tarkoituksella - se on CAD-spesifi
+# (AutoCAD: klhylly.lsp, BricsCAD: klhylly-brics.lsp) ja ladataan
+# PRODUCT-haaroituksella alla.
+$lspList = @('hoyrystin.lsp','kaato.lsp','positio.lsp',
              'putkityokalu.lsp','varusteet.lsp',
              'kotelo.lsp','koneikko.lsp','lauhdutin.lsp')
 
 $lspDirFwd = ($toolsDst -replace '\\', '/')
 if (-not $lspDirFwd.EndsWith('/')) { $lspDirFwd += '/' }
 $loadLines = ($lspList | ForEach-Object { "(radika-load-lsp `"$_`")" }) -join "`r`n"
+# klhylly-LISP eroaa AutoCAD:n ja BricsCAD:n valilla (dynamic-block-
+# parametrien asetusjarjestys + REGEN). Ladataan oikea per PRODUCT-sysvar.
+$loadLines = $loadLines + "`r`n" + @'
+;; klhylly: CAD-spesifi - AutoCAD lataa klhylly.lsp, BricsCAD klhylly-brics.lsp
+(if (wcmatch (strcase (getvar "PRODUCT")) "*BRICSCAD*")
+  (radika-load-lsp "klhylly-brics.lsp")
+  (radika-load-lsp "klhylly.lsp"))
+'@
 $acaddocBody = @"
 ;; RadikaTools-tyokalujen automaattinen lataus.
 ;; Generoitu Asenna.ps1:lla. Ala muokkaa kasin - aja Asenna.cmd

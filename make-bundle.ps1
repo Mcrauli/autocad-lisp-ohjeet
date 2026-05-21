@@ -52,8 +52,10 @@ New-Item -ItemType Directory -Path $bundleIconsDir | Out-Null
 # ============================================================
 # Tools/ — LSP + DWG (neutraali install-paketti)
 # ============================================================
-$lspFiles = @('hoyrystin.lsp','kaato.lsp','klhylly.lsp','positio.lsp',
-              'putkityokalu.lsp','varusteet.lsp',
+# klhylly on CAD-spesifi: klhylly.lsp = AutoCAD, klhylly-brics.lsp = BricsCAD.
+# Molemmat paketoidaan; acaddoc.lsp valitsee oikean (getvar "PRODUCT").
+$lspFiles = @('hoyrystin.lsp','kaato.lsp','klhylly.lsp','klhylly-brics.lsp',
+              'positio.lsp','putkityokalu.lsp','varusteet.lsp',
               'kotelo.lsp','koneikko.lsp','lauhdutin.lsp')
 foreach ($f in $lspFiles) {
   Copy-Item (Join-Path $filesDir $f) $toolsStaging -Force

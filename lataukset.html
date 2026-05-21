@@ -372,6 +372,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <section class="changelog reveal">
 <h2>Viimeisimmät päivitykset</h2>
 <ul>
+<li><span class="when">21.5.2026</span><span><b>Hylly-LISP jaettu erikseen AutoCAD:lle ja BricsCAD:lle.</b> KLH ja KLHV tarvitsevat eri logiikan dynamic-block-parametrien asettamiseen: AutoCAD evaluoi Stretch+Array-actionit natiivisti (Pituus ennen Leveyttä), BricsCAD tarvitsee Leveys-ensin-järjestyksen ja <code>REGEN</code>-pakon. Yhteinen versio toimi vain toisessa CAD:ssä kerrallaan, joten paketissa on nyt <code>klhylly.lsp</code> (AutoCAD) ja <code>klhylly-brics.lsp</code> (BricsCAD). Asentaja valitsee oikean automaattisesti <code>PRODUCT</code>-sysvarin perusteella — käyttäjälle näkymätöntä, komennot KLH/KLHV toimivat molemmissa.</span></li>
 <li><span class="when">19.5.2026</span><span><b>KONEIKKO + LAUHDUTIN attribuuteilla.</b> Lauhdutin- ja koneikkoblokeissa nyt teksti-attribuutit (tyyppi, teho yms.), jotka <code>KONEIKKO</code>- ja <code>LAUHDUTIN</code>-komennot kysyvät dialog-ikkunalla sijoituksen jälkeen. LSP pakottaa <code>ATTREQ</code>/<code>ATTDIA</code> kyselyn päälle ja lataa block-määrityksen aina uusimmasta DWG:stä, joten päivityksiä ei tarvitse manuaalisesti redefinetoida piirustuskohtaisesti.</span></li>
 <li><span class="when">19.5.2026</span><span><b>Yksi asennusskripti AutoCAD + BricsCAD.</b> Pura ZIP, kaksoisklikkaa <code>Asenna.cmd</code>, käynnistä CAD — toimii. Asentaja tunnistaa kummatkin CAD:t ja asentaa molempiin yhdellä ajolla. Radika-ribbon-välilehti + LSP-komennot latautuvat automaattisesti molempiin, ei lisäaskelia. LSP-työkalut menevät polkuun <code>%APPDATA%\Radika\Tools\</code> ja latautuvat <code>acaddoc.lsp</code>:n kautta jokaiseen piirustukseen.</span></li>
 <li><span class="when">18.5.2026</span><span><b>Kolme uutta työkalua: KOTELO, KONEIKKO, LAUHDUTIN.</b> KOTELO piirtää kotelo-tyyppisen kaapelireitin (suljettu poikkileikkaus, parametrinen pituus, sama logiikka kuin KLHYLLY). KONEIKKO ja LAUHDUTIN sijoittavat valmiit kylmälaitos-blokit drag-previewillä. Ribbonin <b>Höyrystimet</b>-paneeli nimetty uudelleen <b>Laitteet</b>-paneeliksi ja KONEIKKO + LAUHDUTIN lisätty sinne. KOTELO Hyllyt-paneelissa. Auto-load <code>acaddoc.lsp</code>:n kautta — APPLOAD ei enää tarpeen (asennus <code>tools/install-radika.ps1</code> hoitaa). dxf2ifc-puolella uusi <code>KYL-KOTELO</code> → <code>IfcCableCarrierSegment</code> / <code>CABLETRUNKINGSEGMENT</code> -mappaus.</span></li>
@@ -392,7 +393,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <span class="file-badge zip">ZIP</span>
 <div class="file-meta">
 <h3>Kaikki työkalut</h3>
-<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>915 KB</span><span>AutoCAD + BricsCAD</span><span>Päiv. 19.5.2026</span></div>
+<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>924 KB</span><span>AutoCAD + BricsCAD</span><span>Päiv. 21.5.2026</span></div>
 </div>
 <a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>

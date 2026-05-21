@@ -30,8 +30,10 @@ $iconsDir = Join-Path $filesDir 'icons'
 $toolsDir = $PSScriptRoot
 
 # LISP files that auto-load on every drawing.
-$lspFiles = @('hoyrystin.lsp','kaato.lsp','klhylly.lsp','positio.lsp',
-              'putkityokalu.lsp','varusteet.lsp',
+# klhylly is CAD-specific: klhylly.lsp = AutoCAD, klhylly-brics.lsp = BricsCAD.
+# Both ship; the generated acaddoc.lsp picks the right one via PRODUCT sysvar.
+$lspFiles = @('hoyrystin.lsp','kaato.lsp','klhylly.lsp','klhylly-brics.lsp',
+              'positio.lsp','putkityokalu.lsp','varusteet.lsp',
               'kotelo.lsp','koneikko.lsp','lauhdutin.lsp')
 # Huom: vputki.lsp tarkoituksella poissa — viemariputkien piirto siirretty
 # BricsCAD-puolelle. files/vputki.lsp sailyy talletettuna mahdollista
@@ -49,7 +51,16 @@ function Get-AutoloadLisp {
   param([string]$CadName)
   $lspDirFwd = ($filesDir -replace '\\', '/')
   if (-not $lspDirFwd.EndsWith('/')) { $lspDirFwd += '/' }
-  $loadLines = ($lspFiles | ForEach-Object { "(radika-load-lsp `"$_`")" }) -join "`r`n"
+  # klhylly excluded here on purpose — it is CAD-specific and loaded via
+  # the PRODUCT branch below (klhylly.lsp = AutoCAD, klhylly-brics.lsp = BricsCAD).
+  $loadList = $lspFiles | Where-Object { $_ -ne 'klhylly.lsp' -and $_ -ne 'klhylly-brics.lsp' }
+  $loadLines = ($loadList | ForEach-Object { "(radika-load-lsp `"$_`")" }) -join "`r`n"
+  $loadLines = $loadLines + "`r`n" + @'
+;; klhylly: CAD-spesifi - AutoCAD lataa klhylly.lsp, BricsCAD klhylly-brics.lsp
+(if (wcmatch (strcase (getvar "PRODUCT")) "*BRICSCAD*")
+  (radika-load-lsp "klhylly-brics.lsp")
+  (radika-load-lsp "klhylly.lsp"))
+'@
   return @"
 ;; Radika LISP-tyokalujen automaattinen lataus ($CadName).
 ;; Generoitu tools/install-radika.ps1:lla - ala muokkaa kasin, aja

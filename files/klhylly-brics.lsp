@@ -1,9 +1,12 @@
-;;; KLHYLLY.LSP - Kylmalaitehyllyn piirtokomennot (AutoCAD-versio)
+;;; KLHYLLY-BRICS.LSP - Kylmalaitehyllyn piirtokomennot (BricsCAD-versio)
 ;;;
-;;; CAD-SPESIFI: tama on AutoCAD-versio. Dynamic-block-parametrit
-;;; asetetaan jarjestyksessa Pituus -> Leveys, eika REGEN:ia tarvita —
-;;; AutoCAD evaluoi Stretch+Array-actionit automaattisesti.
-;;; BricsCAD-versio on klhylly-brics.lsp (Leveys-ensin + REGEN-pakko).
+;;; CAD-SPESIFI: tama on BricsCAD-versio. Dynamic-block-parametrit
+;;; asetetaan jarjestyksessa Leveys -> Pituus, ja Layer+Properties:n
+;;; jalkeen ajetaan REGEN. BricsCAD ei ketjuta Leveys-Stretch +
+;;; Pituus-Array -yhdistelmaa jalkikateen eika evaluoi dynamic-block-
+;;; actioneita reaaliaikaisesti, joten leveys on asetettava ennen kuin
+;;; pituus laukaisee arrayn ja REGEN pakottaa lopullisen evaluoinnin.
+;;; AutoCAD-versio on klhylly.lsp (Pituus-ensin, ei REGEN-pakkoa).
 ;;; Asentajan generoima acaddoc.lsp valitsee oikean per (getvar "PRODUCT").
 ;;;
 ;;; Riippuvuus: rinnalla files/klhylly-levy.dwg ja files/klhylly-tikas.dwg
@@ -396,14 +399,20 @@
   (setq ins (vla-InsertBlock ms (vlax-3d-point insertPt) blockName 1.0 scaleY 1.0 ang))
 
   ;; 10) Aseta layer + dynaamiset properties.
-  ;;     JARJESTYS: Pituus ENNEN Leveytta. AutoCAD evaluoi dynamic-block-
-  ;;     actionit (Stretch/Array) natiivisti put-property:n jalkeen, joten
-  ;;     Pituus-Array kopioi rung-masterin ja Leveys-Stretch leventaa kaikki
-  ;;     kopiot lopuksi. Ei tarvita REGEN-pakkoa.
-  ;;     (BricsCAD-versio klhylly-brics.lsp kayttaa Leveys-ensin + REGEN.)
+  ;;     JARJESTYS: Leveys ENNEN Pituutta. KLHYLLY-TIKAS:n Leveys-Stretch
+  ;;     venyttaa rung-masteria; Pituus-Array kopioi sen. BricsCAD ei
+  ;;     ketjuta Stretch+Array-yhdistelmaa jalkikateen, joten leveys on
+  ;;     asetettava ennen kuin pituus laukaisee arrayn — nain array
+  ;;     kopioi jo-venytetyn masterin. AutoCAD evaluoi koko blockin
+  ;;     lopuksi, joten jarjestyksella ei ole sille merkitysta.
   (vla-put-Layer ins layerName)
-  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" pituus)
+  ;; BricsCAD ei evaluoi dynamic-block-actioneita (Stretch/Array)
+  ;; reaaliaikaisesti parametrin muutoksen jalkeen — REGEN pakottaa
+  ;; evaluoinnin niin etta rungit/leveys nakyvat heti oikein. AutoCAD
+  ;; hyvaksyy saman REGEN:n harmittomasti.
+  (vl-catch-all-apply '(lambda () (command "_.REGEN")))
 
   (setvar "OSMODE"  oldOsmode)
   (setvar "CMDECHO" oldCmdecho)
@@ -619,11 +628,13 @@
         (list 0.0 0.0 0.0 1.0))))
   (vla-TransformBy ins mat)
 
-  ;; 11) Layer + dynaamiset properties. Pituus ENNEN Leveytta — ks. c:KLH
-  ;;     vaihe 10: AutoCAD evaluoi Stretch+Array natiivisti, ei REGEN:ia.
+  ;; 11) Layer + dynaamiset properties. Leveys ENNEN Pituutta — ks. c:KLH
+  ;;     vaihe 10: BricsCAD ei ketjuta Leveys-Stretch + Pituus-Array.
   (vla-put-Layer ins layerName)
-  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" length)
   (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Leveys" levy)
+  (klhylly-set-dyn-prop (vlax-vla-object->ename ins) "Pituus" length)
+  ;; REGEN pakottaa BricsCADin evaluoimaan dynamic-block-actionit — ks. c:KLH.
+  (vl-catch-all-apply '(lambda () (command "_.REGEN")))
 
   ;; 12) Rotaatio: tavallinen 2D-ROTATE p1:n ympari. AutoCAD nayttaa
   ;;     natiivin dynaamisen previewn kun kayttaja liikuttaa hiirta —
