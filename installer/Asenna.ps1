@@ -83,6 +83,7 @@ $lspList = @('hoyrystin.lsp','kaato.lsp','positio.lsp',
 
 $lspDirFwd = ($toolsDst -replace '\\', '/')
 if (-not $lspDirFwd.EndsWith('/')) { $lspDirFwd += '/' }
+$lspDirNoSlash = $lspDirFwd.TrimEnd('/')
 $loadLines = ($lspList | ForEach-Object { "(radika-load-lsp `"$_`")" }) -join "`r`n"
 # klhylly-LISP eroaa AutoCAD:n ja BricsCAD:n valilla (dynamic-block-
 # parametrien asetusjarjestys + REGEN). Ladataan oikea per PRODUCT-sysvar.
@@ -97,7 +98,31 @@ $acaddocBody = @"
 ;; Generoitu Asenna.ps1:lla. Ala muokkaa kasin - aja Asenna.cmd
 ;; uudelleen paivittaaksesi LSP-listan tai polun.
 
+(vl-load-com)
+
 (setq *radika-lsp-dir* "$lspDirFwd")
+
+;; Lisaa Tools-kansio CAD:n support-hakupolkuun. Pakollinen: vanhemmat
+;; LSP:t (hoyrystin, klhylly, kotelo, varusteet, positio) etsivat
+;; block-DWG:nsa pelkalla findfile:lla, eivat *radika-lsp-dir*-
+;; muuttujalla. Ilman tata findfile ei loyda Tools-kansion DWG:ita ->
+;; hoyrystin nayttaa file-dialogin, hyllyt rikkoutuvat. Idempotentti:
+;; vl-string-search estaa duplikaatin kun acaddoc.lsp ajetaan joka
+;; piirustuksen avauksessa.
+(defun radika-add-support-path ( dir / e app prefs files curr )
+  (setq e (vl-catch-all-apply
+            (function
+              (lambda ( )
+                (setq app   (vlax-get-acad-object)
+                      prefs (vla-get-Preferences app)
+                      files (vla-get-Files prefs)
+                      curr  (vla-get-SupportPath files))
+                (if (not (vl-string-search (strcase dir) (strcase curr)))
+                  (vla-put-SupportPath files (strcat curr ";" dir)))))))
+  (if (vl-catch-all-error-p e)
+    (princ "\nRadika: support-polun lisays ei onnistunut")))
+
+(radika-add-support-path "$lspDirNoSlash")
 
 (defun radika-load-lsp (filename / path)
   (setq path (strcat *radika-lsp-dir* filename))
