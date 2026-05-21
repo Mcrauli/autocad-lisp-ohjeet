@@ -22,6 +22,8 @@
 ;;;
 ;;; Komennot:
 ;;;   KLH   -> LEVY/TIKAS -> 300/400/500 -> V=vasen / K=keski -> pisteet
+;;;   KLHL  -> piirra LEVY-hylly suoraan (ribbon, ei tyyppipromptia)
+;;;   KLHT  -> piirra TIKAS-hylly suoraan (ribbon, ei tyyppipromptia)
 ;;;   KLHV  -> 300/400/500 -> alkupiste -> loppupiste (pick tai Z=pystysuunta) -> rotaatio
 ;;;   KORKO      -> valitse kohteet -> kohdekorko z mm
 ;;;
@@ -245,15 +247,20 @@
 )
 
 ;; ============================================================
-;; KLH (vaakaversio: LEVY tai TIKAS)
+;; KLH-PIIRTOAPURI — jaettu c:KLH / c:KLHL / c:KLHT kesken
 ;; ============================================================
+;; tyyppi    = "LEVY" tai "TIKAS"
+;; levy      = leveys mm (300 / 400 / 500)
+;; startMode = "V" (vasen paa) tai "K" (keski)
+;; Ei prompteja tyypille/leveydelle — kutsuja on jo paattanyt ne.
+;; Siirtyy suoraan pisteiden valintaan (vaakahylly).
 
-(defun c:KLH ( / *error* oldClayer oldCmdecho oldOsmode
-                     tyyppi levyStr levy startMode
-                     p1 p1snap p2 pituus ang perp insertPt
-                     blockName dwgName blockPath layerName scaleY firstTime
-                     doc ms ins
-                     savedFiledia savedCmddia savedExpert )
+(defun klhylly-draw-h ( tyyppi levy startMode
+                     / *error* oldClayer oldCmdecho oldOsmode
+                       p1 p1snap p2 pituus ang perp insertPt
+                       blockName dwgName blockPath layerName scaleY firstTime
+                       doc ms ins
+                       savedFiledia savedCmddia savedExpert )
 
   (defun *error* ( msg )
     (if oldOsmode  (setvar "OSMODE"  oldOsmode))
@@ -272,15 +279,7 @@
 
   (setvar "CMDECHO" 0)
 
-  ;; 1) Tyyppi — oletus globaalista klhylly-last-tyyppi (ribbon-valikko
-  ;;    asettaa sen setterilla; Enter promptissa = kayta edellista).
-  (if (null klhylly-last-tyyppi) (setq klhylly-last-tyyppi "LEVY"))
-  (initget "LEVY TIKAS")
-  (setq tyyppi (getkword (strcat "\nSelect type [LEVY/TIKAS] <"
-                                  klhylly-last-tyyppi ">: ")))
-  (if (null tyyppi) (setq tyyppi klhylly-last-tyyppi))
-  (setq klhylly-last-tyyppi tyyppi)
-
+  ;; Block-maaritys tyypin mukaan (tyyppi = kutsujan argumentti).
   (cond
     ((= tyyppi "TIKAS")
       (setq blockName "KLHYLLY-TIKAS")
@@ -291,25 +290,6 @@
       (setq dwgName   "klhylly-levy.dwg")
       (setq layerName "KYL-LEVYHYLLY"))
   )
-
-  ;; 2) Leveys — oletus globaalista klhylly-last-levy.
-  (if (null klhylly-last-levy) (setq klhylly-last-levy "300"))
-  (initget "300 400 500")
-  (setq levyStr (getkword (strcat "\nSelect plate [300/400/500] <"
-                                   klhylly-last-levy ">: ")))
-  (if (null levyStr) (setq levyStr klhylly-last-levy))
-  (setq klhylly-last-levy levyStr)
-  (setq levy (atof levyStr))
-
-  ;; 2b) Aloituspisteen sijainti — V = hyllyn vasen paa, K = hyllyn keski.
-  ;;     Edellinen valinta muistetaan session ajan globaalissa
-  ;;     klhylly-last-startmode -muuttujassa.
-  (if (null klhylly-last-startmode) (setq klhylly-last-startmode "V"))
-  (initget "V K")
-  (setq startMode (getkword (strcat "\nAloituspiste [V=vasen paa / K=keski] <"
-                                     klhylly-last-startmode ">: ")))
-  (if (null startMode) (setq startMode klhylly-last-startmode))
-  (setq klhylly-last-startmode startMode)
 
   ;; 3) Block-maaritys: ensikerralla lookup vastaavan DWG:n polku
   (setq firstTime (not (tblsearch "BLOCK" blockName)))
@@ -409,7 +389,68 @@
   (setvar "CMDECHO" oldCmdecho)
   (setvar "CLAYER"  oldClayer)
 
-  (princ "\nKLH valmis. Properties-paletista voi vaihtaa Leveys/Pituus.")
+  (princ "\nHylly valmis. Properties-paletista voi vaihtaa Leveys/Pituus.")
+  (princ)
+)
+
+;; ============================================================
+;; KLH / KLHL / KLHT — kayttajakomennot
+;; ============================================================
+;; KLH  = komentorivi: kysyy tyypin, leveyden ja aloituspisteen.
+;; KLHL = piirra LEVY-hylly suoraan (ribbon). Ei tyyppipromptia.
+;; KLHT = piirra TIKAS-hylly suoraan (ribbon). Ei tyyppipromptia.
+;; KLHL/KLHT kayttavat valikon viimeisinta leveytta (KLH-W*) ja
+;; aloituspistetta (KLH-SNAP*); oletus 300 mm / V.
+
+(defun c:KLH ( / *error* tyyppi levyStr startMode )
+
+  (defun *error* ( msg )
+    (if (and msg (not (wcmatch (strcase msg) "*CANCEL*,*ABORT*,*EXIT*")))
+      (princ (strcat "\nVirhe: " msg)))
+    (princ)
+  )
+
+  ;; 1) Tyyppi — oletus globaalista klhylly-last-tyyppi.
+  (if (null klhylly-last-tyyppi) (setq klhylly-last-tyyppi "LEVY"))
+  (initget "LEVY TIKAS")
+  (setq tyyppi (getkword (strcat "\nSelect type [LEVY/TIKAS] <"
+                                  klhylly-last-tyyppi ">: ")))
+  (if (null tyyppi) (setq tyyppi klhylly-last-tyyppi))
+  (setq klhylly-last-tyyppi tyyppi)
+
+  ;; 2) Leveys — oletus globaalista klhylly-last-levy.
+  (if (null klhylly-last-levy) (setq klhylly-last-levy "300"))
+  (initget "300 400 500")
+  (setq levyStr (getkword (strcat "\nSelect plate [300/400/500] <"
+                                   klhylly-last-levy ">: ")))
+  (if (null levyStr) (setq levyStr klhylly-last-levy))
+  (setq klhylly-last-levy levyStr)
+
+  ;; 2b) Aloituspiste — V = hyllyn vasen paa, K = hyllyn keski.
+  (if (null klhylly-last-startmode) (setq klhylly-last-startmode "V"))
+  (initget "V K")
+  (setq startMode (getkword (strcat "\nAloituspiste [V=vasen paa / K=keski] <"
+                                     klhylly-last-startmode ">: ")))
+  (if (null startMode) (setq startMode klhylly-last-startmode))
+  (setq klhylly-last-startmode startMode)
+
+  (klhylly-draw-h tyyppi (atof levyStr) startMode)
+  (princ)
+)
+
+;; Ribbon-piirtokomennot: nappi paattaa tyypin, ei tyyppipromptia.
+(defun c:KLHL ( / )
+  (setq klhylly-last-tyyppi "LEVY")
+  (if (null klhylly-last-levy)      (setq klhylly-last-levy "300"))
+  (if (null klhylly-last-startmode) (setq klhylly-last-startmode "V"))
+  (klhylly-draw-h "LEVY" (atof klhylly-last-levy) klhylly-last-startmode)
+  (princ)
+)
+(defun c:KLHT ( / )
+  (setq klhylly-last-tyyppi "TIKAS")
+  (if (null klhylly-last-levy)      (setq klhylly-last-levy "300"))
+  (if (null klhylly-last-startmode) (setq klhylly-last-startmode "V"))
+  (klhylly-draw-h "TIKAS" (atof klhylly-last-levy) klhylly-last-startmode)
   (princ)
 )
 
@@ -713,10 +754,11 @@
 ;; ============================================================
 ;; RIBBON-VALIKON SETTER-KOMENNOT
 ;; ============================================================
-;; Naita kutsutaan Hyllyt-paneelin tyyppi/leveys/snap-dropdowneista.
+;; Naita kutsutaan Hyllyt-paneelin leveys/snap-dropdowneista.
 ;; Ne vain asettavat globaalin oletuksen — eivat piirra mitaan.
-;; KLH-paapainikkeen makro on "KLH;;;" joka hyvaksyy nama oletukset
-;; (Enter joka promptissa) ja siirtyy suoraan pisteiden valintaan.
+;; Ribbonin Levyhylly/Tikashylly-painikkeet ajavat KLHL/KLHT jotka
+;; lukevat nama oletukset ja siirtyvat suoraan pisteiden valintaan.
+;; KLH-LEVY/KLH-TIKAS jaavat varalle (komentorivi / vanhat makrot).
 
 (defun c:KLH-LEVY  () (setq klhylly-last-tyyppi "LEVY")
   (princ "\nHyllytyyppi: LEVY")  (princ))
@@ -735,6 +777,6 @@
 (defun c:KLH-SNAPK () (setq klhylly-last-startmode "K")
   (princ "\nAloituspiste: K (keski)") (princ))
 
-(princ "\nKLH + KLHV + KORKO ladattu.")
+(princ "\nKLH + KLHL + KLHT + KLHV + KORKO ladattu.")
 (princ "\nProperties-paletista voi vaihtaa Leveys/Pituus, gripeilla stretchata.")
 (princ)

@@ -17,17 +17,15 @@ if (-not (Test-Path $iconsDir)) {
 # Each command: id (matches png stem), name (display), command (macro target),
 # help (tooltip text), panel (which ribbon panel it belongs to).
 $commands = @(
-  # KLH/KLHV ribbon-makrot syottavat ";"-Enterit jotta tyyppi/leveys/snap-
-  # promptit hyvaksyvat Hyllyt-valikosta asetetut oletukset ja komento
-  # siirtyy suoraan pisteiden valintaan.
-  #   KLH-promptit: kaynnistys + tyyppi + leveys + snap = 4 ";".
-  #   KLHV-promptit: kaynnistys + leveys = 2 ";".
-  @{ id='klh';         name='KLH';         command='KLH;;;;';     help='Piirra hylly (kayttaa valikon tyyppi/leveys/snap-valintoja)'; panel='Hyllyt' },
+  # KLHL/KLHT ovat omat piirtokomennot per hyllytyyppi — ei tyyppipromptia,
+  # nappi itse paattaa tyypin ja komento siirtyy suoraan pisteiden valintaan.
+  # KLHV-makro syottaa ";"-Enterit jotta leveys-prompti hyvaksyy valikon
+  # oletuksen (kaynnistys + leveys = 2 ";").
+  @{ id='klhl';        name='Levyhylly';   command='KLHL';        help='Piirra levyhylly (leveys/aloituspiste valikosta)';  panel='Hyllyt' },
+  @{ id='klht';        name='Tikashylly';  command='KLHT';        help='Piirra tikashylly (leveys/aloituspiste valikosta)'; panel='Hyllyt' },
   @{ id='klhv';        name='KLHV';        command='KLHV;;';      help='Kylmalaitehylly TIKAS (pysty / 3D)';          panel='Hyllyt' },
   @{ id='korko';       name='KORKO';       command='KORKO';       help='Siirra valitut absoluuttiselle Z-korolle';    panel='Hyllyt' },
   # Hyllyt-valikon setterit: asettavat oletuksen, eivat piirra.
-  @{ id='klh-levy';    name='LEVY';        command='KLH-LEVY';    help='Aseta hyllytyyppi: LEVY' },
-  @{ id='klh-tikas';   name='TIKAS';       command='KLH-TIKAS';   help='Aseta hyllytyyppi: TIKAS' },
   @{ id='klh-w300';    name='300';         command='KLH-W300';    help='Aseta hyllyleveys: 300 mm' },
   @{ id='klh-w400';    name='400';         command='KLH-W400';    help='Aseta hyllyleveys: 400 mm' },
   @{ id='klh-w500';    name='500';         command='KLH-W500';    help='Aseta hyllyleveys: 500 mm' },
@@ -63,13 +61,13 @@ $commands = @(
 #       so the last-used command stays as the primary.
 #   @{ kind='button'; cmd=id }              -> a plain large RibbonCommandButton.
 $panels = @(
-  # Hyllyt: kolme valikko-dropdownia (tyyppi / leveys / snap) jotka
-  # asettavat oletukset, sitten KLH-piirtopainike + KLHV + KORKO.
+  # Hyllyt: Levyhylly/Tikashylly-piirtopainike (split, SplitFollow muistaa
+  # viimeisimman), leveys- ja snap-dropdownit asettavat oletukset,
+  # sitten KLHV + KORKO + KOTELO.
   @{ name='Hyllyt'; items=@(
-      @{ kind='split';  cmds=@('klh-levy','klh-tikas') }
+      @{ kind='split';  cmds=@('klhl','klht') }
       @{ kind='split';  cmds=@('klh-w300','klh-w400','klh-w500') }
       @{ kind='split';  cmds=@('klh-snapv','klh-snapk') }
-      @{ kind='button'; cmd='klh' }
       @{ kind='button'; cmd='klhv' }
       @{ kind='button'; cmd='korko' }
       @{ kind='button'; cmd='kotelo' }

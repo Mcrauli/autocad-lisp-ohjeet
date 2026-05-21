@@ -545,6 +545,36 @@ lopputila manuaalisesti, muuten kuva osuu usein fade-hetkeen.
     - ZIP-paketti nyt 903 KB / 9 LSP + 14 DWG + ribbon (oli 896 KB /
       6 LSP + 12 DWG + ribbon). lataukset.html päivitetty.
 
+25. **Ribbon: oma piirtopainike levy- ja tikashyllylle** (21.5.2026):
+    Hyllyt-paneelin vanha rakenne oli ärsyttävä — LEVY/TIKAS-dropdown
+    asetti vain globaalin tyypin (ei piirtänyt), ja erillinen KLH-nappi
+    (`KLH;;;;`) piirsi. Kaksi klikkausta yhteen tekoon. Uusi rakenne:
+    yksi split-painike **Levyhylly / Tikashylly**, jonka molemmat
+    valinnat piirtävät suoraan. `Behavior="SplitFollow"` muistaa
+    viimeksi käytetyn tyypin näkyväksi päänapiksi → saman hyllyn
+    toisto = yksi klikkaus.
+    - **LISP (`klhylly.lsp` + `klhylly-brics.lsp`):** `c:KLH`:n
+      piirto-osa (vaiheet 3–10) eriytetty jaetuksi apufunktioksi
+      `klhylly-draw-h (tyyppi levy startMode)`. `c:KLH` säilyy
+      komentorivillä identtisenä (kysyy tyyppi/leveys/aloituspiste).
+      Uudet `c:KLHL` / `c:KLHT` asettavat tyypin ja kutsuvat apuria
+      suoraan — ei tyyppipromptia, leveys + aloituspiste tulevat
+      valikon globaaleista (KLH-W* / KLH-SNAP*, oletus 300 / V).
+      Geometriaa EI muutettu — vaiheet 3–10 siirretty verbatim.
+    - **CUIX (`make-cuix.ps1`):** Hyllyt-paneelin split vaihdettu
+      `klh-levy/klh-tikas`-settereistä → `klhl/klht`-piirtokomentoihin,
+      vanha `klh`-nappi poistettu. `make-icons.ps1`: `klh`-ikoni →
+      `klhl` (shelf-glyph) + uusi `klht` (ladder-glyph); orvot
+      `klh-levy`/`klh-tikas`-settereiden ikonit poistettu. `KLH-LEVY`/
+      `KLH-TIKAS`-LISP-setterit jäävät varalle (komentorivi).
+    - **make-bundle.ps1:** PackageContents.xml:n bundle-`Icon` oli
+      `klh_32.png` (poistettu) → korjattu `klhl_32.png`.
+    - ZIP nyt ~1321 KB / 10 LSP + 19 DWG + ribbon. lataukset.html:
+      changelog + meta päivitetty, ohjeet.html Hyllyt-paneelin
+      sisältölista päivitetty (Levyhylly / Tikashylly).
+    - Samassa yhteydessä paketoitu Laurin muokkaamat block-DWG:t:
+      hoyrystin-1/2/3.dwg + Koneikko.dwg + lauhdutin.dwg.
+
 ## Ideoita tulevaisuuteen (vielä pöydällä)
 
 - **Kopioi-nappi `<code>`-pätkille** ohjeissa + toast-feedback.

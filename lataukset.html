@@ -372,6 +372,8 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <section class="changelog reveal">
 <h2>Viimeisimmät päivitykset</h2>
 <ul>
+<li><span class="when">21.5.2026</span><span><b>Höyrystinblokkien basepoint säädetty.</b> HY1/HY2/HY3-höyrystimet sijoittuvat nyt heti järkevämmälle korolle — block-määritysten insertion-piste siirretty niin että höyrystin asettuu luontevaan asennuskorkoon ilman erillistä KORKO-jälkisäätöä.</span></li>
+<li><span class="when">21.5.2026</span><span><b>Ribbon: oma piirtopainike levy- ja tikashyllylle.</b> Hyllyt-paneelissa on nyt erilliset <b>Levyhylly</b>- ja <b>Tikashylly</b>-painikkeet, jotka aloittavat piirron suoraan — ei erillistä tyyppivalintaa ennen piirtoa kuten aiemmalla KLH-painikkeella. Split-painike muistaa viimeksi käytetyn tyypin, joten saman hyllyn toistaminen on yksi klikkaus. Leveys (300/400/500) ja aloituspiste tulevat edelleen viereisistä dropdowneista. Komentoriviltä <code>KLH</code> kysyy kaiken kuten ennen; uudet komennot <code>KLHL</code> ja <code>KLHT</code> piirtävät tyypin suoraan.</span></li>
 <li><span class="when">21.5.2026</span><span><b>Lauhdutin + koneikko: valmistaja ja malli.</b> <code>KONEIKKO</code>- ja <code>LAUHDUTIN</code>-blokkeihin lisätty <code>VALMISTAJA</code>- ja <code>MALLI</code>-attribuutit teho-attribuuttien rinnalle. Täytä arvot Properties-paletista — dxf2ifc vie ne IFC-mallin tuotetietoihin, joten valmistaja ja malli näkyvät Solibrissa jokaiselle laitteelle.</span></li>
 <li><span class="when">21.5.2026</span><span><b>Hylly-työkalut jaettu erikseen AutoCAD:lle ja BricsCAD:lle.</b> KLH ja KLHV tarvitsevat eri logiikan dynamic-block-parametrien asettamiseen, ja lisäksi dynamic-block-kirjastot (DWG) eivät säily ehjinä CAD:sta toiseen — BricsCAD-tallennus pudottaa AutoCAD:n Stretch/Array-action-dataa ja toisinpäin. Ratkaisu: paketissa on nyt sekä LISP että block-kirjastot erikseen molemmille — <code>klhylly.lsp</code> + <code>klhylly-levy/tikas.dwg</code> (AutoCAD) ja <code>klhylly-brics.lsp</code> + <code>klhylly-levy/tikas-brics.dwg</code> (BricsCAD). Asentaja valitsee oikean automaattisesti <code>PRODUCT</code>-sysvarin perusteella — käyttäjälle näkymätöntä, komennot KLH/KLHV toimivat molemmissa.</span></li>
 <li><span class="when">19.5.2026</span><span><b>KONEIKKO + LAUHDUTIN attribuuteilla.</b> Lauhdutin- ja koneikkoblokeissa nyt teksti-attribuutit (tyyppi, teho yms.), jotka <code>KONEIKKO</code>- ja <code>LAUHDUTIN</code>-komennot kysyvät dialog-ikkunalla sijoituksen jälkeen. LSP pakottaa <code>ATTREQ</code>/<code>ATTDIA</code> kyselyn päälle ja lataa block-määrityksen aina uusimmasta DWG:stä, joten päivityksiä ei tarvitse manuaalisesti redefinetoida piirustuskohtaisesti.</span></li>
@@ -394,7 +396,7 @@ kylmälaitesuunnittelua ja putkikaavioiden tekemistä.
 <span class="file-badge zip">ZIP</span>
 <div class="file-meta">
 <h3>Kaikki työkalut</h3>
-<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>1322 KB</span><span>AutoCAD + BricsCAD</span><span>Päiv. 21.5.2026</span></div>
+<div class="file-meta-line"><span>suunnittelutyokalut.zip</span><span>1321 KB</span><span>AutoCAD + BricsCAD</span><span>Päiv. 21.5.2026</span></div>
 </div>
 <a class="file-action" href="files/suunnittelutyokalut.zip" download>Lataa kaikki<span class="file-action-arrow">↓</span></a>
 </div>

@@ -97,7 +97,7 @@ $pkg = @"
                     AppVersion="1.1.0"
                     FriendlyVersion="1.1.0"
                     SupportedLocales="*"
-                    Icon="./Contents/icons/klh_32.png">
+                    Icon="./Contents/icons/klhl_32.png">
   <CompanyDetails Name="Lauri Rekola" />
   <RuntimeRequirements OS="Win32|Win64" Platform="AutoCAD*" SeriesMin="R23.0" SeriesMax="R25.0" />
   <Components Description="Radika-ribbon">
@@ -164,7 +164,8 @@ KAYTTO:
   CAD:eihin. Komennot toimivat suoraan komentorivilta jokaisessa
   piirustuksessa:
 
-    KLH KLHV KOTELO KORKO     - hyllyt ja kotelot
+    KLHL KLHT KLHV KORKO      - hyllyt (levy / tikas / pysty)
+    KOTELO                    - kotelo (kaapelireitti)
     MTI LTI MTN               - putket
     HOYRYSTIN KONEIKKO        - kylmakoneikko-laitteet
     LAUHDUTIN                 -   "    "

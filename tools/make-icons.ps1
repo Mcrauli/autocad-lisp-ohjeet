@@ -13,7 +13,8 @@ if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir | Out
 # glyph      -> drawing routine name
 # color      -> background color
 $commands = @(
-  @{ id='klh';         glyph='shelf';      color='#8B5A2B' },
+  @{ id='klhl';        glyph='shelf';      color='#8B5A2B' },
+  @{ id='klht';        glyph='ladder';     color='#8B5A2B' },
   @{ id='klhv';        glyph='ladder';     color='#8B5A2B' },
   @{ id='korko';       glyph='elevation';  color='#8B5A2B' },
   @{ id='3ptk';        glyph='triplepipe'; color='#1F75D9' },
@@ -37,9 +38,7 @@ $commands = @(
   @{ id='varusteet-ryhmakeskus'; glyph='cabinet';  color='#555555' },
   @{ id='varusteet-keskus';      glyph='ctrlbox';  color='#555555' },
   @{ id='varusteet-hataseis';    glyph='estop';    color='#555555' },
-  # Hyllyt-paneelin valikko-setterit (tyyppi / leveys / snap)
-  @{ id='klh-levy';   glyph='shelf';   color='#8B5A2B' },
-  @{ id='klh-tikas';  glyph='ladder';  color='#8B5A2B' },
+  # Hyllyt-paneelin valikko-setterit (leveys / snap)
   @{ id='klh-w300';   glyph='label';   color='#8B5A2B'; label='300' },
   @{ id='klh-w400';   glyph='label';   color='#8B5A2B'; label='400' },
   @{ id='klh-w500';   glyph='label';   color='#8B5A2B'; label='500' },
