@@ -9,7 +9,10 @@
 ;;; AutoCAD-versio on klhylly.lsp (Pituus-ensin, ei REGEN-pakkoa).
 ;;; Asentajan generoima acaddoc.lsp valitsee oikean per (getvar "PRODUCT").
 ;;;
-;;; Riippuvuus: rinnalla files/klhylly-levy.dwg ja files/klhylly-tikas.dwg
+;;; Riippuvuus: rinnalla files/klhylly-levy-brics.dwg ja
+;;;             files/klhylly-tikas-brics.dwg (BricsCAD-tallennetut
+;;;             dynamic-block-kirjastot — AutoCAD-versiot ovat ilman
+;;;             -brics-paatetta klhylly.lsp:n kaytossa)
 ;;; -block-kirjastot, jotka sisaltavat dynamic blockit KLHYLLY-LEVY ja
 ;;; KLHYLLY-TIKAS. Blockit on parametrisoitu: Pituus (Linear, continuous)
 ;;; ja Leveys (Linear, List 300/400/500), molemmat muokattavissa
@@ -284,14 +287,17 @@
   (if (null tyyppi) (setq tyyppi klhylly-last-tyyppi))
   (setq klhylly-last-tyyppi tyyppi)
 
+  ;; CAD-spesifit DWG:t: BricsCAD-versio kayttaa -brics-block-kirjastoja
+  ;; jotka on tallennettu BricsCAD:lla. AutoCAD-versio (klhylly.lsp)
+  ;; kayttaa klhylly-levy.dwg / klhylly-tikas.dwg.
   (cond
     ((= tyyppi "TIKAS")
       (setq blockName "KLHYLLY-TIKAS")
-      (setq dwgName   "klhylly-tikas.dwg")
+      (setq dwgName   "klhylly-tikas-brics.dwg")
       (setq layerName "KYL-TIKASHYLLY"))
     (t
       (setq blockName "KLHYLLY-LEVY")
-      (setq dwgName   "klhylly-levy.dwg")
+      (setq dwgName   "klhylly-levy-brics.dwg")
       (setq layerName "KYL-LEVYHYLLY"))
   )
 
@@ -466,7 +472,7 @@
   (setvar "CMDECHO" 0)
 
   (setq blockName "KLHYLLY-TIKAS")
-  (setq dwgName   "klhylly-tikas.dwg")
+  (setq dwgName   "klhylly-tikas-brics.dwg")   ; BricsCAD-spesifi block-kirjasto
   (setq layerName "KYL-TIKASHYLLY")
 
   ;; 1) Leveys — jaettu globaali klhylly-last-levy KLH:n kanssa.
